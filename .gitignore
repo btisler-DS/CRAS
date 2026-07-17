@@ -1,0 +1,26 @@
+# Environment secrets and local overrides
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Dependencies and build outputs (reserved for later phases)
+node_modules/
+.next/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+
+# Runtime data and evidence exports (reserved for later phases)
+*.db
+*.db-shm
+*.db-wal
+evidence-exports/
+
+# Logs and editor/OS artifacts
+*.log
+.DS_Store
+.idea/
+.vscode/
