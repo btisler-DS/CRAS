@@ -6,7 +6,7 @@ The canonical demonstration follows a robot asked to deliver medication to Room 
 
 ## Project status
 
-Phase 0 establishes the Build Week project record and documentation only. No application framework, runtime, user interface, evidence store, OpenAI API integration, or robot adapter has been implemented yet.
+Phase 1 implements and verifies the deterministic authorization kernel. It evaluates the medication-delivery conditions and stops at `READY_FOR_EVIDENCE`; it cannot authorize or dispatch an action. No user interface, evidence store, OpenAI API integration, deployment, or robot adapter has been implemented yet.
 
 The inspected starting directory contained no application code, no valid Git history, and no reusable implementation. It contained only empty placeholder directories named `.git`, `.agents`, and `.codex`. The empty `.git` placeholder was not valid repository metadata and was replaced during Phase 0 by a valid Git repository.
 
@@ -31,4 +31,12 @@ Constitutional Runtime is the new Build Week product. Any future reuse or integr
 
 ## Development
 
-There are currently no install, build, test, or run commands. Those will be added only when an implementation phase begins.
+Install dependencies and run the Phase 1 verification gates:
+
+```sh
+npm install
+npm run build
+npm test
+```
+
+There is no application run command in Phase 1.

@@ -2,7 +2,7 @@
 
 ## Status
 
-This document defines the intended architecture and trust boundary. Phase 0 contains no runtime implementation.
+This document defines the intended architecture and trust boundary. Phase 1 implements only the deterministic policy kernel and its state machine through `READY_FOR_EVIDENCE`. Evidence persistence, authorization, dispatch, execution, UI, and integrations remain unimplemented.
 
 ## Safety objective
 

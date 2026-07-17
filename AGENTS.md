@@ -6,12 +6,13 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 0 is documentation-only. Until a later phase is explicitly authorized:
+Phase 1 implements the deterministic authorization kernel and its tests. Until a later phase is explicitly authorized:
 
-- Do not initialize an application framework.
-- Do not install dependencies.
-- Do not add runtime implementation code.
-- Do not claim that proposed behavior has been implemented or verified.
+- Do not build a UI or initialize an application framework.
+- Do not add an evidence store or manufacture authorization grants.
+- Do not add OpenAI, deployment, or physical robot integrations.
+- Do not add a production robot adapter; Phase 1 must never dispatch.
+- Do not claim that later-phase proposed behavior has been implemented or verified.
 
 ## Non-negotiable invariants
 

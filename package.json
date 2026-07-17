@@ -1,0 +1,23 @@
+{
+  "name": "constitutional-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pre-execution authorization runtime for autonomous systems",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
