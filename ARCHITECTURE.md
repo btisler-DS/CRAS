@@ -2,7 +2,7 @@
 
 ## Status
 
-This document defines the intended architecture and trust boundary. Phase 2 implements the deterministic policy kernel through `READY_FOR_EVIDENCE` and a separate SQLite transaction that atomically persists evidence and its authorization grant. Dispatch, execution, UI, and external integrations remain unimplemented.
+This document defines the implemented trust boundary through Phase 3. Phase 1 evaluates through `READY_FOR_EVIDENCE`, Phase 2 atomically persists evidence and its grant, and Phase 3 atomically consumes a revalidated grant before invoking the canonical simulator. Browser UI and external integrations remain unimplemented.
 
 ## Safety objective
 
@@ -76,11 +76,11 @@ RECEIVED -> EVALUATING -> BLOCKED
                                                                   -> EVIDENCE_COMMIT_FAILED
 ```
 
-Phase 1 owns the progression through `READY_FOR_EVIDENCE`. Phase 2 owns `COMMITTING_EVIDENCE`, `AUTHORIZED`, and `EVIDENCE_COMMIT_FAILED`. Dispatch and execution transitions remain future work.
+Phase 1 owns the progression through `READY_FOR_EVIDENCE`. Phase 2 owns `COMMITTING_EVIDENCE`, `AUTHORIZED`, and `EVIDENCE_COMMIT_FAILED`. Phase 3 owns the valid `AUTHORIZED -> DISPATCHED -> EXECUTED` progression and rejects lifecycle shortcuts.
 
 ## Evidence transaction and durability
 
-Phase 2 uses `better-sqlite3` with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Two migrations create `evidence_records` and `authorization_grants`. A composite foreign key binds each grant to the same evidence record, action ID, and action digest.
+Phase 2 uses `better-sqlite3` with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Migrations create `evidence_records` and `authorization_grants`; Phase 3 adds `execution_records`. A composite foreign key binds each grant to the same evidence record, action ID, and action digest.
 
 The exact transaction sequence is:
 
@@ -94,6 +94,25 @@ The exact transaction sequence is:
 An evidence or grant write error throws within the transaction, causing rollback. The state becomes `EVIDENCE_COMMIT_FAILED`, the result contains no grant, and there is no dispatch path.
 
 Evidence records contain a SHA-256 hash of their canonical content and the previous committed record hash. The resulting chain is **tamper-evident, not tamper-proof**. It can reveal broken links or changed content when independently verified, but an attacker with sufficient database write access could rewrite records and recompute the chain. This phase does not claim independent notarization, append-only hardware, replication, or protection from host loss.
+
+## Protected dispatch sequence
+
+The dispatcher accepts a persisted `AuthorizationGrant` and branded `NormalizedAction`. It does not accept a raw `ActionProposal`. Within a SQLite transaction it:
+
+1. Re-reads and verifies the persisted grant is `AUTHORIZED`, unconsumed, unrevoked, and unexpired.
+2. Verifies the referenced evidence exists and matches the grant action ID and digest.
+3. Digests the supplied exact normalized action and compares it with the grant and evidence.
+4. Atomically updates the grant to `CONSUMED` with `consumed_at`.
+5. Creates an `AUTHORIZED` execution record.
+6. Commits.
+
+Only after commit, the dispatcher records `DISPATCHED` and invokes the `RobotAdapter`. Successful simulator completion records `EXECUTED`, final position, call count, action ID, and grant ID.
+
+### Adapter failure after consumption
+
+Consumption is intentionally not rolled back after adapter invocation: the adapter may have received or partially executed the command. If the adapter throws, the grant remains `CONSUMED`, the lifecycle result remains `DISPATCHED`, and the execution record becomes `ADAPTER_FAILED` with the error, adapter call count, and last known position. It is never reported as undispatched or successfully executed. Replay is rejected; recovery requires reconciliation and a new authorization.
+
+There is no public HTTP endpoint for the dispatcher or adapter.
 
 ## Hardware independence
 

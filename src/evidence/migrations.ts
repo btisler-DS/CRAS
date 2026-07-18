@@ -6,6 +6,7 @@ import type Database from "better-sqlite3";
 const MIGRATIONS = [
   "../../db/migrations/001_create_evidence_records.sql",
   "../../db/migrations/002_create_authorization_grants.sql",
+  "../../db/migrations/003_create_execution_records.sql",
 ] as const;
 
 export function migrate(database: Database.Database): void {

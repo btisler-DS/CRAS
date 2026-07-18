@@ -6,7 +6,7 @@ The canonical demonstration follows a robot asked to deliver medication to Room 
 
 ## Project status
 
-Phase 2 implements and verifies SQLite-backed evidence-before-authorization. The unchanged Phase 1 kernel evaluates medication-delivery conditions and stops at `READY_FOR_EVIDENCE`; a separate transactional layer can then create the evidence record and its bound authorization grant atomically. No user interface, simulator, OpenAI API integration, deployment, or robot adapter has been implemented yet.
+Phase 3 implements and verifies the protected dispatch boundary and canonical robot simulator. The unchanged Phase 1 kernel stops at `READY_FOR_EVIDENCE`; Phase 2 atomically creates evidence and its bound grant; Phase 3 atomically consumes and revalidates that grant before invoking the simulator. No browser UI, OpenAI API integration, deployment, HTTP dispatch endpoint, or physical robot adapter has been implemented.
 
 SQLite is configured with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Evidence records form a SHA-256 hash chain and can be exported as JSON. This chain is **tamper-evident, not tamper-proof**: modification can break detectable links, but a party able to rewrite the database may also be able to recompute the chain.
 
@@ -33,12 +33,19 @@ Constitutional Runtime is the new Build Week product. Any future reuse or integr
 
 ## Development
 
-Install dependencies and run the Phase 2 verification gates:
+Install dependencies and run the Phase 3 verification gates:
 
 ```sh
 npm install
 npm run build
 npm test
+npm run demo
 ```
 
-There is no application run command in Phase 2.
+The CLI demo runs entirely locally and creates temporary SQLite databases that it removes on completion.
+
+## Dispatch safety
+
+The public `RobotAdapter` interface accepts only a branded, validated authorization grant and the branded exact normalized action. Grant revalidation, consumption, and initial execution-record creation occur in one SQLite transaction. Only after commit does the dispatcher call the simulator.
+
+If consumption commits but the adapter subsequently fails, the grant remains consumed and cannot be replayed. The execution is recorded as `ADAPTER_FAILED`, while the dispatch result remains `DISPATCHED` rather than falsely claiming the action was never dispatched or executed successfully. Manual reconciliation is required before any new authorization attempt.

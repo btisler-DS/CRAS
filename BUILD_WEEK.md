@@ -84,10 +84,32 @@ Verified on July 18, 2026:
 - Tests cover SQLite configuration, committed evidence/grant binding, shared action digests, evidence-write rollback, grant-write rollback, no grant or dispatch opportunity after rollback, failure state, successful authorization, restart persistence, JSON export, and a two-record hash-chain link.
 - No UI, simulator, OpenAI integration, deployment, or physical robot integration was added.
 
+## Work completed during Phase 3
+
+- Added a protected dispatcher and a `RobotAdapter` interface whose execution method accepts only branded `ValidatedAuthorizationGrant` and `NormalizedAction` values.
+- Added atomic grant revalidation and single-use consumption with an execution record created in the same transaction.
+- Added checks for authorization status, evidence existence, action ID and digest binding, exact normalized action, expiry, revocation, and prior consumption.
+- Added an execution lifecycle state machine for `AUTHORIZED -> DISPATCHED -> EXECUTED` with invalid-transition rejection.
+- Added the deterministic `SimulatedRobotAdapter`, starting at `pharmacy` and moving to `Room 312` only after valid dispatch.
+- Added persistent execution outcomes, adapter call count, final position, executed action ID, and grant ID.
+- Added explicit post-consumption adapter-failure behavior: the grant remains consumed, the result is `DISPATCHED`, and the execution record is `ADAPTER_FAILED`; it is never reported as undispatched or successfully executed.
+- Added a local CLI demonstration for blocked, successful, and repository-failure scenarios.
+- Added no HTTP endpoint, browser UI, OpenAI integration, deployment, or physical robot adapter.
+
+### Phase 3 verification
+
+Verified on July 18, 2026:
+
+- `npm run build`: passed (`tsc --noEmit`).
+- `npm test`: passed with 3 test files and 37 tests.
+- Vitest result: 3 files passed, 37 tests passed, 0 failures.
+- `npm run demo`: passed; blocked and evidence-failure scenarios made 0 adapter calls and remained at `pharmacy`, while the successful scenario made exactly 1 call and ended at `Room 312`.
+- Tests cover blocked, pre-evidence, and evidence-failure immobility; valid execution; replay; expiry; revocation; action mismatch; missing/corrupt evidence binding; typed raw-action exclusion; restart persistence; repeated dispatch; lifecycle validation; and adapter failure.
+
 ## Not yet implemented
 
 - Application or UI framework.
-- Robot adapter, simulator, or physical hardware integration.
+- Physical robot adapter or hardware integration.
 - User interface.
 - OpenAI API integration or natural-language parser.
 - CI, deployment, telemetry, authentication, or production security controls.

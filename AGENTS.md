@@ -6,12 +6,13 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 2 implements the deterministic kernel plus transactional SQLite evidence and grant persistence. Until a later phase is explicitly authorized:
+Phase 3 implements the protected dispatch boundary, atomic grant consumption, execution records, and canonical simulator. Until a later phase is explicitly authorized:
 
 - Do not build a UI or initialize an application framework.
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.
-- Do not add a production robot adapter; Phase 2 must never dispatch.
+- Do not expose dispatch or the robot adapter through HTTP.
+- Do not add a physical robot adapter; the deterministic simulator is canonical.
 - Do not claim that later-phase proposed behavior has been implemented or verified.
 
 ## Non-negotiable invariants
@@ -34,6 +35,9 @@ Fail closed on missing conditions, storage errors, timeouts, and ambiguous commi
 - Inject the evidence-outage scenario at the repository boundary, not only in presentation state.
 - Preserve the Phase 1 kernel ceiling at `READY_FOR_EVIDENCE`; evidence-backed authorization belongs to the separate Phase 2 transaction.
 - Treat the local SHA-256 evidence chain as tamper-evident, not tamper-proof.
+- Pass only `ValidatedAuthorizationGrant` and `NormalizedAction` across the robot-adapter boundary.
+- Consume a grant atomically before adapter invocation; consumed grants are single-use even when the adapter fails.
+- Record post-consumption adapter failures as dispatched failures, never as undispatched or executed successes.
 - Document any reused code, assets, or external integration in `BUILD_WEEK.md` before merging it.
 - Do not commit secrets, patient data, generated evidence databases, or evidence exports.
 

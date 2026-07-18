@@ -81,3 +81,22 @@ export interface EvidenceRecord {
   readonly previousRecordHash: string | null;
   readonly currentRecordHash: string;
 }
+
+export type ExecutionRecordState =
+  | "AUTHORIZED"
+  | "DISPATCHED"
+  | "EXECUTED"
+  | "ADAPTER_FAILED";
+
+export interface ExecutionRecord {
+  readonly executionId: string;
+  readonly grantId: string;
+  readonly actionId: string;
+  readonly state: ExecutionRecordState;
+  readonly consumedAt: string;
+  readonly dispatchedAt: string | null;
+  readonly executedAt: string | null;
+  readonly adapterError: string | null;
+  readonly adapterCallCount: number;
+  readonly finalPosition: string | null;
+}

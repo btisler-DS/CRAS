@@ -9,7 +9,14 @@ import type {
   AuthorizationGrant,
   ConditionResult,
   EvidenceRecord,
+  ExecutionRecord,
 } from "../domain.js";
+import { digestNormalizedAction } from "../dispatch/normalized-action.js";
+import type {
+  NormalizedAction,
+  RobotExecutionReceipt,
+  ValidatedAuthorizationGrant,
+} from "../dispatch/types.js";
 import { parseActionProposal } from "../medication-delivery.js";
 import { migrate } from "./migrations.js";
 import { EvidenceAuthorizationStateMachine } from "./state-machine.js";
@@ -71,6 +78,31 @@ interface GrantRow {
   consumed_at: string | null;
   revoked_at: string | null;
 }
+
+interface ExecutionRow {
+  execution_id: string;
+  grant_id: string;
+  action_id: string;
+  state: ExecutionRecord["state"];
+  consumed_at: string;
+  dispatched_at: string | null;
+  executed_at: string | null;
+  adapter_error: string | null;
+  adapter_call_count: number;
+  final_position: string | null;
+}
+
+export type GrantConsumptionResult =
+  | {
+      readonly accepted: true;
+      readonly grant: ValidatedAuthorizationGrant;
+      readonly action: NormalizedAction;
+      readonly executionRecord: ExecutionRecord;
+    }
+  | {
+      readonly accepted: false;
+      readonly reason: string;
+    };
 
 export class EvidenceRepository {
   readonly #database: Database.Database;
@@ -221,6 +253,201 @@ export class EvidenceRepository {
     return row ? mapGrantRow(row) : null;
   }
 
+  /**
+   * Atomically revalidates and consumes a grant. Returning accepted=true means
+   * the COMMIT has completed; callers may invoke an adapter only after this.
+   */
+  consumeGrant(
+    suppliedGrant: AuthorizationGrant,
+    suppliedAction: NormalizedAction,
+  ): GrantConsumptionResult {
+    try {
+      return this.#database.transaction(() => {
+        if (
+          suppliedGrant.status !== "AUTHORIZED" ||
+          suppliedGrant.consumedAt !== null ||
+          suppliedGrant.revokedAt !== null
+        ) {
+          throw new Error("Supplied grant is not an unconsumed authorization.");
+        }
+
+        const storedGrant = this.findAuthorizationGrant(suppliedGrant.grantId);
+        if (!storedGrant) {
+          throw new Error("Authorization grant does not exist.");
+        }
+        if (
+          storedGrant.evidenceRecordId !== suppliedGrant.evidenceRecordId ||
+          storedGrant.actionId !== suppliedGrant.actionId ||
+          storedGrant.actionDigest !== suppliedGrant.actionDigest ||
+          storedGrant.issuedAt !== suppliedGrant.issuedAt ||
+          storedGrant.expiresAt !== suppliedGrant.expiresAt
+        ) {
+          throw new Error("Supplied grant does not match the persisted grant.");
+        }
+        if (storedGrant.status !== "AUTHORIZED") {
+          throw new Error(`Grant status is ${storedGrant.status}, not AUTHORIZED.`);
+        }
+        if (storedGrant.revokedAt !== null) {
+          throw new Error("Authorization grant has been revoked.");
+        }
+        if (storedGrant.consumedAt !== null) {
+          throw new Error("Authorization grant has already been consumed.");
+        }
+
+        const consumedAt = this.#now().toISOString();
+        if (Date.parse(storedGrant.expiresAt) <= Date.parse(consumedAt)) {
+          throw new Error("Authorization grant has expired.");
+        }
+
+        const evidence = this.findEvidenceRecord(storedGrant.evidenceRecordId);
+        if (!evidence) {
+          throw new Error("Referenced evidence record does not exist.");
+        }
+        if (evidence.actionId !== storedGrant.actionId) {
+          throw new Error("Evidence and grant action IDs do not match.");
+        }
+        if (evidence.actionDigest !== storedGrant.actionDigest) {
+          throw new Error("Evidence and grant action digests do not match.");
+        }
+
+        const suppliedDigest = digestNormalizedAction(suppliedAction);
+        if (suppliedDigest !== storedGrant.actionDigest) {
+          throw new Error("Supplied action digest does not match the grant.");
+        }
+        if (
+          canonicalJson(suppliedAction) !== canonicalJson(evidence.normalizedAction)
+        ) {
+          throw new Error("Supplied action is not the committed normalized action.");
+        }
+
+        const update = this.#database
+          .prepare(
+            `UPDATE authorization_grants
+                SET status = 'CONSUMED', consumed_at = ?
+              WHERE grant_id = ?
+                AND status = 'AUTHORIZED'
+                AND consumed_at IS NULL
+                AND revoked_at IS NULL`,
+          )
+          .run(consumedAt, storedGrant.grantId);
+        if (update.changes !== 1) {
+          throw new Error("Authorization grant could not be consumed atomically.");
+        }
+
+        const executionRecord: ExecutionRecord = {
+          executionId: this.#createId(),
+          grantId: storedGrant.grantId,
+          actionId: storedGrant.actionId,
+          state: "AUTHORIZED",
+          consumedAt,
+          dispatchedAt: null,
+          executedAt: null,
+          adapterError: null,
+          adapterCallCount: 0,
+          finalPosition: null,
+        };
+        this.#insertExecutionRecord(executionRecord);
+
+        return {
+          accepted: true as const,
+          grant: storedGrant as ValidatedAuthorizationGrant,
+          action: suppliedAction,
+          executionRecord,
+        };
+      })();
+    } catch (error) {
+      return {
+        accepted: false,
+        reason: error instanceof Error ? error.message : "Grant consumption failed.",
+      };
+    }
+  }
+
+  markDispatched(executionId: string): ExecutionRecord {
+    const dispatchedAt = this.#now().toISOString();
+    const update = this.#database
+      .prepare(
+        `UPDATE execution_records
+            SET state = 'DISPATCHED', dispatched_at = ?
+          WHERE execution_id = ? AND state = 'AUTHORIZED'`,
+      )
+      .run(dispatchedAt, executionId);
+    if (update.changes !== 1) {
+      throw new Error("Execution could not transition to DISPATCHED.");
+    }
+    return this.#requireExecutionRecord(executionId);
+  }
+
+  markExecuted(
+    executionId: string,
+    receipt: RobotExecutionReceipt,
+  ): ExecutionRecord {
+    const executedAt = this.#now().toISOString();
+    const update = this.#database
+      .prepare(
+        `UPDATE execution_records
+            SET state = 'EXECUTED', executed_at = ?,
+                adapter_call_count = ?, final_position = ?
+          WHERE execution_id = ? AND state = 'DISPATCHED'`,
+      )
+      .run(
+        executedAt,
+        receipt.adapterCallCount,
+        receipt.finalPosition,
+        executionId,
+      );
+    if (update.changes !== 1) {
+      throw new Error("Execution could not transition to EXECUTED.");
+    }
+    return this.#requireExecutionRecord(executionId);
+  }
+
+  markAdapterFailed(
+    executionId: string,
+    error: string,
+    adapterCallCount: number,
+    finalPosition: string,
+  ): ExecutionRecord {
+    const update = this.#database
+      .prepare(
+        `UPDATE execution_records
+            SET state = 'ADAPTER_FAILED', adapter_error = ?,
+                adapter_call_count = ?, final_position = ?
+          WHERE execution_id = ? AND state = 'DISPATCHED'`,
+      )
+      .run(error, adapterCallCount, finalPosition, executionId);
+    if (update.changes !== 1) {
+      throw new Error("Adapter failure could not be recorded.");
+    }
+    return this.#requireExecutionRecord(executionId);
+  }
+
+  findExecutionRecord(executionId: string): ExecutionRecord | null {
+    const row = this.#database
+      .prepare(
+        `SELECT execution_id, grant_id, action_id, state, consumed_at,
+                dispatched_at, executed_at, adapter_error,
+                adapter_call_count, final_position
+           FROM execution_records
+          WHERE execution_id = ?`,
+      )
+      .get(executionId) as ExecutionRow | undefined;
+    return row ? mapExecutionRow(row) : null;
+  }
+
+  revokeGrant(grantId: string, revokedAt = this.#now().toISOString()): boolean {
+    return (
+      this.#database
+        .prepare(
+          `UPDATE authorization_grants
+              SET status = 'REVOKED', revoked_at = ?
+            WHERE grant_id = ? AND status = 'AUTHORIZED'
+              AND consumed_at IS NULL AND revoked_at IS NULL`,
+        )
+        .run(revokedAt, grantId).changes === 1
+    );
+  }
+
   countEvidenceRecords(): number {
     return (
       this.#database
@@ -307,6 +534,37 @@ export class EvidenceRepository {
       );
   }
 
+  #insertExecutionRecord(record: ExecutionRecord): void {
+    this.#database
+      .prepare(
+        `INSERT INTO execution_records (
+           execution_id, grant_id, action_id, state, consumed_at,
+           dispatched_at, executed_at, adapter_error,
+           adapter_call_count, final_position
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        record.executionId,
+        record.grantId,
+        record.actionId,
+        record.state,
+        record.consumedAt,
+        record.dispatchedAt,
+        record.executedAt,
+        record.adapterError,
+        record.adapterCallCount,
+        record.finalPosition,
+      );
+  }
+
+  #requireExecutionRecord(executionId: string): ExecutionRecord {
+    const record = this.findExecutionRecord(executionId);
+    if (!record) {
+      throw new Error(`Execution record not found: ${executionId}`);
+    }
+    return record;
+  }
+
   #injectFailure(point: Exclude<RepositoryFailureMode, "NONE">): void {
     if (this.#failureMode === point) {
       throw new Error(`Injected repository failure at ${point}.`);
@@ -341,5 +599,20 @@ function mapGrantRow(row: GrantRow): AuthorizationGrant {
     expiresAt: row.expires_at,
     consumedAt: row.consumed_at,
     revokedAt: row.revoked_at,
+  };
+}
+
+function mapExecutionRow(row: ExecutionRow): ExecutionRecord {
+  return {
+    executionId: row.execution_id,
+    grantId: row.grant_id,
+    actionId: row.action_id,
+    state: row.state,
+    consumedAt: row.consumed_at,
+    dispatchedAt: row.dispatched_at,
+    executedAt: row.executed_at,
+    adapterError: row.adapter_error,
+    adapterCallCount: row.adapter_call_count,
+    finalPosition: row.final_position,
   };
 }

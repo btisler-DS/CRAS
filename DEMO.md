@@ -2,7 +2,7 @@
 
 ## Status
 
-This is the required demonstration specification. It has not yet been implemented.
+The browser presentation remains unimplemented. Phase 3 provides a canonical command-line demonstration and deterministic robot simulator for the three core paths. Run it with `npm run demo`.
 
 ## Scenario A: Authorization succeeds only after evidence commit
 
@@ -62,6 +62,16 @@ This is the required demonstration specification. It has not yet been implemente
 
 The simulated robot and browser UI must demonstrate both scenarios completely without physical hardware. A later hardware adapter may supplement, but must not replace, the canonical simulation.
 
+## Phase 3 CLI demonstration
+
+The CLI runs three isolated scenarios and prints their state transitions, evidence and grant IDs, adapter call counts, movement state, and final position:
+
+1. Unresolved patient identity: `BLOCKED`, no evidence or grant, zero calls, pharmacy.
+2. All conditions plus committed evidence: `AUTHORIZED -> DISPATCHED -> EXECUTED`, one call, Room 312.
+3. Injected evidence repository failure: `EVIDENCE_COMMIT_FAILED`, rolled-back evidence, no grant, zero calls, pharmacy.
+
+The evidence failure is injected in the repository immediately before the evidence write; it is not a presentation-only fault.
+
 ## Future verification targets
 
-Automated tests should eventually verify adapter invocation counts, persisted evidence references, state transitions, rollback behavior, robot position, export behavior, and restart persistence. None of these tests exists in Phase 0.
+Automated tests now verify adapter invocation counts, persisted evidence and execution references, state transitions, rollback behavior, robot position, export behavior, restart persistence, replay rejection, expiry, revocation, mismatches, missing evidence, repeated dispatch, and adapter failure. Browser end-to-end tests remain future work.
