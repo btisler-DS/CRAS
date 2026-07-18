@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import type Database from "better-sqlite3";
 
 const MIGRATIONS = [
-  "../../db/migrations/001_create_evidence_records.sql",
-  "../../db/migrations/002_create_authorization_grants.sql",
-  "../../db/migrations/003_create_execution_records.sql",
+  "001_create_evidence_records.sql",
+  "002_create_authorization_grants.sql",
+  "003_create_execution_records.sql",
 ] as const;
 
 export function migrate(database: Database.Database): void {
@@ -20,7 +20,7 @@ export function migrate(database: Database.Database): void {
       continue;
     }
 
-    const migrationPath = fileURLToPath(new URL(relativePath, import.meta.url));
+    const migrationPath = join(process.cwd(), "db", "migrations", relativePath);
     const sql = readFileSync(migrationPath, "utf8");
     database.transaction(() => {
       database.exec(sql);

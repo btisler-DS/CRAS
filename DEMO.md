@@ -2,7 +2,7 @@
 
 ## Status
 
-The browser presentation remains unimplemented. Phase 3 provides a canonical command-line demonstration and deterministic robot simulator for the three core paths. Run it with `npm run demo`.
+Phase 4 implements the canonical browser presentation. Start it with `npm run dev`, open `http://localhost:3000`, and use the preset controls without developer tools. The Phase 3 CLI remains available with `npm run demo`.
 
 ## Scenario A: Authorization succeeds only after evidence commit
 
@@ -72,6 +72,44 @@ The CLI runs three isolated scenarios and prints their state transitions, eviden
 
 The evidence failure is injected in the repository immediately before the evidence write; it is not a presentation-only fault.
 
+## Exact three-minute operator script
+
+### 0:00–0:25 — Establish the rule
+
+Open the app on the default **Blocked** preset. Read the instruction aloud: “Deliver medication to Room 312.” Point to the large `UNAUTHORIZED` status, the unresolved patient identity reason, the robot at `pharmacy`, and `Adapter calls: 0`.
+
+Say: “The instruction exists, but authorization precedes execution. The robot cannot receive this action while identity is unresolved.”
+
+### 0:25–0:55 — Resolve conditions without authorizing
+
+Check **Patient identity verified**. The checklist becomes 4/4 and the large status changes to `READY FOR EVIDENCE`.
+
+Point to the separate state row: authorization is ready, evidence is `NOT STARTED`, execution is `STATIONARY`, and adapter calls remain zero.
+
+Say: “Passing policy is necessary, but it is not authorization. Durable evidence still has to commit.”
+
+### 0:55–1:35 — Commit, authorize, and execute
+
+Click **Commit evidence & execute**. Point to the large `AUTHORIZED` status, `COMMITTED` evidence, and `EXECUTED` execution state. Follow the robot moving to Room 312.
+
+Show the evidence ID, grant ID, one adapter call, final position `Room 312`, and the timeline ending in `DISPATCHED` then `EXECUTED`. Expand **View committed JSON**, then click **Export JSON**.
+
+Say: “The evidence row and single-use grant committed together. Only after commit did the protected dispatcher consume the grant and invoke the simulator exactly once.”
+
+### 1:35–2:25 — Prove fail-closed evidence behavior
+
+Click the **Evidence failure** preset. Confirm all four conditions are satisfied and the failure switch is visibly on. The status is `READY FOR EVIDENCE`, not authorized.
+
+Click **Commit evidence & execute**. Point to `EVIDENCE COMMIT FAILED`, the authorization-denied explanation, `No evidence record`, `No authorization grant`, zero adapter calls, and the robot still at `pharmacy`.
+
+Say: “The fault is injected in the repository, inside the transaction. Even with every condition satisfied, failed evidence persistence means no authorization and no dispatch opportunity.”
+
+### 2:25–3:00 — Close on the invariants
+
+Click **Reset** and show the deterministic initial blocked state.
+
+Summarize: “Authorization precedes execution. Evidence commit completes authorization. Unauthorized actions cannot reach the adapter. Every authorized action references durable, exportable evidence. The complete proof runs locally without physical hardware.”
+
 ## Future verification targets
 
-Automated tests now verify adapter invocation counts, persisted evidence and execution references, state transitions, rollback behavior, robot position, export behavior, restart persistence, replay rejection, expiry, revocation, mismatches, missing evidence, repeated dispatch, and adapter failure. Browser end-to-end tests remain future work.
+Automated tests verify adapter invocation counts, persisted evidence and execution references, state transitions, rollback behavior, robot position, export behavior, restart persistence, replay rejection, expiry, revocation, mismatches, missing evidence, repeated dispatch, and adapter failure. Six Chromium tests verify the four browser scenes, reset, export equality, and bypass rejection.

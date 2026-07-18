@@ -2,7 +2,7 @@
 
 ## Status
 
-This document defines the implemented trust boundary through Phase 3. Phase 1 evaluates through `READY_FOR_EVIDENCE`, Phase 2 atomically persists evidence and its grant, and Phase 3 atomically consumes a revalidated grant before invoking the canonical simulator. Browser UI and external integrations remain unimplemented.
+This document defines the implemented trust boundary through Phase 4. Phase 1 evaluates through `READY_FOR_EVIDENCE`, Phase 2 atomically persists evidence and its grant, Phase 3 consumes a revalidated grant before invoking the canonical simulator, and Phase 4 presents those server-owned states in a local browser. External integrations remain unimplemented.
 
 ## Safety objective
 
@@ -113,6 +113,21 @@ Only after commit, the dispatcher records `DISPATCHED` and invokes the `RobotAda
 Consumption is intentionally not rolled back after adapter invocation: the adapter may have received or partially executed the command. If the adapter throws, the grant remains `CONSUMED`, the lifecycle result remains `DISPATCHED`, and the execution record becomes `ADAPTER_FAILED` with the error, adapter call count, and last known position. It is never reported as undispatched or successfully executed. Replay is rejected; recovery requires reconciliation and a new authorization.
 
 There is no public HTTP endpoint for the dispatcher or adapter.
+
+## Browser application boundary
+
+The Next.js application has one local route handler at `/api/runtime`. It accepts a strict, closed command union:
+
+- `reset`
+- `preset` with `blocked`, `successful`, or `evidence-failure`
+- `set-condition` with a known condition ID and boolean value
+- `commit-and-dispatch`
+
+The route does not accept evidence, grants, authorization states, robot positions, raw dispatch commands, or adapter calls. Unsupported fields and commands are rejected. A server-side runtime session owns every mutable object and returns a read-only `RuntimeView` projection.
+
+`GET /api/runtime?export=1` exports only the currently committed evidence record. It does not mutate runtime state.
+
+The visible failure toggle resets the deterministic scenario with the existing `EvidenceRepository` failure mode set to `EVIDENCE_WRITE`. The failure therefore occurs inside the evidence transaction, not in client presentation state.
 
 ## Hardware independence
 

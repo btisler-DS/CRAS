@@ -6,7 +6,7 @@ The canonical demonstration follows a robot asked to deliver medication to Room 
 
 ## Project status
 
-Phase 3 implements and verifies the protected dispatch boundary and canonical robot simulator. The unchanged Phase 1 kernel stops at `READY_FOR_EVIDENCE`; Phase 2 atomically creates evidence and its bound grant; Phase 3 atomically consumes and revalidates that grant before invoking the simulator. No browser UI, OpenAI API integration, deployment, HTTP dispatch endpoint, or physical robot adapter has been implemented.
+Phase 4 adds the complete local browser demonstration over the unchanged Phase 1–3 runtime. A Next.js server owns the deterministic session, SQLite repository, dispatcher, and simulator; the React client sends only preset, condition, reset, and commit intents and receives a read-only view. No OpenAI API integration, deployment, HTTP dispatch endpoint, or physical robot adapter has been implemented.
 
 SQLite is configured with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Evidence records form a SHA-256 hash chain and can be exported as JSON. This chain is **tamper-evident, not tamper-proof**: modification can break detectable links, but a party able to rewrite the database may also be able to recompute the chain.
 
@@ -33,16 +33,24 @@ Constitutional Runtime is the new Build Week product. Any future reuse or integr
 
 ## Development
 
-Install dependencies and run the Phase 3 verification gates:
+Install dependencies and run the Phase 4 verification gates:
 
 ```sh
 npm install
+npm run typecheck
 npm run build
 npm test
+npm run test:browser
 npm run demo
 ```
 
-The CLI demo runs entirely locally and creates temporary SQLite databases that it removes on completion.
+Start the complete browser demonstration with one command:
+
+```sh
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The app creates temporary SQLite databases and resets to a deterministic blocked scenario. The separate CLI demo remains available with `npm run demo`.
 
 ## Dispatch safety
 

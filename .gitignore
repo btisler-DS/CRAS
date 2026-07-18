@@ -12,6 +12,7 @@ build/
 coverage/
 playwright-report/
 test-results/
+*.tsbuildinfo
 
 # Runtime data and evidence exports (reserved for later phases)
 *.db

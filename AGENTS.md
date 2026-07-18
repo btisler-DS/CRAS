@@ -6,9 +6,8 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 3 implements the protected dispatch boundary, atomic grant consumption, execution records, and canonical simulator. Until a later phase is explicitly authorized:
+Phase 4 implements the complete local Next.js browser demonstration over the protected runtime. Until a later phase is explicitly authorized:
 
-- Do not build a UI or initialize an application framework.
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.
 - Do not expose dispatch or the robot adapter through HTTP.
@@ -38,9 +37,14 @@ Fail closed on missing conditions, storage errors, timeouts, and ambiguous commi
 - Pass only `ValidatedAuthorizationGrant` and `NormalizedAction` across the robot-adapter boundary.
 - Consume a grant atomically before adapter invocation; consumed grants are single-use even when the adapter fails.
 - Record post-consumption adapter failures as dispatched failures, never as undispatched or executed successes.
+- Keep all mutable runtime state and transitions server-side; clients may send only the closed command union documented in `ARCHITECTURE.md`.
+- Do not duplicate policy, evidence, grant, dispatch, or simulator logic in React components.
+- Keep the complete demonstration operable without developer tools or physical hardware.
 - Document any reused code, assets, or external integration in `BUILD_WEEK.md` before merging it.
 - Do not commit secrets, patient data, generated evidence databases, or evidence exports.
 
 ## Verification expectations
 
 Each implementation phase must add tests proportionate to its claims. In particular, blocked and evidence-failure paths must prove zero robot-adapter calls. Documentation must distinguish intended behavior from behavior verified by tests.
+
+Run `npm run typecheck`, `npm test`, `npm run build`, and `npm run test:browser` after UI or server-handler changes.

@@ -106,15 +106,34 @@ Verified on July 18, 2026:
 - `npm run demo`: passed; blocked and evidence-failure scenarios made 0 adapter calls and remained at `pharmacy`, while the successful scenario made exactly 1 call and ended at `Room 312`.
 - Tests cover blocked, pre-evidence, and evidence-failure immobility; valid execution; replay; expiry; revocation; action mismatch; missing/corrupt evidence binding; typed raw-action exclusion; restart persistence; repeated dispatch; lifecycle validation; and adapter failure.
 
+## Work completed during Phase 4
+
+- Added a local Next.js 16 and React 19 full-stack application with a polished high-contrast browser demonstration.
+- Added a server-owned deterministic runtime session using the existing authorization kernel, evidence repository, dispatcher, and simulator APIs.
+- Added one strict command route for reset, presets, condition changes, and commit-and-dispatch; it exposes no raw dispatch or robot-adapter command.
+- Added distinct authorization, evidence, and execution status displays; condition controls; blocking reasons; evidence and grant records; JSON export; floor-map animation; event timeline; adapter call count; reset; and three scenario presets.
+- Connected the visible evidence-failure control to the existing repository-boundary `EVIDENCE_WRITE` injection.
+- Added browser tests for all four scenes, deterministic reset, committed JSON export equality, and rejected dispatch bypass.
+- Added no OpenAI integration, physical robot integration, deployment configuration, or public robot endpoint.
+
+### Phase 4 verification
+
+Verified on July 18, 2026:
+
+- `npm run typecheck`: passed (`tsc --noEmit`).
+- `npm test`: passed with 3 test files and all existing 37 tests.
+- `npm run build`: passed with Next.js 16.2.10 production compilation.
+- `npm run test:browser`: passed with 6 Chromium tests and 0 failures.
+- Visual browser verification: meaningful content rendered, 0 Next.js error overlays, and all six primary buttons were present.
+- Production dependency audit: 0 known vulnerabilities after pinning patched PostCSS 8.5.19 through a package override.
+
 ## Not yet implemented
 
-- Application or UI framework.
 - Physical robot adapter or hardware integration.
-- User interface.
 - OpenAI API integration or natural-language parser.
 - CI, deployment, telemetry, authentication, or production security controls.
 
-Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Dispatch, execution, UI, and integrations remain future work.
+Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule
 
