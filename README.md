@@ -6,7 +6,9 @@ The canonical demonstration follows a robot asked to deliver medication to Room 
 
 ## Project status
 
-Phase 1 implements and verifies the deterministic authorization kernel. It evaluates the medication-delivery conditions and stops at `READY_FOR_EVIDENCE`; it cannot authorize or dispatch an action. No user interface, evidence store, OpenAI API integration, deployment, or robot adapter has been implemented yet.
+Phase 2 implements and verifies SQLite-backed evidence-before-authorization. The unchanged Phase 1 kernel evaluates medication-delivery conditions and stops at `READY_FOR_EVIDENCE`; a separate transactional layer can then create the evidence record and its bound authorization grant atomically. No user interface, simulator, OpenAI API integration, deployment, or robot adapter has been implemented yet.
+
+SQLite is configured with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Evidence records form a SHA-256 hash chain and can be exported as JSON. This chain is **tamper-evident, not tamper-proof**: modification can break detectable links, but a party able to rewrite the database may also be able to recompute the chain.
 
 The inspected starting directory contained no application code, no valid Git history, and no reusable implementation. It contained only empty placeholder directories named `.git`, `.agents`, and `.codex`. The empty `.git` placeholder was not valid repository metadata and was replaced during Phase 0 by a valid Git repository.
 
@@ -31,7 +33,7 @@ Constitutional Runtime is the new Build Week product. Any future reuse or integr
 
 ## Development
 
-Install dependencies and run the Phase 1 verification gates:
+Install dependencies and run the Phase 2 verification gates:
 
 ```sh
 npm install
@@ -39,4 +41,4 @@ npm run build
 npm test
 ```
 
-There is no application run command in Phase 1.
+There is no application run command in Phase 2.

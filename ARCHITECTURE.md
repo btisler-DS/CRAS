@@ -2,7 +2,7 @@
 
 ## Status
 
-This document defines the intended architecture and trust boundary. Phase 1 implements only the deterministic policy kernel and its state machine through `READY_FOR_EVIDENCE`. Evidence persistence, authorization, dispatch, execution, UI, and integrations remain unimplemented.
+This document defines the intended architecture and trust boundary. Phase 2 implements the deterministic policy kernel through `READY_FOR_EVIDENCE` and a separate SQLite transaction that atomically persists evidence and its authorization grant. Dispatch, execution, UI, and external integrations remain unimplemented.
 
 ## Safety objective
 
@@ -66,21 +66,34 @@ The authorization runtime, deterministic policy rules, evidence transaction, and
 
 Edos, TraceStack, and Edos-R are pre-existing concepts, not implemented components of this repository. Any future connection to them is optional and must not weaken fail-closed behavior.
 
-## Planned decision progression
+## Decision progression
 
 The eventual implementation is expected to make state transitions explicit, for example:
 
 ```text
 RECEIVED -> EVALUATING -> BLOCKED
-                       -> COMMITTING_EVIDENCE -> AUTHORIZED -> DISPATCHED -> EXECUTED
-                                             -> EVIDENCE_COMMIT_FAILED
+                       -> READY_FOR_EVIDENCE -> COMMITTING_EVIDENCE -> AUTHORIZED -> DISPATCHED -> EXECUTED
+                                                                  -> EVIDENCE_COMMIT_FAILED
 ```
 
-Exact states and recovery semantics remain implementation work.
+Phase 1 owns the progression through `READY_FOR_EVIDENCE`. Phase 2 owns `COMMITTING_EVIDENCE`, `AUTHORIZED`, and `EVIDENCE_COMMIT_FAILED`. Dispatch and execution transitions remain future work.
 
-## Evidence durability
+## Evidence transaction and durability
 
-The storage technology and durability guarantee have not yet been selected or implemented. Later architecture work must define what constitutes a successful commit, how ambiguous outcomes are handled, how records are exported, and what persistence guarantees survive process or host failure. Phase 0 makes no claim of production-grade immutability, replication, or external notarization.
+Phase 2 uses `better-sqlite3` with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Two migrations create `evidence_records` and `authorization_grants`. A composite foreign key binds each grant to the same evidence record, action ID, and action digest.
+
+The exact transaction sequence is:
+
+1. Begin the SQLite transaction.
+2. Verify the decision and state are `READY_FOR_EVIDENCE`.
+3. Transition to `COMMITTING_EVIDENCE` and insert the evidence record.
+4. Insert the authorization grant referencing that evidence record.
+5. Commit the transaction.
+6. Only after the transaction API returns from commit, transition to and return `AUTHORIZED`.
+
+An evidence or grant write error throws within the transaction, causing rollback. The state becomes `EVIDENCE_COMMIT_FAILED`, the result contains no grant, and there is no dispatch path.
+
+Evidence records contain a SHA-256 hash of their canonical content and the previous committed record hash. The resulting chain is **tamper-evident, not tamper-proof**. It can reveal broken links or changed content when independently verified, but an attacker with sufficient database write access could rewrite records and recompute the chain. This phase does not claim independent notarization, append-only hardware, replication, or protection from host loss.
 
 ## Hardware independence
 

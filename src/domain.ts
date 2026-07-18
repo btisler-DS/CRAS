@@ -53,14 +53,31 @@ export interface AuthorizationDecision {
 }
 
 /**
- * Shape reserved for a later phase. Phase 1 contains no function that creates
- * an AuthorizationGrant because an evidence transaction does not yet exist.
+ * Grants are created only by the Phase 2 evidence transaction after the
+ * corresponding evidence record is inserted in that same transaction.
  */
 export interface AuthorizationGrant {
   readonly grantId: string;
   readonly actionId: string;
   readonly evidenceRecordId: string;
   readonly actionDigest: string;
+  readonly status: "AUTHORIZED" | "CONSUMED" | "REVOKED";
   readonly issuedAt: string;
   readonly expiresAt: string;
+  readonly consumedAt: string | null;
+  readonly revokedAt: string | null;
+}
+
+export interface EvidenceRecord {
+  readonly evidenceRecordId: string;
+  readonly actionId: string;
+  readonly correlationId: string;
+  readonly normalizedAction: ActionProposal;
+  readonly actionDigest: string;
+  readonly policyVersion: string;
+  readonly conditionResults: readonly ConditionResult[];
+  readonly identityReferences: readonly string[];
+  readonly decisionTimestamp: string;
+  readonly previousRecordHash: string | null;
+  readonly currentRecordHash: string;
 }

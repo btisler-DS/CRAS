@@ -62,17 +62,37 @@ Verified on July 17, 2026:
 - Vitest result: 1 file passed, 12 tests passed, 0 failures.
 - No UI, SQLite evidence store, OpenAI integration, deployment, or physical robot integration was added.
 
+## Work completed during Phase 2
+
+- Added `better-sqlite3` persistence and SQL migrations for `evidence_records` and `authorization_grants`.
+- Configured SQLite for WAL journaling, foreign keys, and `synchronous=FULL`.
+- Added a separate evidence-authorization state machine without changing the Phase 1 kernel or its `READY_FOR_EVIDENCE` ceiling.
+- Implemented one atomic transaction that verifies readiness, creates evidence, creates the bound grant, commits, and only then returns `AUTHORIZED`.
+- Added repository-boundary failure injection for evidence and grant writes; both paths roll back and return `EVIDENCE_COMMIT_FAILED` with no grant.
+- Added canonical action digests, a SHA-256 evidence hash chain, restart persistence, record lookup, and JSON evidence export.
+- Added a composite foreign key binding each grant to its evidence record, action ID, and action digest.
+
+The evidence hash chain is tamper-evident, not tamper-proof. It does not provide independent notarization or prevent a sufficiently privileged party from rewriting and rehashing the database.
+
+### Phase 2 verification
+
+Verified on July 18, 2026:
+
+- `npm run build`: passed (`tsc --noEmit`).
+- `npm test`: passed with 2 test files and 22 tests.
+- Vitest result: 2 files passed, 22 tests passed, 0 failures.
+- Tests cover SQLite configuration, committed evidence/grant binding, shared action digests, evidence-write rollback, grant-write rollback, no grant or dispatch opportunity after rollback, failure state, successful authorization, restart persistence, JSON export, and a two-record hash-chain link.
+- No UI, simulator, OpenAI integration, deployment, or physical robot integration was added.
+
 ## Not yet implemented
 
 - Application or UI framework.
-- Evidence transaction or durable evidence store.
-- Authorization-grant creation or evidence-backed authorization mechanism.
 - Robot adapter, simulator, or physical hardware integration.
 - User interface.
 - OpenAI API integration or natural-language parser.
 - CI, deployment, telemetry, authentication, or production security controls.
 
-Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Documentation describing evidence commit, authorization, dispatch, execution, UI, and integrations remains a future design rather than implemented behavior.
+Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Dispatch, execution, UI, and integrations remain future work.
 
 ## Future provenance rule
 
