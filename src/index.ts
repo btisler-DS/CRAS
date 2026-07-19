@@ -9,6 +9,7 @@ export * from "./evidence/state-machine.js";
 export * from "./ingress/conversation-intent-resolver.js";
 export * from "./ingress/voice-intent-pipeline.js";
 export * from "./ingress/action-authorization-service.js";
+export * from "./ingress/authorization-dispatch-bridge.js";
 export * from "./medication-delivery.js";
 export * from "./robot/simulated-robot-adapter.js";
 export * from "./robot/physical-robot-adapter.js";

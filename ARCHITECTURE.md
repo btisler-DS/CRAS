@@ -231,6 +231,8 @@ Routing determines where input goes. It does not determine whether an action may
 
 Phase 5D-7 implements that authorization-only connection for one deterministic command. The speech text cannot supply or override condition facts. The service stops after a committed, unconsumed grant and has no reference to the Dispatcher or any robot adapter.
 
+Phase 5D-8 adds a typed authorization-to-dispatch bridge. It accepts no transcript or raw text. For an authorized result, it recovers the exact action from the committed evidence record and hands the grant and normalized action to the existing Dispatcher, which still performs atomic revalidation and consumption before invoking an adapter.
+
 ## Competition-minimum physical deployment
 
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.

@@ -251,6 +251,13 @@ Verified on July 18, 2026:
 - Blocked, non-action, unsupported, and evidence-failure outcomes return no grant. A satisfied request returns an unconsumed `AUTHORIZED` grant referencing its committed evidence record.
 - The service has no Dispatcher or robot-adapter dependency; Phase 5D-7 cannot execute an action.
 
+## Work completed during Phase 5D-8
+
+- Added a narrow bridge whose only input is the typed Phase 5D-7 authorization result.
+- Only `AUTHORIZED` results reach the existing Dispatcher. The exact normalized action is recovered from the committed evidence record; transcripts, raw text, and intent objects are not accepted by the bridge.
+- Blocked and other non-authorized results make zero adapter calls. Grant replay remains rejected, and tests use only an in-memory robot spy.
+- No browser route or physical-hardware selection was added.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule
