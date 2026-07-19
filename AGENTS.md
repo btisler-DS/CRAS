@@ -6,7 +6,7 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 5D-10 permits exactly one physical behavior, `MEDICATION_DELIVERY_DEMO_V1`. Do not add a second behavior, reverse motion, steering, navigation, or ground movement. The simulator remains canonical. Until a later phase is explicitly authorized:
+Phase 5D-11 proves simulator and physical targets use one shared authorization/evidence/Dispatcher composition and differ only at the final injected adapter. Do not create a target-specific bypass. Until a later phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.
