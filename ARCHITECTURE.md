@@ -223,6 +223,12 @@ The optional microphone path is `AlsaMicrophoneCaptureAdapter -> transient Audio
 
 A transcript is untrusted input. Phase 5D-4 does not route it, normalize it into an action, authorize it, persist it, dispatch it, or expose it to the browser. Missing model configuration fails closed with a typed error.
 
+## Modality-independent intent boundary
+
+Voice transcripts and typed text enter the same deterministic `ConversationIntentResolver`. It distinguishes action requests, status and information queries, clarification answers, cancellation, and ordinary conversation. The resolver returns only a destination and always declares `authority: NONE`.
+
+Routing determines where input goes. It does not determine whether an action may occur. Only `action_request` is eligible to reach a future shared action normalizer; it still has to pass the existing authorization, evidence, and dispatch boundaries.
+
 ## Competition-minimum physical deployment
 
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.
