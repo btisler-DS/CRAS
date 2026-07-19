@@ -229,6 +229,8 @@ Voice transcripts and typed text enter the same deterministic `ConversationInten
 
 Routing determines where input goes. It does not determine whether an action may occur. Only `action_request` is eligible to reach a future shared action normalizer; it still has to pass the existing authorization, evidence, and dispatch boundaries.
 
+Phase 5D-7 implements that authorization-only connection for one deterministic command. The speech text cannot supply or override condition facts. The service stops after a committed, unconsumed grant and has no reference to the Dispatcher or any robot adapter.
+
 ## Competition-minimum physical deployment
 
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.

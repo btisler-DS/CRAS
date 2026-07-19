@@ -6,7 +6,7 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 5D-6 adds a shared deterministic intent resolver for voice and typed input. It routes only and always returns `authority: NONE`; it does not normalize or authorize actions. The Phase 4 simulator remains canonical. Until a later phase is explicitly authorized:
+Phase 5D-7 connects canonical action intent to the existing authorization and evidence transaction, then stops at an unconsumed grant. It has no Dispatcher or robot-adapter dependency. The Phase 4 simulator remains canonical. Until a later phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.

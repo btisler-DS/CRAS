@@ -245,6 +245,12 @@ Verified on July 18, 2026:
 - Clarification answers require explicit pending-clarification context, and unknown or conversational text does not fall through to the action normalizer.
 - Added the voice composition boundary from `SpeechPipeline` to the shared resolver. Incomplete, empty, timed-out, and low-confidence transcripts remain unresolved and are not routed.
 
+## Work completed during Phase 5D-7
+
+- Added an authorization-only ingress service. It re-resolves strict voice or typed input, deterministically admits only the canonical medication-delivery command, evaluates separately supplied typed condition facts, and uses the existing atomic evidence transaction.
+- Blocked, non-action, unsupported, and evidence-failure outcomes return no grant. A satisfied request returns an unconsumed `AUTHORIZED` grant referencing its committed evidence record.
+- The service has no Dispatcher or robot-adapter dependency; Phase 5D-7 cannot execute an action.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule
