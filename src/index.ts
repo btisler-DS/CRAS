@@ -8,4 +8,6 @@ export * from "./evidence/repository.js";
 export * from "./evidence/state-machine.js";
 export * from "./medication-delivery.js";
 export * from "./robot/simulated-robot-adapter.js";
+export * from "./robot/physical-robot-adapter.js";
+export * from "./robot/http-physical-robot-transport.js";
 export * from "./state-machine.js";

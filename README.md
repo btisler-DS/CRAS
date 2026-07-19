@@ -1,5 +1,41 @@
 # Constitutional Runtime
 
+## Gated Robot HAT tone verification
+
+Phase 5D-3B includes a concrete local controller for the verified SunFounder PyAudio
+tone path. It remains disabled by default and the hardware verification is never part
+of the automated test suite.
+
+After separate physical authorization, run on the Robot HAT host from this repository:
+
+```bash
+sudo -n env CRAS_ENABLE_ROBOT_HAT_TONE_TEST=I_UNDERSTAND_THIS_PLAYS_AUDIO \
+  npm run verify:robot-hat-tone
+```
+
+This command produces one approved 440 Hz tone with a requested duration of one second
+through `RobotHatToneAdapter`. Do not run it on an unsecured robot or without an
+operator at the power cutoff.
+
+## Speech adapter status
+
+Phase 5D-3A provides server-only STT/TTS interfaces, deterministic hardware-free test
+adapters, and a passive Robot HAT tone boundary based on the verified SunFounder
+PyAudio path. Speech engines remain disabled by default. There is no microphone,
+speech routing, browser audio, network speech engine, or physical playback integration
+in the application yet.
+
+## Optional future vision transport
+
+Phase 5C-4A defines the server-only transport and typed client for a future
+observational camera interface. It does not yet provide a vision worker, API routes,
+or browser page, and it does not alter the canonical simulator.
+
+When a later phase adds the proxy routes, the server will read
+`ROBOT_VISION_BASE_URL`. The example value is a local endpoint expected to be supplied
+by separately managed transport infrastructure. Robot addresses, SSH credentials,
+and tunnel lifecycle must not be placed in browser code or committed configuration.
+
 Constitutional Runtime is a new OpenAI Build Week product: a pre-execution authorization runtime for autonomous systems. Its purpose is to prevent an autonomous system from executing an unauthorized action and to require a durable evidence record before authorization completes.
 
 The canonical demonstration follows a robot asked to deliver medication to Room 312. The robot remains stationary while patient identity is unresolved, the interface displays `UNAUTHORIZED` and the blocking reason, and execution becomes possible only after all required conditions are satisfied and the evidence transaction commits. A second scenario makes the evidence store unavailable; authorization then fails and the robot remains stationary even though every other condition is satisfied.
@@ -51,6 +87,10 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The app creates temporary SQLite databases and resets to a deterministic blocked scenario. The separate CLI demo remains available with `npm run demo`.
+
+### Optional local speech recognition artifact
+
+Phase 5D-4 adds a server-only, disabled-by-default Vosk adapter. It requires the explicitly provisioned model directory configured by `CRAS_VOSK_MODEL_PATH`; the application does not download models. Microphone capture is bounded to at most three seconds from `hw:CARD=Device,DEV=0`, is held only in memory, and is zeroed after transcription. This phase adds no speech routing, authorization, UI, or robot action.
 
 ## Dispatch safety
 

@@ -19,6 +19,7 @@ test-results/
 *.db-shm
 *.db-wal
 evidence-exports/
+.runtime/
 
 # Logs and editor/OS artifacts
 *.log

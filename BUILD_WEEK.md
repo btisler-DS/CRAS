@@ -1,5 +1,83 @@
 # Build Week Record
 
+## Phase 5D-3B — concrete Robot HAT tone controller
+
+Phase 5D-3B implements the concrete, robot-local subprocess bridge behind the existing
+`RobotHatToneController` injection contract. `RobotHatToneAdapter.speak(ApprovedSpeech)`
+remains the sole public text-to-speech execution boundary.
+
+The controller is passive on import and construction. Contract calls use fixed
+argument-vector subprocesses with `shell: false`, bounded output, hard timeouts, and
+typed failures. Tone playback independently revalidates frequency and duration, then
+calls the verified PyAudio-backed `Music.play_tone_for()` method. It deliberately uses
+`Music.__new__(Music)` rather than `Music()` because the adapter separately owns the
+GPIO20 enable/disable lifecycle.
+
+An explicitly gated hardware verification script was added but was not executed. It
+constructs an approved 440 Hz/one-second tone and enters only through
+`RobotHatToneAdapter.speak()`.
+
+## Phase 5D-3A — audio adapter contracts
+
+Phase 5D-3A implements server-only, engine-independent speech adapter contracts. It
+does not implement microphone capture, speech recognition, browser audio, intent
+routing, physical motion, or an audio network worker.
+
+Built during this phase:
+
+- `SpeechToTextAdapter.transcribe(AudioInput) -> TranscriptResult`;
+- `TextToSpeechAdapter.speak(ApprovedSpeech) -> SpeechResult`;
+- opaque, bounded `AudioInput` and `ApprovedSpeech` construction boundaries;
+- deterministic test STT and TTS adapters that access no hardware or network;
+- `RobotHatToneAdapter`, which accepts only approved bounded tones and delegates
+  playback to an injected controller constrained to the verified
+  `Music.play_tone_for()` path;
+- a single public Robot HAT execution entry point: `speak(ApprovedSpeech)`;
+- hard Robot HAT tone timeout and ordered amplifier-disable/pin-restoration cleanup;
+- explicit failure when cleanup or restoration is incomplete;
+- server-only allow-listed adapter selection, disabled by default.
+
+No concrete Robot HAT controller is instantiated or selected in this phase. Automated
+tests use an inert controller and cannot import Robot HAT Python, open audio, or change
+GPIO state.
+
+Verification on 2026-07-19:
+
+- `npm run typecheck`: passed;
+- `npm test`: 57 passed across 5 files.
+
+## Phase 5C-4A — vision transport foundation
+
+Phase 5C-4A adds the server-side, implementation-independent communication boundary
+for the future observational vision feature. It does not add the robot-local worker,
+camera access, proxy routes, browser UI, actuator commands, or a physical robot
+adapter.
+
+Built during this phase:
+
+- `VisionTransport`, the dependency used by the typed `VisionClient`;
+- `HttpVisionTransport`, with bounded JSON responses, request and stream-connection
+  timeouts, frame-idle detection, and downstream cancellation propagation;
+- strict Zod contracts for worker health, stream state, still capture, telemetry, and
+  structured errors;
+- lazy, server-only resolution of `ROBOT_VISION_BASE_URL`;
+- in-memory transport tests, allowing client verification without a robot or network;
+- tests for response limits, stream cancellation, frame-idle timeout, contract
+  rejection, and safe error serialization.
+
+SSH is an operational way to forward the initial HTTP endpoint, not a dependency of
+the application architecture. No SSH implementation, credential, robot address, or
+tunnel lifecycle is present in the source.
+
+Verification on 2026-07-18:
+
+- `npm run typecheck`: passed;
+- `npm test`: 45 passed across 4 files;
+- `npm run build`: passed;
+- `npm run test:browser`: 6 passed.
+
+The existing Phase 4 simulator remains the canonical complete demonstration.
+
 ## Product
 
 **Working name:** Constitutional Runtime
@@ -132,6 +210,26 @@ Verified on July 18, 2026:
 - Physical robot adapter or hardware integration.
 - OpenAI API integration or natural-language parser.
 - CI, deployment, telemetry, authentication, or production security controls.
+
+## Work completed during Phase 5D-4
+
+- Provisioned one deployment artifact, `vosk-model-small-en-us-0.15`, outside Git at `/opt/cras-runtime/models/vosk-model-small-en-us-0.15` on the robot host.
+- Source: `https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip`; version `0.15`; archive size `41,205,931` bytes; installed size `70,898,967` bytes; SHA-256 `30f26242c4eb449f948e42cb302dd7a686cb29a3423a8367f99ff41780942498`.
+- Added a passive Vosk `SpeechToTextAdapter`, a bounded explicit-device ALSA microphone adapter, typed configuration and runtime failures, transient-buffer deletion, and a separately gated one-utterance verifier.
+- Vosk remains disabled by default. Startup refuses a configured missing model, and application startup never downloads models.
+- No microphone was accessed during automated verification. Early robot-host checks returned `unintelligible` because the spoken cue preceded SSH/capture readiness. The deployed bridge now uses an explicit no-capture operator-ready handshake, reports non-retaining signal metrics, and locally resamples the USB device's 48 kHz PCM to Vosk's 16 kHz input. The synchronized verification recognized `deliver medication to room three twelve` at `0.9453375` confidence (peak `-10.78 dBFS`, RMS `-27.24 dBFS`) and erased both audio buffers.
+
+## Competition-minimum robot deployment
+
+- Added and deployed bounded Python microphone and speaker bridges; no Node or application repository is installed on the robot.
+- Added a loopback-only, authenticated, replay-protected physical worker and a server-side `PhysicalRobotAdapter` that preserves the validated-grant boundary.
+- Added supervised robot-worker and SSH-forward services, health checks, fixed action admission, motor `finally` cleanup, and SIGTERM/SIGINT emergency stopping.
+- The CRAS server retains the UI, authorization kernel, evidence store, and Dispatcher.
+- The physical dispatch verifier is explicitly gated by wheel-off-ground confirmation. No physical dispatch had occurred when this record was written.
+- The first authorized physical verification failed closed after local grant consumption: the worker returned `401 invalid_signature`, created no replay record, and admitted no motor action. Root cause was a trailing newline in the server-side text key while the worker used the trimmed key. The verifier now normalizes the provisioned text key; no retry was performed without renewed authorization.
+- A separately authorized retry passed authentication and durable replay admission but failed before motor commands when the Robot HAT GPIO backend attempted to create `//.lgd-nfy0` inside the hardened service. The worker returned `500`, the local execution record accurately became `ADAPTER_FAILED`, and the remote grant replay record remained consumed. The service now supplies `/var/lib/cras-robot` as its writable working directory and home; no automatic retry occurs.
+- Subsequent commissioning exposed SunFounder's `Picarx()` dependency on `os.getlogin()`, which is unavailable in a system service. A robot-local fixed-action child now resolves only the actual service UID as a compatibility fallback; vendor source remains unchanged. The child is bounded, receives no caller-controlled command, and stops on completion, error, timeout, SIGTERM, and SIGINT.
+- The protected physical path then completed successfully: evidence `3fcbb08c-af28-43d0-98b0-197e52b497a1`, grant `56ce94f8-91e2-4e79-82d4-0b322a9f761b`, one authenticated worker call, durable remote replay consumption, and local execution state `EXECUTED` with no lingering motion process. The operator confirmed both raised rear wheels moved for approximately one second and then fully stopped.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 

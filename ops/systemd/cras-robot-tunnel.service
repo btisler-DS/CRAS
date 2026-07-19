@@ -1,0 +1,16 @@
+[Unit]
+Description=Constitutional Runtime private robot SSH transport
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=edos
+ExecStart=/usr/bin/ssh -N -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -L 127.0.0.1:19300:127.0.0.1:9300 edos@192.168.68.120
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

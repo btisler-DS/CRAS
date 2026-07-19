@@ -12,7 +12,10 @@
     "demo": "node --import tsx scripts/demo.ts",
     "test": "vitest run",
     "test:browser": "playwright test",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:robot-hat-tone": "node --import tsx scripts/verify-robot-hat-tone.ts",
+    "verify:vosk-microphone": "node --import tsx scripts/verify-vosk-microphone.ts",
+    "verify:physical-dispatch": "node --import tsx scripts/verify-physical-dispatch.ts"
   },
   "engines": {
     "node": ">=20"

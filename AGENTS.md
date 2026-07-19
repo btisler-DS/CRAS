@@ -6,12 +6,21 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 4 implements the complete local Next.js browser demonstration over the protected runtime. Until a later phase is explicitly authorized:
+Phase 5D-4 adds passive, disabled-by-default microphone and Vosk boundaries. The model is a robot-host deployment artifact outside Git, and the gated physical microphone verification has not been authorized or run. The Phase 4 simulator remains canonical. Until a later phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.
 - Do not expose dispatch or the robot adapter through HTTP.
 - Do not add a physical robot adapter; the deterministic simulator is canonical.
+- Do not add a vision worker, camera access, vision proxy route, or Robot Status page.
+- Do not add speech routing, intent resolution, browser speech behavior, or audible automated tests.
+- Do not run `verify:vosk-microphone` without explicit physical-test authorization.
+- Do not run `verify:physical-dispatch` unless the operator has explicitly confirmed every driven wheel is off the ground and immediate power cutoff is available.
+- Never download a speech model during application startup or commit a model to Git.
+- Keep speech engines disabled by default; Robot HAT output requires an explicitly injected controller.
+- Do not run `verify:robot-hat-tone` without explicit physical-test authorization.
+- Keep `ROBOT_VISION_BASE_URL` server-only and all tunnel credentials and lifecycle outside this repository.
+- Make vision route handlers depend on `VisionClient`; never put SSH, socket, robot-address, or direct `fetch` logic in a route.
 - Do not claim that later-phase proposed behavior has been implemented or verified.
 
 ## Non-negotiable invariants
