@@ -231,6 +231,12 @@ Verified on July 18, 2026:
 - Subsequent commissioning exposed SunFounder's `Picarx()` dependency on `os.getlogin()`, which is unavailable in a system service. A robot-local fixed-action child now resolves only the actual service UID as a compatibility fallback; vendor source remains unchanged. The child is bounded, receives no caller-controlled command, and stops on completion, error, timeout, SIGTERM, and SIGINT.
 - The protected physical path then completed successfully: evidence `3fcbb08c-af28-43d0-98b0-197e52b497a1`, grant `56ce94f8-91e2-4e79-82d4-0b322a9f761b`, one authenticated worker call, durable remote replay consumption, and local execution state `EXECUTED` with no lingering motion process. The operator confirmed both raised rear wheels moved for approximately one second and then fully stopped.
 
+## Work completed during Phase 5D-5
+
+- Added a passive `SpeechPipeline` that composes one injected `MicrophoneCaptureAdapter` with one injected `SpeechToTextAdapter` and returns only an untrusted `TranscriptResult`.
+- Capture failure prevents transcription, cancellation before invocation prevents microphone access, and construction performs no hardware operation.
+- The pipeline has no dependency on intent resolution, authorization, evidence, dispatch, robot adapters, browser state, or persistence.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule

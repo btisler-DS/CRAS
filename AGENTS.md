@@ -6,7 +6,7 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 5D-4 adds passive, disabled-by-default microphone and Vosk boundaries. The model is a robot-host deployment artifact outside Git, and the gated physical microphone verification has not been authorized or run. The Phase 4 simulator remains canonical. Until a later phase is explicitly authorized:
+Phase 5D-5 connects one injected microphone capture to one injected STT adapter and returns an untrusted transcript. It does not route or authorize speech. The Phase 4 simulator remains canonical. Until a later phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.
