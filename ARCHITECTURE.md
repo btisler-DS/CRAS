@@ -233,6 +233,8 @@ Phase 5D-7 implements that authorization-only connection for one deterministic c
 
 Phase 5D-8 adds a typed authorization-to-dispatch bridge. It accepts no transcript or raw text. For an authorized result, it recovers the exact action from the committed evidence record and hands the grant and normalized action to the existing Dispatcher, which still performs atomic revalidation and consumption before invoking an adapter.
 
+Phase 5D-9 makes adapter selection an explicit server-owned deployment choice. `simulator` is the default. `physical` requires a loopback transport and signing key loaded from a server file; selection is never accepted through a browser route. Changing adapters does not change the intent, authorization, evidence, or Dispatcher contracts.
+
 ## Competition-minimum physical deployment
 
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.

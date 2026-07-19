@@ -258,6 +258,13 @@ Verified on July 18, 2026:
 - Blocked and other non-authorized results make zero adapter calls. Grant replay remains rejected, and tests use only an in-memory robot spy.
 - No browser route or physical-hardware selection was added.
 
+## Work completed during Phase 5D-9
+
+- Formalized server-only robot-adapter selection around the existing `RobotAdapter` interface.
+- The simulator remains the default and canonical selection. Physical selection requires an explicit environment mode, loopback worker URL, and signing-key file; missing or unknown configuration fails closed with typed errors.
+- Physical construction is passive and still accepts execution only through `ValidatedAuthorizationGrant + NormalizedAction`. Tests inject an inert transport and perform no hardware operation.
+- Browser input cannot select an adapter, worker address, transport, signing key, or physical mode.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule
