@@ -54,6 +54,15 @@ See:
 - [ARCHITECTURE.md](ARCHITECTURE.md) for the intended trust boundary and invariants.
 - [DEMO.md](DEMO.md) for the canonical demonstration.
 
+## License
+
+CRAS source code is available under the
+[PolyForm Noncommercial License 1.0.0](LICENSE). Documentation, diagrams,
+screenshots, and original demonstration media are available under the
+[Creative Commons Attribution-NonCommercial 4.0 International license](LICENSE-DOCS).
+See [NOTICE](NOTICE) for the required attribution and scope. Third-party
+components retain their original license terms.
+
 ## Product boundary
 
 Edos, TraceStack, and Edos-R are pre-existing concepts that may inform later design decisions. They are not the product created in this repository, are not present as integrations or reusable code, and no access to them is assumed.
