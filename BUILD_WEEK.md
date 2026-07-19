@@ -265,6 +265,13 @@ Verified on July 18, 2026:
 - Physical construction is passive and still accepts execution only through `ValidatedAuthorizationGrant + NormalizedAction`. Tests inject an inert transport and perform no hardware operation.
 - Browser input cannot select an adapter, worker address, transport, signing key, or physical mode.
 
+## Work completed during Phase 5D-10
+
+- Formalized the single physical behavior as `MEDICATION_DELIVERY_DEMO_V1`: both rear wheels at minimum speed `1` for 1,000 ms on the wheel-off-ground stand, followed by `stop()` in `finally`.
+- Added the behavior ID to the authenticated dispatch envelope and required the robot worker to reject unknown behavior IDs. Successful receipts must bind to the same behavior ID and final-position marker.
+- Added a commissioning record distinguishing this fixed demonstration maneuver from real navigation to Room 312.
+- No second behavior, reverse motion, steering, navigation, or ground movement was added.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule

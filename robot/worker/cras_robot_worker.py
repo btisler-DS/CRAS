@@ -18,6 +18,7 @@ HOST = "127.0.0.1"
 PORT = 9300
 MAX_BODY = 16 * 1024
 MAX_CLOCK_SKEW_MS = 30_000
+BEHAVIOR_ID = "MEDICATION_DELIVERY_DEMO_V1"
 DB_PATH = os.environ.get("CRAS_ROBOT_REPLAY_DB", "/var/lib/cras-robot/replay.sqlite3")
 KEY_PATH = os.environ.get("CRAS_ROBOT_SIGNING_KEY_FILE", "/etc/cras-robot/dispatch.key")
 ACTIVE_LOCK = threading.Lock()
@@ -147,10 +148,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(409, {"error": "stale_dispatch"})
             if envelope.get("action") != {"kind": "MEDICATION_DELIVERY", "destination": "Room 312"}:
                 return self.reply(422, {"error": "unsupported_action"})
+            if envelope.get("behavior_id") != BEHAVIOR_ID:
+                return self.reply(422, {"error": "unsupported_behavior"})
             if not claim_once(envelope["grant_id"], envelope["nonce"], int(time.time() * 1000)):
                 return self.reply(409, {"error": "replay_rejected"})
             execute_fixed_demo_action()
-            self.reply(200, {"status": "executed", "final_position": "physical-demo-complete"})
+            self.reply(200, {
+                "status": "executed",
+                "final_position": "physical-demo-complete",
+                "behavior_id": BEHAVIOR_ID,
+            })
         except Exception as error:
             print(json.dumps({
                 "event": "robot.worker.dispatch_failed",

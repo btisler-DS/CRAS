@@ -235,6 +235,8 @@ Phase 5D-8 adds a typed authorization-to-dispatch bridge. It accepts no transcri
 
 Phase 5D-9 makes adapter selection an explicit server-owned deployment choice. `simulator` is the default. `physical` requires a loopback transport and signing key loaded from a server file; selection is never accepted through a browser route. Changing adapters does not change the intent, authorization, evidence, or Dispatcher contracts.
 
+Phase 5D-10 fixes the physical capability to one versioned behavior, `MEDICATION_DELIVERY_DEMO_V1`. The behavior ID is HMAC-bound with the grant and exact action. The worker rejects any other behavior and returns a receipt bound to the same ID. This maneuver is not represented as autonomous navigation to the physical Room 312.
+
 ## Competition-minimum physical deployment
 
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.

@@ -6,6 +6,10 @@ import os
 import pwd
 
 ROBOT = None
+LEFT_MOTOR = 1
+RIGHT_MOTOR = 2
+SPEED = 1
+DURATION_SECONDS = 1.0
 
 def stop_and_exit(signum, frame):
     if ROBOT is not None:
@@ -24,9 +28,9 @@ def main():
     signal.signal(signal.SIGINT, stop_and_exit)
     try:
         ROBOT = Picarx()
-        ROBOT.set_motor_speed(1, 1)
-        ROBOT.set_motor_speed(2, 1)
-        time.sleep(1.0)
+        ROBOT.set_motor_speed(LEFT_MOTOR, SPEED)
+        ROBOT.set_motor_speed(RIGHT_MOTOR, SPEED)
+        time.sleep(DURATION_SECONDS)
     finally:
         if ROBOT is not None:
             ROBOT.stop()

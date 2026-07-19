@@ -12,3 +12,5 @@ CRAS server.
 The worker has no generic movement endpoint. It admits only an HMAC-authenticated
 dispatch envelope for medication delivery to Room 312 and maps it to one fixed,
 one-second, minimum-speed wheel-off-ground maneuver. Motors are stopped in `finally`.
+The versioned behavior contract and verification evidence are recorded in
+`COMMISSIONING.md`.

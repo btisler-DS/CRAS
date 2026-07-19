@@ -7,6 +7,7 @@ import type {
   ValidatedAuthorizationGrant,
 } from "../dispatch/types.js";
 import { RobotAdapterExecutionError } from "./simulated-robot-adapter.js";
+import { PHYSICAL_BEHAVIOR, supportsPhysicalBehavior } from "./physical-behavior.js";
 
 export interface PhysicalRobotTransportRequest {
   readonly body: string;
@@ -55,7 +56,7 @@ export class PhysicalRobotAdapter implements RobotAdapter {
   }
 
   execute(grant: ValidatedAuthorizationGrant, action: NormalizedAction): RobotExecutionReceipt {
-    if (action.kind !== "MEDICATION_DELIVERY" || action.destination !== "Room 312") {
+    if (!supportsPhysicalBehavior(action)) {
       throw new RobotAdapterExecutionError("Physical adapter accepts only the canonical demonstration action.", 0, "unknown");
     }
     const envelope = {
@@ -68,6 +69,7 @@ export class PhysicalRobotAdapter implements RobotAdapter {
         kind: action.kind,
         destination: action.destination,
       },
+      behavior_id: PHYSICAL_BEHAVIOR.id,
       issued_at_ms: this.#now(),
       nonce: this.#nonce(),
     } as const;
@@ -89,7 +91,8 @@ function parseReceipt(body: string): { final_position: string } {
   let value: unknown;
   try { value = JSON.parse(body); } catch { throw new RobotAdapterExecutionError("Physical worker returned invalid JSON.", 1, "unknown"); }
   if (typeof value !== "object" || value === null || !("status" in value) || value.status !== "executed" ||
-      !("final_position" in value) || typeof value.final_position !== "string") {
+      !("final_position" in value) || value.final_position !== PHYSICAL_BEHAVIOR.finalPosition ||
+      !("behavior_id" in value) || value.behavior_id !== PHYSICAL_BEHAVIOR.id) {
     throw new RobotAdapterExecutionError("Physical worker returned an invalid receipt.", 1, "unknown");
   }
   return { final_position: value.final_position };

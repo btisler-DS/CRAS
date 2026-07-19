@@ -6,7 +6,7 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 5D-9 formalizes passive server-only adapter selection. The simulator remains canonical and physical mode must be explicit, fully configured, and inaccessible to browser input. Until a later phase is explicitly authorized:
+Phase 5D-10 permits exactly one physical behavior, `MEDICATION_DELIVERY_DEMO_V1`. Do not add a second behavior, reverse motion, steering, navigation, or ground movement. The simulator remains canonical. Until a later phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
 - Do not add OpenAI, deployment, or physical robot integrations.
