@@ -25,3 +25,13 @@ Verified July 19, 2026:
 - Post-action state: worker healthy; no motion child remained
 
 This behavior is a commissioning/demo maneuver. It does not claim physical navigation to Room 312.
+
+Repeatability verification, July 19, 2026:
+
+- Evidence record: `59289496-f525-4627-a1e9-99ada4d6ad82`
+- Authorization grant: `803f377d-cb87-4cc1-9517-2fe16aae7eca`
+- Server execution state: `EXECUTED`
+- Authenticated worker calls: exactly one
+- Remote replay record: persisted
+- Operator observation: both raised rear wheels again moved for approximately one second and fully stopped
+- Post-action state: worker healthy and passive; no motion child remained

@@ -271,6 +271,7 @@ Verified on July 18, 2026:
 - Added the behavior ID to the authenticated dispatch envelope and required the robot worker to reject unknown behavior IDs. Successful receipts must bind to the same behavior ID and final-position marker.
 - Added a commissioning record distinguishing this fixed demonstration maneuver from real navigation to Room 312.
 - No second behavior, reverse motion, steering, navigation, or ground movement was added.
+- A separately authorized repeatability run completed with evidence `59289496-f525-4627-a1e9-99ada4d6ad82` and grant `803f377d-cb87-4cc1-9517-2fe16aae7eca`. The worker recorded one call and returned to passive health with no motion child; the operator confirmed both raised rear wheels again moved for approximately one second and fully stopped.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
