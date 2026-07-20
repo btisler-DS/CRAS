@@ -235,7 +235,14 @@ Phase 5D-8 adds a typed authorization-to-dispatch bridge. It accepts no transcri
 
 Phase 5D-9 makes adapter selection an explicit server-owned deployment choice. `simulator` is the default. `physical` requires a loopback transport and signing key loaded from a server file; selection is never accepted through a browser route. Changing adapters does not change the intent, authorization, evidence, or Dispatcher contracts.
 
-Phase 5D-10 fixes the physical capability to one versioned behavior, `MEDICATION_DELIVERY_DEMO_V1`. The behavior ID is HMAC-bound with the grant and exact action. The worker rejects any other behavior and returns a receipt bound to the same ID. This maneuver is not represented as autonomous navigation to the physical Room 312.
+Phase 5D-10 originally fixed the physical capability to the commissioning behavior
+`MEDICATION_DELIVERY_DEMO_V1`. The active successor is
+`MEDICATION_DELIVERY_ROUND_TRIP_V1`: one fixed minimum-speed outbound interval, full
+stop, neutral pause, one fixed minimum-speed return interval, and final stop. The
+behavior ID is HMAC-bound with the grant and exact action. The worker rejects every
+other behavior and returns a receipt bound to the same ID. On the wheel-off-ground
+stand this verifies controlled outbound/return actuation; it is not represented as
+autonomous navigation to the physical Room 312.
 
 Phase 5D-11 composes the shared request-to-execution path once. Simulator and physical execution use identical intent, authorization, evidence, grant-consumption, and Dispatcher objects; only the final injected `RobotAdapter` differs. Neither target has a parallel authorization or dispatch route.
 
@@ -243,7 +250,7 @@ Phase 5D-11 composes the shared request-to-execution path once. Simulator and ph
 
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.
 
-An independently supervised SSH forward connects that loopback port to the robot worker, which itself binds only to `127.0.0.1:9300`. The worker verifies the HMAC, freshness, exact canonical action, and durable replay record before constructing `Picarx`. Its only action is a fixed one-second minimum-speed wheel-off-ground maneuver, with `stop()` in `finally` and on SIGTERM/SIGINT. There is no generic movement endpoint.
+An independently supervised SSH forward connects that loopback port to the robot worker, which itself binds only to `127.0.0.1:9300`. The worker verifies the HMAC, freshness, exact canonical action, and durable replay record before constructing `Picarx`. Its only active action is the fixed minimum-speed outbound/stop/return/stop wheel-off-ground maneuver, with `stop()` in `finally` and on SIGTERM/SIGINT. There is no generic movement endpoint.
 
 ## Private robot acknowledgments
 

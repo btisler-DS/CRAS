@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fixed one-action child. Intended only for the authenticated CRAS worker."""
+"""Fixed round-trip child. Intended only for the authenticated CRAS worker."""
 import signal
 import time
 import os
@@ -9,7 +9,10 @@ ROBOT = None
 LEFT_MOTOR = 1
 RIGHT_MOTOR = 2
 SPEED = 1
-DURATION_SECONDS = 1.0
+OUTBOUND_DURATION_SECONDS = 1.0
+STOPPED_PAUSE_SECONDS = 0.5
+RETURN_SPEED = -1
+RETURN_DURATION_SECONDS = 1.0
 
 def stop_and_exit(signum, frame):
     if ROBOT is not None:
@@ -30,7 +33,12 @@ def main():
         ROBOT = Picarx()
         ROBOT.set_motor_speed(LEFT_MOTOR, SPEED)
         ROBOT.set_motor_speed(RIGHT_MOTOR, SPEED)
-        time.sleep(DURATION_SECONDS)
+        time.sleep(OUTBOUND_DURATION_SECONDS)
+        ROBOT.stop()
+        time.sleep(STOPPED_PAUSE_SECONDS)
+        ROBOT.set_motor_speed(LEFT_MOTOR, RETURN_SPEED)
+        ROBOT.set_motor_speed(RIGHT_MOTOR, RETURN_SPEED)
+        time.sleep(RETURN_DURATION_SECONDS)
     finally:
         if ROBOT is not None:
             ROBOT.stop()

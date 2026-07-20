@@ -309,6 +309,20 @@ Verified on July 18, 2026:
   no actuator movement. All four fixed acknowledgment patterns are now physically
   verified.
 
+## Active protected round-trip behavior
+
+- Versioned the active physical contract as `MEDICATION_DELIVERY_ROUND_TRIP_V1`
+  instead of silently changing the previously commissioned forward-only V1 behavior.
+- The one admitted sequence is both rear wheels at minimum speed `1` for 1,000 ms,
+  full stop, a 500 ms neutral pause, both rear wheels at `-1` for 1,000 ms, and a final
+  `stop()` in `finally`. Its bounded receipt reports `home-base`.
+- The exact sequence is covered by a hardware-free injected-PiCar-X test. The full
+  TypeScript suite remains at 125 passing tests and the Python worker suite now has
+  4 passing tests.
+- This active behavior has not yet been executed on hardware. Reverse movement and
+  the complete round trip remain physically unverified and require a separately cued
+  wheel-off-ground test.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule

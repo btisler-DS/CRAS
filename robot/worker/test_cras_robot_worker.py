@@ -4,7 +4,9 @@
 import importlib.util
 import os
 import sqlite3
+import sys
 import tempfile
+import types
 import unittest
 from contextlib import closing
 from pathlib import Path
@@ -69,6 +71,43 @@ class RobotWorkerTests(unittest.TestCase):
             {"ATTENTION", "INSTRUCTION_RECEIVED", "AUTHORIZED", "MISSION_COMPLETED"},
         )
         self.assertNotIn("robot_hat", globals())
+
+    def test_motion_child_has_one_fixed_outbound_stop_return_sequence(self):
+        motion_path = WORKER_PATH.with_name("motion_once.py")
+        spec = importlib.util.spec_from_file_location("motion_once", motion_path)
+        motion = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(motion)
+        calls = []
+
+        class FakePicarx:
+            def set_motor_speed(self, motor, speed):
+                calls.append(("motor", motor, speed))
+
+            def stop(self):
+                calls.append(("stop",))
+
+        fake_module = types.SimpleNamespace(Picarx=FakePicarx)
+        with (
+            patch.dict(sys.modules, {"picarx": fake_module}),
+            patch.object(motion.os, "getlogin", return_value="edos"),
+            patch.object(motion.time, "sleep", side_effect=lambda value: calls.append(("sleep", value))),
+        ):
+            motion.main()
+
+        self.assertEqual(
+            calls,
+            [
+                ("motor", 1, 1),
+                ("motor", 2, 1),
+                ("sleep", 1.0),
+                ("stop",),
+                ("sleep", 0.5),
+                ("motor", 1, -1),
+                ("motor", 2, -1),
+                ("sleep", 1.0),
+                ("stop",),
+            ],
+        )
 
 
 if __name__ == "__main__":

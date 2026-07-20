@@ -19,7 +19,7 @@ HOST = "127.0.0.1"
 PORT = 9300
 MAX_BODY = 16 * 1024
 MAX_CLOCK_SKEW_MS = 30_000
-BEHAVIOR_ID = "MEDICATION_DELIVERY_DEMO_V1"
+BEHAVIOR_ID = "MEDICATION_DELIVERY_ROUND_TRIP_V1"
 ACKNOWLEDGMENT_TYPES = frozenset(("ATTENTION", "INSTRUCTION_RECEIVED", "AUTHORIZED", "MISSION_COMPLETED"))
 DB_PATH = os.environ.get("CRAS_ROBOT_REPLAY_DB", "/var/lib/cras-robot/replay.sqlite3")
 KEY_PATH = os.environ.get("CRAS_ROBOT_SIGNING_KEY_FILE", "/etc/cras-robot/dispatch.key")
@@ -83,7 +83,7 @@ def execute_fixed_demo_action():
         )
         with ACTIVE_LOCK:
             ACTIVE_PROCESS = process
-        output, _ = process.communicate(timeout=5)
+        output, _ = process.communicate(timeout=8)
         if process.returncode != 0 or "CRAS_MOTION_COMPLETED" not in output:
             diagnostic = output.replace("\x00", "")[-1200:]
             raise RuntimeError(f"fixed motion child failed ({process.returncode}): {diagnostic}")
@@ -213,7 +213,7 @@ class Handler(BaseHTTPRequestHandler):
                 OPERATION_LOCK.release()
             self.reply(200, {
                 "status": "executed",
-                "final_position": "physical-demo-complete",
+                "final_position": "home-base",
                 "behavior_id": BEHAVIOR_ID,
             })
         except Exception as error:

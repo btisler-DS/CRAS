@@ -16,12 +16,12 @@ const action = {
 describe("PhysicalRobotAdapter", () => {
   it("is passive until execute and sends only an authenticated bounded envelope", () => {
     const calls: string[] = [];
-    const transport: PhysicalRobotTransport = { request(request) { calls.push(request.body); return { status: 200, body: '{"status":"executed","final_position":"physical-demo-complete","behavior_id":"MEDICATION_DELIVERY_DEMO_V1"}' }; } };
+    const transport: PhysicalRobotTransport = { request(request) { calls.push(request.body); return { status: 200, body: '{"status":"executed","final_position":"home-base","behavior_id":"MEDICATION_DELIVERY_ROUND_TRIP_V1"}' }; } };
     const adapter = new PhysicalRobotAdapter({ transport, signingKey: new Uint8Array(32).fill(7), now: () => 10, nonce: () => "nonce_1" });
     expect(calls).toEqual([]);
-    expect(adapter.execute(grant, action)).toEqual({ finalPosition: "physical-demo-complete", adapterCallCount: 1 });
+    expect(adapter.execute(grant, action)).toEqual({ finalPosition: "home-base", adapterCallCount: 1 });
     const sent = JSON.parse(calls[0] ?? "{}");
-    expect(JSON.parse(sent.payload)).toMatchObject({ grant_id: "grant_1", evidence_record_id: "evidence_1", behavior_id: "MEDICATION_DELIVERY_DEMO_V1", action: { kind: "MEDICATION_DELIVERY", destination: "Room 312" } });
+    expect(JSON.parse(sent.payload)).toMatchObject({ grant_id: "grant_1", evidence_record_id: "evidence_1", behavior_id: "MEDICATION_DELIVERY_ROUND_TRIP_V1", action: { kind: "MEDICATION_DELIVERY", destination: "Room 312" } });
     expect(sent.signature).toMatch(/^[0-9a-f]{64}$/);
     expect(calls[0]).not.toContain("patient_1");
   });

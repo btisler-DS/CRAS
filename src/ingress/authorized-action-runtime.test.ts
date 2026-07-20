@@ -41,8 +41,8 @@ describe("simulator and physical execution-path alignment", () => {
           status: 200,
           body: JSON.stringify({
             status: "executed",
-            final_position: "physical-demo-complete",
-            behavior_id: "MEDICATION_DELIVERY_DEMO_V1",
+            final_position: "home-base",
+            behavior_id: "MEDICATION_DELIVERY_ROUND_TRIP_V1",
           }),
         };
       },
@@ -75,7 +75,7 @@ describe("simulator and physical execution-path alignment", () => {
     const payload = JSON.parse(JSON.parse(physicalCalls[0] ?? "{}").payload);
     expect(payload).toMatchObject({
       action_id: "aligned_action",
-      behavior_id: "MEDICATION_DELIVERY_DEMO_V1",
+      behavior_id: "MEDICATION_DELIVERY_ROUND_TRIP_V1",
       action: { kind: "MEDICATION_DELIVERY", destination: "Room 312" },
     });
     simulatorRepository.close();

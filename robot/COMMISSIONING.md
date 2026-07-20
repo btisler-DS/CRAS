@@ -51,6 +51,17 @@ Verified July 20, 2026 with the robot secured on its stand:
 All four fixed patterns are physically verified: attention (one short), instruction
 received (two short), authorized (one long), and mission completed (three short).
 
+## Active round-trip contract — awaiting physical verification
+
+`MEDICATION_DELIVERY_ROUND_TRIP_V1` supersedes the forward-only behavior as the one
+active physical contract. It commands minimum-speed forward for 1,000 ms, stops,
+holds neutral for 500 ms, commands minimum-speed reverse for 1,000 ms, and stops in
+`finally`. A successful receipt reports `home-base`.
+
+The exact command order passes a hardware-free injected-controller test. It has not
+been executed on the robot. In particular, reverse motion remains physically untested;
+this section is a pending test specification, not commissioning evidence.
+
 Constitutional Runtime exposes exactly one physical behavior for the competition demonstration.
 
 ```text

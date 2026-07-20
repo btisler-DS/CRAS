@@ -109,6 +109,12 @@ completed. Callers cannot select frequency, duration, device, file, or command.
 Attention and instruction receipt are currently connected to the live mission flow;
 the latter two remain reserved until that flow owns physical execution state.
 
+The single active protected hardware behavior is
+`MEDICATION_DELIVERY_ROUND_TRIP_V1`. It is a fixed minimum-speed
+outbound/stop/return/stop stand maneuver and accepts no caller-selected motion
+parameters. It is currently verified only by hardware-free tests; it does not yet
+constitute physical navigation to Room 312.
+
 ### Optional local speech recognition artifact
 
 Phase 5D-4 adds a server-only, disabled-by-default Vosk adapter. It requires the explicitly provisioned model directory configured by `CRAS_VOSK_MODEL_PATH`; the application does not download models. Microphone capture is bounded to at most three seconds from `hw:CARD=Device,DEV=0`, is held only in memory, and is zeroed after transcription. This phase adds no speech routing, authorization, UI, or robot action.
