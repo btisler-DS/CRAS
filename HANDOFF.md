@@ -183,6 +183,11 @@ A QR observation is evidence input, not authorization. A face is narrative conte
 not biometric proof. Print PDFs are in the marker directory. Regenerate with
 `npm run markers:generate`.
 
+The companion `demo-assets/floorplans/` directory contains eight standalone scenario
+maps and a printable landscape PDF. Its ten-room assignment is deliberately marked
+proposed until Bruce confirms the physical doorway mapping. Regenerate with
+`npm run floorplans:generate` after generating markers.
+
 ## 8. Deployment topology
 
 The CRAS server keeps the Next.js UI, authorization kernel, SQLite authority store,

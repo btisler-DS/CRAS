@@ -1,0 +1,45 @@
+{
+  "status": "PROPOSED_ASSIGNMENT_REQUIRES_OPERATOR_CONFIRMATION",
+  "physical_testbed": {
+    "overall_length_inches": 120,
+    "overall_width_inches": 60,
+    "robot_length_inches": 9.5,
+    "robot_width_inches": 5.5,
+    "doorways": {
+      "standard_count": 8,
+      "standard_width_inches": 16,
+      "utility_count": 2,
+      "utility_width_inches": 12
+    }
+  },
+  "orientation": "Viewed from the open end in the overview photographs; north is the far end.",
+  "left_north_to_south": [
+    "LOC-PHARMACY",
+    "LOC-ROOM-311",
+    "LOC-ROOM-313",
+    "LOC-SUPPLY",
+    "LOC-HOME"
+  ],
+  "right_north_to_south": [
+    "LOC-NURSE-STATION",
+    "LOC-ROOM-312",
+    "LOC-ROOM-314",
+    "LOC-LAB",
+    "LOC-CLEAN-UTILITY"
+  ],
+  "utility_doorway_candidates": [
+    "LOC-HOME",
+    "LOC-CLEAN-UTILITY"
+  ],
+  "canonical_scenario": {
+    "instruction": "Deliver insulin lispro to Sarah Johnson in Room 312, Bed 312-A.",
+    "staff": "STAFF-NURSE-7001",
+    "order": "ORDER-8001",
+    "medication": "MED-2001",
+    "location": "LOC-ROOM-312",
+    "bed": "BED-312-A",
+    "patient": "PAT-1001",
+    "home_approach": "DOCK-HOME-APPROACH",
+    "home_final": "DOCK-HOME-FINAL"
+  }
+}

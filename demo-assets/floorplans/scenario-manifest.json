@@ -1,0 +1,738 @@
+[
+  {
+    "slug": "00-master-placement",
+    "title": "Master marker and image placement",
+    "instruction": "Place the printed marker library consistently before running a scenario.",
+    "outcome": "PROPOSED LAYOUT — OPERATOR CONFIRMATION REQUIRED",
+    "status": "PLACEMENT",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "note": "Every doorway also receives its matching LOC-* QR facing the hallway."
+  },
+  {
+    "slug": "01-success-room-312",
+    "title": "Scenario 1 · Authorized medication delivery",
+    "instruction": "Deliver insulin lispro to Sarah Johnson in Room 312, Bed 312-A.",
+    "outcome": "All identities match; evidence commits; one grant permits the declared mission.",
+    "status": "AUTHORIZED PATH",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "route": [
+      "LOC-HOME",
+      "LOC-NURSE-STATION",
+      "LOC-PHARMACY",
+      "LOC-ROOM-312",
+      "LOC-HOME"
+    ],
+    "note": "Show evidence ID and grant ID before movement; return and reverse into Home."
+  },
+  {
+    "slug": "02-similar-name-mismatch",
+    "title": "Scenario 2 · Similar-name patient mismatch",
+    "instruction": "Deliver insulin lispro to Sarah Johnson, PAT-1001, in Room 312.",
+    "outcome": "PAT-1901 is Sarah Johnston. Patient identity remains unresolved; no dispatch.",
+    "status": "UNAUTHORIZED",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      },
+      {
+        "marker": "PAT-1901",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnston · PAT-1901",
+        "role": "mismatch",
+        "face": "PAT-1901"
+      }
+    ],
+    "note": "The similar spelling is intentionally insufficient. Robot remains at Home."
+  },
+  {
+    "slug": "03-same-name-wrong-id",
+    "title": "Scenario 3 · Same name, wrong patient number",
+    "instruction": "Deliver insulin lispro to Sarah Johnson, PAT-1001, in Room 312.",
+    "outcome": "Presented PAT-1902 has the same name but a different identifier; no dispatch.",
+    "status": "UNAUTHORIZED",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      },
+      {
+        "marker": "PAT-1902",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1902",
+        "role": "mismatch",
+        "face": "PAT-1902"
+      }
+    ],
+    "note": "Human-readable name equality never overrides the patient identifier."
+  },
+  {
+    "slug": "04-wrong-medication",
+    "title": "Scenario 4 · Wrong medication formulation",
+    "instruction": "Deliver insulin lispro, MED-2001, to Sarah Johnson in Room 312.",
+    "outcome": "MED-2901 is insulin glargine; medication match fails; no dispatch.",
+    "status": "UNAUTHORIZED",
+    "placements": [
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "MED-2901",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin glargine · MED-2901",
+        "role": "mismatch"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "note": "A related medication name is not an acceptable substitution."
+  },
+  {
+    "slug": "05-order-on-hold",
+    "title": "Scenario 5 · Physician order on hold",
+    "instruction": "Deliver insulin lispro to Sarah Johnson in Room 312.",
+    "outcome": "ORDER-8901 is on hold; physician-order condition fails; no dispatch.",
+    "status": "UNAUTHORIZED",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "ORDER-8901",
+        "room": "LOC-NURSE-STATION",
+        "label": "Order 8901 · ON HOLD",
+        "role": "mismatch"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "note": "Correct patient and medication do not compensate for an inactive order."
+  },
+  {
+    "slug": "06-patient-moved",
+    "title": "Scenario 6 · Patient moved to another room",
+    "instruction": "Deliver insulin lispro to Sarah Johnson in Room 312, Bed 312-A.",
+    "outcome": "PAT-1001 is now in Room 314; ordered location is stale; withhold and re-resolve.",
+    "status": "UNAUTHORIZED",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-314",
+        "label": "Sarah Johnson · moved",
+        "role": "mismatch",
+        "face": "PAT-1001"
+      }
+    ],
+    "note": "Do not silently redirect. Open a new inquiry and require updated evidence."
+  },
+  {
+    "slug": "07-evidence-outage",
+    "title": "Scenario 7 · Evidence store unavailable",
+    "instruction": "Deliver insulin lispro to Sarah Johnson in Room 312, Bed 312-A.",
+    "outcome": "All physical facts match, but evidence cannot commit; no grant and no movement.",
+    "status": "COMMIT FAILED",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "note": "This is the constitutional failure case: capability and conditions are insufficient without durable evidence."
+  }
+]

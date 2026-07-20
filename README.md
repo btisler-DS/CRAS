@@ -65,6 +65,8 @@ See:
 - [DEMO.md](DEMO.md) for the canonical demonstration.
 - [demo-assets/markers/README.md](demo-assets/markers/README.md) for the printable
   hospital location, patient, medication, order, staff, and docking marker kit.
+- [demo-assets/floorplans/README.md](demo-assets/floorplans/README.md) for the proposed
+  ten-room placement plan and eight printable success/failure scenario maps.
 
 ## License
 

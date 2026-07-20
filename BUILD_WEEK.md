@@ -1,5 +1,17 @@
 # Build Week Record
 
+## Reproducible hospital scenario floorplans
+
+Prepared a deterministic, editable floorplan asset set over the existing marker and
+fictional-face library. The proposed ten-door assignment and eight scenario maps cover
+master placement, canonical Room 312 delivery, similar-name mismatch, same-name/wrong-ID
+mismatch, wrong medication, held order, moved patient, and evidence-store outage.
+
+Each standalone SVG embeds its referenced QR and portrait images and the set includes
+a letter-size landscape print artifact, JSON scenario manifest, and regeneration script.
+The room assignment is explicitly marked proposed pending operator confirmation. These
+maps do not claim marker perception, condition resolution, or ground navigation.
+
 ## Physical hospital testbed and marker kit
 
 Prepared July 20, 2026 for the reproducible competition demonstration:

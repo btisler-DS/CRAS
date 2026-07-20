@@ -18,7 +18,8 @@
     "verify:robot-hat-tone": "node --import tsx scripts/verify-robot-hat-tone.ts",
     "verify:vosk-microphone": "node --import tsx scripts/verify-vosk-microphone.ts",
     "verify:physical-dispatch": "node --import tsx scripts/verify-physical-dispatch.ts",
-    "markers:generate": "node --import tsx scripts/generate-demo-markers.ts"
+    "markers:generate": "node --import tsx scripts/generate-demo-markers.ts",
+    "floorplans:generate": "node --import tsx scripts/generate-floorplans.ts"
   },
   "engines": {
     "node": ">=20"
