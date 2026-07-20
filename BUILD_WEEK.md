@@ -292,7 +292,13 @@ Verified on July 18, 2026:
 - Connected only attention and instruction-received signals to the interactive mission
   session. Neither signal authorizes, commits evidence, dispatches, or executes.
 - Verification is hardware-free: 125 TypeScript tests and 3 Python worker tests pass.
-  No sound or physical movement was produced during this implementation checkpoint.
+  No sound or physical movement was produced during the implementation checkpoint.
+- A separately authorized robot-host verification then sent exactly one fixed
+  `ATTENTION` request through the HMAC-authenticated private worker. The worker
+  returned `200 acknowledged` with cleanup confirmed; GPIO20 returned to `PCM_DIN`,
+  no playback or motion child remained, and the operator confirmed one short tone
+  was audible with no actuator movement. The other three patterns remain physically
+  unverified.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 

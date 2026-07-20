@@ -1,5 +1,18 @@
 # Physical behavior commissioning record
 
+## Private acknowledgment verification — attention
+
+Verified July 20, 2026 with the robot secured on its stand:
+
+- Request: fixed `ATTENTION` acknowledgment through the signed, loopback-only worker
+  boundary.
+- Worker receipt: HTTP 200, `acknowledged`, cleanup completed.
+- Operator observation: one short tone heard; no actuator movement.
+- Postcondition: worker healthy, GPIO20 restored to `PCM_DIN` (`a0`, pull-down), no
+  acknowledgment or motion child remained, and no PCM playback owner remained.
+- `INSTRUCTION_RECEIVED`, `AUTHORIZED`, and `MISSION_COMPLETED` patterns were not
+  exercised in this verification and remain unverified on hardware.
+
 Constitutional Runtime exposes exactly one physical behavior for the competition demonstration.
 
 ```text
