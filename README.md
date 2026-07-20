@@ -108,6 +108,10 @@ operator may start or stop the OV5647 MJPEG stream. The browser talks only to CR
 the camera worker exposes no actuator commands and receives no browser-selected robot
 address.
 
+The deployed reference path uses robot loopback port `9400` and server loopback port
+`19100`. Camera capture is stopped explicitly by the UI and is also released when the
+sole downstream stream disconnects.
+
 For a supervised physical stand demonstration, the server process—not the browser—may
 be configured with:
 

@@ -216,6 +216,10 @@ class Handler(BaseHTTPRequestHandler):
                     self.wfile.flush()
             except (BrokenPipeError, ConnectionResetError):
                 pass
+            finally:
+                # One worker owns one camera stream. Losing its sole downstream
+                # viewer releases the camera instead of recording indefinitely.
+                OWNER.stop()
             return
         self.reply(404, {"error": {"code": "BAD_REQUEST", "message": "Not found.", "retryable": False}})
 

@@ -366,8 +366,14 @@ Verified on July 18, 2026:
 - Added a prominent observation-only video panel. It states that video supplies
   context but cannot authorize or execute action, and exposes only start/stop.
 - Three hardware-free worker tests prove passive construction, fixed `rpicam-vid`
-  arguments, and absence of robotics dependencies. Physical camera streaming has not
-  yet been deployed or verified in this checkpoint.
+  arguments, and absence of robotics dependencies.
+- Deployed the separate robot and tunnel services and verified the OV5647 through the
+  complete private path. One bounded stream delivered a valid 15,247-byte JPEG at
+  640×480 and a measured 15 fps; explicit stop released `rpicam-vid` and left the
+  worker healthy. A browser verification then rendered a real 640×480 image with no
+  console error or framework overlay. No actuator library or command was involved.
+- Browser-stream disconnect now releases the sole camera owner at the worker, so a
+  closed tab or broken proxy connection does not leave indefinite capture running.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
