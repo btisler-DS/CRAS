@@ -267,3 +267,19 @@ and restores GPIO20 to its verified idle function. The capability is disabled by
 default. Attention and instruction-received acknowledgments do not imply authority;
 they only confirm receipt. Automated tests inject transports and processes and never
 touch audio or GPIO.
+
+The interactive mission composes these boundaries in one server-owned order:
+
+```text
+alert -> ATTENTION acknowledgment
+instruction -> INSTRUCTION_RECEIVED acknowledgment
+conditions -> evidence + grant transaction
+committed AUTHORIZED -> AUTHORIZED acknowledgment
+Dispatcher -> selected RobotAdapter -> EXECUTED record
+EXECUTED -> MISSION_COMPLETED acknowledgment
+```
+
+Acknowledgment receipt is not authority. In physical mode, failure to produce the
+authorization acknowledgment conservatively prevents dispatch and leaves the grant
+unconsumed. Adapter selection and acknowledgment enablement are server environment
+choices, never browser payload fields. Simulator mode remains the default.

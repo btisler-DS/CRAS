@@ -13,17 +13,19 @@ import type {
 } from "../domain.js";
 import { Dispatcher } from "../dispatch/dispatcher.js";
 import { normalizeAction } from "../dispatch/normalized-action.js";
+import type { RobotAdapter } from "../dispatch/types.js";
 import type { EvidenceAuthorizationResult } from "../evidence/repository.js";
 import { EvidenceRepository } from "../evidence/repository.js";
 import { SimulatedRobotAdapter } from "../robot/simulated-robot-adapter.js";
-import { createRobotAcknowledgmentClientFromEnvironment } from "./robot/robot-acknowledgment-config.js";
-import type { RobotAcknowledgmentClient } from "./robot/robot-acknowledgment-client.js";
 import type {
   DemoPreset,
   InteractionState,
   RuntimeEvent,
   RuntimeView,
 } from "../ui/runtime-view.js";
+import { createRobotAdapterFromEnvironment } from "./robot/robot-adapter-config.js";
+import { createRobotAcknowledgmentClientFromEnvironment } from "./robot/robot-acknowledgment-config.js";
+import type { RobotAcknowledgmentType } from "./robot/robot-acknowledgment-client.js";
 
 const INSTRUCTION = "Deliver medication to Room 312.";
 const FIXED_NOW = "2026-07-18T12:00:00.000Z";
@@ -38,10 +40,27 @@ interface ConditionFacts {
   administrationWindowValid: boolean;
 }
 
-class RuntimeSession {
+interface RobotAcknowledgmentPort {
+  acknowledge(request: {
+    missionId: string;
+    eventId: string;
+    acknowledgment: RobotAcknowledgmentType;
+  }): unknown;
+}
+
+export interface RuntimeSessionOptions {
+  readonly robotFactory?: () => RobotAdapter;
+  readonly robotTarget?: "simulator" | "physical";
+  readonly acknowledgments?: RobotAcknowledgmentPort | null;
+}
+
+export class RuntimeSession {
   #directory = "";
   #repository: EvidenceRepository | null = null;
-  #robot = new SimulatedRobotAdapter();
+  #robot: RobotAdapter;
+  readonly #robotFactory: () => RobotAdapter;
+  readonly #robotTarget: "simulator" | "physical";
+  #physicalRobotView: RuntimeView["robot"];
   #facts: ConditionFacts = {
     patientIdentityVerified: false,
     physicianOrderActive: true,
@@ -57,23 +76,58 @@ class RuntimeSession {
   #evidenceState: RuntimeView["evidenceState"] = "NOT STARTED";
   #executionState: RuntimeView["executionState"] = "STATIONARY";
   #interactionState: InteractionState = "INSTRUCTION_ACKNOWLEDGED";
-  readonly #acknowledgments: RobotAcknowledgmentClient | null;
+  readonly #acknowledgments: RobotAcknowledgmentPort | null;
+  #authorizationEventId: string | null = null;
+  #authorizationAcknowledged = false;
 
-  constructor() {
-    this.#acknowledgments = createRobotAcknowledgmentClientFromEnvironment(
-      {
-        CRAS_ROBOT_ACKNOWLEDGMENTS: process.env.CRAS_ROBOT_ACKNOWLEDGMENTS,
-        CRAS_PHYSICAL_WORKER_BASE_URL:
-          process.env.CRAS_PHYSICAL_WORKER_BASE_URL,
-        CRAS_ROBOT_SIGNING_KEY_FILE:
-          process.env.CRAS_ROBOT_SIGNING_KEY_FILE,
-      },
-    );
+  constructor(options: RuntimeSessionOptions = {}) {
+    const configuredTarget =
+      process.env.CRAS_ROBOT_ADAPTER === "physical" ? "physical" : "simulator";
+    this.#robotTarget = options.robotTarget ?? configuredTarget;
+    this.#robotFactory =
+      options.robotFactory ??
+      (() =>
+        createRobotAdapterFromEnvironment({
+          CRAS_ROBOT_ADAPTER: process.env.CRAS_ROBOT_ADAPTER,
+          CRAS_PHYSICAL_WORKER_BASE_URL:
+            process.env.CRAS_PHYSICAL_WORKER_BASE_URL,
+          CRAS_ROBOT_SIGNING_KEY_FILE:
+            process.env.CRAS_ROBOT_SIGNING_KEY_FILE,
+        }));
+    this.#robot = this.#robotFactory();
+    this.#physicalRobotView = initialRobotView(this.#robotTarget);
+    this.#acknowledgments =
+      options.acknowledgments === undefined
+        ? this.#robotTarget === "physical"
+          ? createRobotAcknowledgmentClientFromEnvironment({
+              CRAS_ROBOT_ACKNOWLEDGMENTS:
+                process.env.CRAS_ROBOT_ACKNOWLEDGMENTS,
+              CRAS_PHYSICAL_WORKER_BASE_URL:
+                process.env.CRAS_PHYSICAL_WORKER_BASE_URL,
+              CRAS_ROBOT_SIGNING_KEY_FILE:
+                process.env.CRAS_ROBOT_SIGNING_KEY_FILE,
+            })
+          : null
+        : options.acknowledgments;
+    if (this.#robotTarget === "physical" && !this.#acknowledgments) {
+      throw new Error(
+        "Physical mission mode requires private robot acknowledgments.",
+      );
+    }
     this.reset("blocked");
   }
 
   reset(preset: DemoPreset = "blocked"): RuntimeView {
     this.#initialize(preset);
+    if (this.#robotTarget === "physical") {
+      this.#interactionState = "IDLE";
+      this.#addEvent(
+        "MISSION_OPENED",
+        "Physical medication-delivery mission opened at home base",
+        "CRAS",
+      );
+      return this.view();
+    }
     this.#interactionState = "INSTRUCTION_ACKNOWLEDGED";
     this.#addEvent("ROBOT_ALERTED", "Robot attention requested", "OPERATOR");
     this.#addEvent("ATTENTION_ACKNOWLEDGED", "Robot acknowledged and is listening", "ROBOT");
@@ -105,7 +159,8 @@ class RuntimeSession {
         createId: () => `demo-${String(++idSequence).padStart(4, "0")}`,
       },
     );
-    this.#robot = new SimulatedRobotAdapter();
+    this.#robot = this.#robotFactory();
+    this.#physicalRobotView = initialRobotView(this.#robotTarget);
     this.#facts =
       preset === "blocked"
         ? {
@@ -125,6 +180,8 @@ class RuntimeSession {
     this.#evidenceState = "NOT STARTED";
     this.#executionState = "STATIONARY";
     this.#interactionState = "IDLE";
+    this.#authorizationEventId = null;
+    this.#authorizationAcknowledged = false;
     this.#events = [];
     this.#eventSequence = 0;
     this.#decision = evaluateAuthorization(this.#proposal(), this.#facts);
@@ -151,6 +208,7 @@ class RuntimeSession {
 
   setCondition(id: RequiredConditionId, satisfied: boolean): RuntimeView {
     if (this.#interactionState !== "INSTRUCTION_ACKNOWLEDGED") return this.view();
+    if (this.#authorization || this.#executionRecord) return this.view();
     const factByCondition: Record<RequiredConditionId, keyof ConditionFacts> = {
       PATIENT_IDENTITY_VERIFIED: "patientIdentityVerified",
       PHYSICIAN_ORDER_ACTIVE: "physicianOrderActive",
@@ -162,6 +220,8 @@ class RuntimeSession {
     this.#executionRecord = null;
     this.#evidenceState = "NOT STARTED";
     this.#executionState = "STATIONARY";
+    this.#authorizationEventId = null;
+    this.#authorizationAcknowledged = false;
     this.#evaluate();
     return this.view();
   }
@@ -171,43 +231,98 @@ class RuntimeSession {
       this.#addEvent("BLOCKED", "Evidence commit refused while conditions are unresolved");
       return this.view();
     }
-    if (this.#authorization || this.#executionRecord) return this.view();
+    if (this.#executionRecord) return this.view();
 
-    this.#evidenceState = "WAITING";
-    this.#addEvent("COMMITTING_EVIDENCE", "Committing evidence and authorization grant");
     const proposal = this.#proposal();
-    const result = this.#requireRepository().authorize({
-      proposal,
-      decision: this.#decision,
-      correlationId: CORRELATION_ID,
-      policyVersion: "medication-delivery/v1",
-      identityReferences: ["patient:patient-demo-312"],
-    });
-    if (result.state === "EVIDENCE_COMMIT_FAILED") {
-      this.#evidenceState = "FAILED";
-      this.#addEvent("EVIDENCE_COMMIT_FAILED", "Evidence store rejected the transaction");
-      return this.view();
-    }
+    if (!this.#authorization) {
+      this.#evidenceState = "WAITING";
+      this.#addEvent("COMMITTING_EVIDENCE", "Committing evidence and authorization grant");
+      const result = this.#requireRepository().authorize({
+        proposal,
+        decision: this.#decision,
+        correlationId: CORRELATION_ID,
+        policyVersion: "medication-delivery/v1",
+        identityReferences: ["patient:patient-demo-312"],
+      });
+      if (result.state === "EVIDENCE_COMMIT_FAILED") {
+        this.#evidenceState = "FAILED";
+        this.#addEvent("EVIDENCE_COMMIT_FAILED", "Evidence store rejected the transaction");
+        return this.view();
+      }
 
-    this.#authorization = result;
-    this.#evidenceState = "COMMITTED";
-    this.#addEvent("AUTHORIZED", "Evidence committed; authorization completed", "EVIDENCE_STORE", {
-      evidenceRecordId: result.evidenceRecord.evidenceRecordId,
-      grantId: result.grant.grantId,
-    });
+      this.#authorization = result;
+      this.#evidenceState = "COMMITTED";
+      this.#authorizationEventId = this.#addEvent("AUTHORIZED", "Evidence committed; authorization completed", "EVIDENCE_STORE", {
+        evidenceRecordId: result.evidenceRecord.evidenceRecordId,
+        grantId: result.grant.grantId,
+      });
+    }
+    const authorization = this.#authorization;
+    if (!this.#authorizationAcknowledged) {
+      if (!this.#tryAcknowledge(this.#authorizationEventId!, "AUTHORIZED")) {
+        return this.view();
+      }
+      this.#authorizationAcknowledged = true;
+      this.#addEvent(
+        "AUTHORIZATION_ACKNOWLEDGED",
+        "Robot acknowledged the committed authorization; dispatch has not yet occurred",
+        "ROBOT",
+      );
+    }
     const dispatch = new Dispatcher(
       this.#requireRepository(),
       this.#robot,
-    ).dispatch(result.grant, normalizeAction(proposal));
+    ).dispatch(authorization.grant, normalizeAction(proposal));
     if (dispatch.outcome === "EXECUTED") {
       this.#executionRecord = dispatch.executionRecord;
       this.#executionState = "EXECUTED";
-      this.#addEvent("DISPATCHED", "Validated grant delivered to simulator");
-      this.#addEvent("EXECUTED", "Robot arrived at Room 312");
+      this.#addEvent(
+        "DISPATCHED",
+        `Validated grant delivered to ${this.#robotTarget} adapter`,
+      );
+      if (this.#robotTarget === "physical") {
+        this.#physicalRobotView = {
+          target: "physical",
+          position:
+            dispatch.executionRecord.finalPosition === "home-base"
+              ? "home-base"
+              : "unknown",
+          movementState: "RETURNED",
+          dispatchCount: dispatch.executionRecord.adapterCallCount,
+          executedActionId: dispatch.executionRecord.actionId,
+          grantId: dispatch.executionRecord.grantId,
+        };
+      }
+      const executedEventId = this.#addEvent(
+        "EXECUTED",
+        this.#robotTarget === "physical"
+          ? "Robot completed the protected round trip and returned to home base"
+          : "Robot arrived at Room 312",
+      );
+      if (this.#tryAcknowledge(executedEventId, "MISSION_COMPLETED")) {
+        this.#addEvent(
+          "MISSION_COMPLETION_ACKNOWLEDGED",
+          "Robot acknowledged mission completion",
+          "ROBOT",
+        );
+      }
     } else if (dispatch.outcome === "ADAPTER_FAILED") {
       this.#executionRecord = dispatch.executionRecord;
       this.#executionState = "FAILED";
-      this.#addEvent("DISPATCHED", "Simulator accepted the dispatch");
+      if (this.#robotTarget === "physical") {
+        this.#physicalRobotView = {
+          target: "physical",
+          position: "unknown",
+          movementState: "FAILED",
+          dispatchCount: dispatch.executionRecord.adapterCallCount,
+          executedActionId: dispatch.executionRecord.actionId,
+          grantId: dispatch.executionRecord.grantId,
+        };
+      }
+      this.#addEvent(
+        "DISPATCHED",
+        `${this.#robotTarget === "physical" ? "Physical" : "Simulator"} adapter accepted the dispatch`,
+      );
       this.#addEvent("ADAPTER_FAILED", dispatch.reason);
     }
     return this.view();
@@ -218,6 +333,15 @@ class RuntimeSession {
     return this.#requireRepository().exportEvidenceRecord(
       this.#authorization.evidenceRecord.evidenceRecordId,
     );
+  }
+
+  dispose(): void {
+    this.#repository?.close();
+    this.#repository = null;
+    if (this.#directory) {
+      rmSync(this.#directory, { recursive: true, force: true });
+      this.#directory = "";
+    }
   }
 
   view(): RuntimeView {
@@ -277,14 +401,18 @@ class RuntimeSession {
           }
         : null,
       executionRecord: this.#executionRecord,
-      robot: this.#robot.snapshot,
+      robot:
+        this.#robot instanceof SimulatedRobotAdapter
+          ? { target: "simulator", ...this.#robot.snapshot }
+          : this.#physicalRobotView,
       events: this.#events,
       failureInjected: this.#failureInjected,
       canCommit:
         this.#interactionState === "INSTRUCTION_ACKNOWLEDGED" &&
         this.#decision.state === "READY_FOR_EVIDENCE" &&
-        this.#evidenceState !== "COMMITTED" &&
-        this.#evidenceState !== "FAILED",
+        this.#evidenceState !== "FAILED" &&
+        this.#executionRecord === null &&
+        (!this.#authorization || !this.#authorizationAcknowledged),
       canExport: evidenceRecord !== null,
     };
   }
@@ -349,7 +477,7 @@ class RuntimeSession {
 
   #tryAcknowledge(
     requestEventId: string,
-    acknowledgment: "ATTENTION" | "INSTRUCTION_RECEIVED",
+    acknowledgment: RobotAcknowledgmentType,
   ): boolean {
     if (!this.#acknowledgments) return true;
     try {
@@ -373,6 +501,19 @@ class RuntimeSession {
     if (!this.#repository) throw new Error("Runtime repository is unavailable.");
     return this.#repository;
   }
+}
+
+function initialRobotView(
+  target: "simulator" | "physical",
+): RuntimeView["robot"] {
+  return {
+    target,
+    position: target === "physical" ? "home-base" : "pharmacy",
+    movementState: "STATIONARY",
+    dispatchCount: 0,
+    executedActionId: null,
+    grantId: null,
+  };
 }
 
 function toConditionView(result: ConditionResult) {

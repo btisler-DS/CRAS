@@ -102,6 +102,22 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The app creates temporary SQLite databases and resets to a deterministic blocked scenario. The separate CLI demo remains available with `npm run demo`.
 
+For a supervised physical stand demonstration, the server process—not the browser—may
+be configured with:
+
+```sh
+CRAS_ROBOT_ADAPTER=physical \
+CRAS_ROBOT_ACKNOWLEDGMENTS=physical \
+CRAS_PHYSICAL_WORKER_BASE_URL=http://127.0.0.1:19300 \
+CRAS_ROBOT_SIGNING_KEY_FILE=.runtime/dispatch.key \
+npm run dev
+```
+
+This mode requires the independently supervised loopback forward and a secured robot
+with an operator at the cutoff. It admits only the fixed round-trip behavior through
+the evidence-backed Dispatcher. Do not expose this unauthenticated local demonstration
+server to an untrusted network.
+
 Robot-local acknowledgments are an optional private capability. With
 `CRAS_ROBOT_ACKNOWLEDGMENTS=physical`, the server sends only four fixed, signed names
 to the loopback worker: attention, instruction received, authorized, and mission

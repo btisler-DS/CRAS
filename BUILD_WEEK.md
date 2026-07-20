@@ -326,6 +326,24 @@ Verified on July 18, 2026:
   confirmed forward movement, the stopped interval, reverse movement, and final stop
   with no unintended behavior. The active round-trip behavior is physically verified.
 
+## Server-owned physical mission lifecycle
+
+- Made the browser mission target a server-only deployment choice. Simulator remains
+  the default; physical mode can be selected only through server environment and the
+  browser receives no worker address, key, transport, or adapter selector.
+- Connected the fixed signals to their lifecycle facts: attention after alert,
+  instruction receipt after admission, authorization only after the evidence/grant
+  transaction commits, and mission completion only after an `EXECUTED` record.
+- A failed authorization acknowledgment produces zero adapter calls and leaves the
+  committed grant unconsumed for a controlled retry. A completion-tone failure cannot
+  rewrite an already completed physical action.
+- Added a physical UI projection that reports the protected adapter, its single call,
+  and the worker's `home-base` receipt without pretending the stand maneuver navigated
+  to a real hospital room.
+- Hardware-free composition tests prove the complete acknowledgment order, fail-closed
+  physical configuration, and protected dispatch boundary. The TypeScript suite now
+  contains 128 passing tests.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule

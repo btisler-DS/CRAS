@@ -6,12 +6,17 @@ interface RobotFloorMapProps {
 
 export function RobotFloorMap({ robot }: RobotFloorMapProps) {
   const arrived = robot.position === "Room 312";
+  const physical = robot.target === "physical";
   return (
     <section className="panel floor-panel" aria-labelledby="floor-heading">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">Canonical simulator</span>
-          <h2 id="floor-heading">Medication route</h2>
+          <span className="eyebrow">
+            {physical ? "Protected physical adapter" : "Canonical simulator"}
+          </span>
+          <h2 id="floor-heading">
+            {physical ? "Commissioning round trip" : "Medication route"}
+          </h2>
         </div>
         <span className={`pill ${arrived ? "pill--success" : ""}`}>
           {robot.movementState}
@@ -42,7 +47,7 @@ export function RobotFloorMap({ robot }: RobotFloorMapProps) {
           <strong data-testid="adapter-calls">{robot.dispatchCount}</strong>
         </div>
         <div>
-          <span>Final position</span>
+          <span>{physical ? "Worker receipt" : "Final position"}</span>
           <strong data-testid="robot-position">{robot.position}</strong>
         </div>
       </div>

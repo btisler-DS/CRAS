@@ -55,8 +55,9 @@ export interface RuntimeView {
   > | null;
   readonly executionRecord: ExecutionRecord | null;
   readonly robot: {
-    position: "pharmacy" | "Room 312";
-    movementState: "STATIONARY" | "MOVING" | "ARRIVED" | "FAILED";
+    target: "simulator" | "physical";
+    position: "pharmacy" | "Room 312" | "home-base" | "unknown";
+    movementState: "STATIONARY" | "MOVING" | "ARRIVED" | "RETURNED" | "FAILED";
     dispatchCount: number;
     executedActionId: string | null;
     grantId: string | null;

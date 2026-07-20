@@ -18,9 +18,9 @@ export interface RobotAdapterConfiguration {
 }
 
 export interface RobotAdapterEnvironment {
-  readonly CRAS_ROBOT_ADAPTER?: string;
-  readonly CRAS_PHYSICAL_WORKER_BASE_URL?: string;
-  readonly CRAS_ROBOT_SIGNING_KEY_FILE?: string;
+  readonly CRAS_ROBOT_ADAPTER?: string | undefined;
+  readonly CRAS_PHYSICAL_WORKER_BASE_URL?: string | undefined;
+  readonly CRAS_ROBOT_SIGNING_KEY_FILE?: string | undefined;
 }
 
 /** Passive factory. The simulator remains the default and canonical adapter. */
