@@ -7,7 +7,10 @@ CRAS server.
 - `audio/microphone_once.py`: one gated, bounded, non-retaining Vosk capture.
 - `audio/tone_once.py`: one gated tone through the verified Robot HAT PyAudio path.
 - `worker/cras_robot_worker.py`: loopback-only authenticated, replay-protected worker for the single canonical physical demonstration action.
+- `vision/vision_worker.py`: loopback-only observational OV5647 MJPEG owner. It starts
+  no capture on import or service startup and imports no actuator library.
 - `systemd/cras-robot-worker.service`: supervised worker with a restricted filesystem view.
+- `systemd/cras-vision-worker.service`: separately supervised, camera-only worker.
 
 The worker has no generic movement endpoint. It admits only an HMAC-authenticated
 dispatch envelope for medication delivery to Room 312 and maps it to one fixed,

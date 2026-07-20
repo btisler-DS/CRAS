@@ -6,6 +6,7 @@ import type { RequiredConditionId } from "../domain.js";
 import type { DemoPreset, RuntimeView } from "../ui/runtime-view.js";
 import { EventTimeline } from "./event-timeline.js";
 import { RobotFloorMap } from "./robot-floor-map.js";
+import { RobotVisionPanel } from "./robot-vision-panel.js";
 import { RuntimeRecords } from "./runtime-records.js";
 import { StatusPanel } from "./status-panel.js";
 
@@ -73,18 +74,23 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           >
             Live mission
           </button>
-          <button onClick={() => selectPreset("blocked")} disabled={pending}>
-            Blocked
-          </button>
-          <button onClick={() => selectPreset("successful")} disabled={pending}>
-            Successful
-          </button>
-          <button
-            onClick={() => selectPreset("evidence-failure")}
-            disabled={pending}
-          >
-            Evidence failure
-          </button>
+          <details className="preset-menu">
+            <summary>Demo presets</summary>
+            <div>
+              <button onClick={() => selectPreset("blocked")} disabled={pending}>
+                Blocked
+              </button>
+              <button onClick={() => selectPreset("successful")} disabled={pending}>
+                Successful
+              </button>
+              <button
+                onClick={() => selectPreset("evidence-failure")}
+                disabled={pending}
+              >
+                Evidence failure
+              </button>
+            </div>
+          </details>
           <button
             className="button--reset"
             onClick={() => void run({ command: "reset" })}
@@ -96,6 +102,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       </header>
 
       <div className="page-shell">
+        <RobotVisionPanel />
         <section className="interaction-panel" aria-labelledby="interaction-heading">
           <div>
             <span className="eyebrow">Mission interaction · {view.missionId}</span>
@@ -202,8 +209,15 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           <RobotFloorMap robot={view.robot} />
         </div>
 
-        <RuntimeRecords view={view} />
-        <EventTimeline events={view.events} />
+        <details className="technical-disclosure">
+          <summary>Evidence, grant, and complete audit trail</summary>
+          <p>
+            Open this section for judge-facing technical evidence. It is not required
+            to operate the mission.
+          </p>
+          <RuntimeRecords view={view} />
+          <EventTimeline events={view.events} />
+        </details>
       </div>
     </main>
   );

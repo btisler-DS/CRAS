@@ -12,6 +12,7 @@
     "demo": "node --import tsx scripts/demo.ts",
     "test": "vitest run",
     "test:robot-worker": "python3 -m unittest robot/worker/test_cras_robot_worker.py",
+    "test:vision-worker": "python3 -m unittest robot/vision/test_vision_worker.py",
     "test:browser": "playwright test",
     "test:watch": "vitest",
     "verify:robot-hat-tone": "node --import tsx scripts/verify-robot-hat-tone.ts",

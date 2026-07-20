@@ -1,0 +1,14 @@
+[Unit]
+Description=Constitutional Runtime private robot vision SSH transport
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ssh -F /dev/null -i /home/edos/.ssh/id_ed25519 -o UserKnownHostsFile=/home/edos/.ssh/known_hosts -o StrictHostKeyChecking=yes -N -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -L 127.0.0.1:19100:127.0.0.1:9400 edos@192.168.68.120
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

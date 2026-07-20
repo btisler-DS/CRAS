@@ -102,6 +102,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The app creates temporary SQLite databases and resets to a deterministic blocked scenario. The separate CLI demo remains available with `npm run demo`.
 
+The main screen includes an observation-only robot video panel. When
+`ROBOT_VISION_BASE_URL` points at the independently supervised loopback forward, the
+operator may start or stop the OV5647 MJPEG stream. The browser talks only to CRAS;
+the camera worker exposes no actuator commands and receives no browser-selected robot
+address.
+
 For a supervised physical stand demonstration, the server process—not the browser—may
 be configured with:
 

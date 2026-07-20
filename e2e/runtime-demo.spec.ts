@@ -5,6 +5,14 @@ async function reset(page: import("@playwright/test").Page): Promise<void> {
   await page.goto("/");
 }
 
+async function selectPreset(
+  page: import("@playwright/test").Page,
+  name: "Blocked" | "Successful" | "Evidence failure",
+): Promise<void> {
+  await page.getByText("Demo presets", { exact: true }).click();
+  await page.getByRole("button", { name, exact: true }).click();
+}
+
 test.describe("Constitutional Runtime browser demonstration", () => {
   test.beforeEach(async ({ page }) => {
     await reset(page);
@@ -22,8 +30,10 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     );
     await expect(page.getByTestId("adapter-calls")).toHaveText("0");
     await expect(page.getByTestId("robot-position")).toHaveText("pharmacy");
-    await expect(page.getByTestId("no-evidence")).toBeVisible();
-    await expect(page.getByTestId("no-grant")).toBeVisible();
+    await expect(page.getByTestId("vision-frame")).toBeVisible();
+    await expect(page.locator(".technical-disclosure")).not.toHaveAttribute("open");
+    await expect(page.getByTestId("no-evidence")).toBeAttached();
+    await expect(page.getByTestId("no-grant")).toBeAttached();
   });
 
   test("live mission logs attention and instruction acknowledgments without authority", async ({
@@ -84,7 +94,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
   test("Scene 3: committed authorization dispatches once and exports matching JSON", async ({
     page,
   }) => {
-    await page.getByRole("button", { name: "Successful", exact: true }).click();
+    await selectPreset(page, "Successful");
     await expect(page.getByTestId("runtime-status")).toHaveText(
       "READY FOR EVIDENCE",
     );
@@ -114,9 +124,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
   test("Scene 4: repository failure denies authorization and prevents motion", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: "Evidence failure", exact: true })
-      .click();
+    await selectPreset(page, "Evidence failure");
     await expect(page.getByTestId("runtime-status")).toHaveText(
       "READY FOR EVIDENCE",
     );
@@ -131,14 +139,14 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     );
     await expect(page.getByTestId("evidence-state")).toHaveText("FAILED");
     await expect(page.getByTestId("execution-state")).toHaveText("STATIONARY");
-    await expect(page.getByTestId("no-evidence")).toBeVisible();
-    await expect(page.getByTestId("no-grant")).toBeVisible();
+    await expect(page.getByTestId("no-evidence")).toBeAttached();
+    await expect(page.getByTestId("no-grant")).toBeAttached();
     await expect(page.getByTestId("adapter-calls")).toHaveText("0");
     await expect(page.getByTestId("robot-position")).toHaveText("pharmacy");
   });
 
   test("reset restores the deterministic blocked scene", async ({ page }) => {
-    await page.getByRole("button", { name: "Successful", exact: true }).click();
+    await selectPreset(page, "Successful");
     await page
       .getByRole("button", { name: "Commit evidence & execute" })
       .click();

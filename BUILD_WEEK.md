@@ -353,6 +353,22 @@ Verified on July 18, 2026:
   closes the physical session, reopens the database, and proves its evidence and grant
   remain present. The TypeScript suite now contains 129 passing tests.
 
+## Native robot video path
+
+- Added a separate loopback-only robot vision worker using the already installed
+  `rpicam-vid` 1.12.0 MJPEG path at 640×480 and 15 fps. Import and service startup are
+  camera-passive; capture begins only after an explicit visible start request.
+- The worker imports neither `picarx` nor `robot_hat` and exposes no actuator,
+  calibration, filesystem, shell, or arbitrary-command surface.
+- Added CRAS server proxy routes for status, start, stop, and MJPEG streaming through
+  the existing typed `VisionClient`/`VisionTransport` boundary. Robot addresses and
+  tunnel details remain outside browser code.
+- Added a prominent observation-only video panel. It states that video supplies
+  context but cannot authorize or execute action, and exposes only start/stop.
+- Three hardware-free worker tests prove passive construction, fixed `rpicam-vid`
+  arguments, and absence of robotics dependencies. Physical camera streaming has not
+  yet been deployed or verified in this checkpoint.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule

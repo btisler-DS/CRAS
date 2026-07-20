@@ -92,6 +92,7 @@ export class RuntimeSession {
       options.databasePath === undefined
         ? this.#robotTarget === "physical"
           ? resolve(
+              /* turbopackIgnore: true */
               process.env.CRAS_PHYSICAL_EVIDENCE_DB ??
                 ".runtime/physical-ui-evidence.db",
             )

@@ -1,0 +1,24 @@
+[Unit]
+Description=Constitutional Runtime private observational vision worker
+After=local-fs.target
+
+[Service]
+Type=simple
+User=edos
+Group=edos
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory=/var/lib/cras-robot
+ExecStart=/usr/bin/python3 /opt/cras-robot/vision/vision_worker.py
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=3
+KillSignal=SIGTERM
+SendSIGKILL=yes
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/cras-robot
+
+[Install]
+WantedBy=multi-user.target
