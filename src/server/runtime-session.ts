@@ -16,6 +16,8 @@ import { normalizeAction } from "../dispatch/normalized-action.js";
 import type { EvidenceAuthorizationResult } from "../evidence/repository.js";
 import { EvidenceRepository } from "../evidence/repository.js";
 import { SimulatedRobotAdapter } from "../robot/simulated-robot-adapter.js";
+import { createRobotAcknowledgmentClientFromEnvironment } from "./robot/robot-acknowledgment-config.js";
+import type { RobotAcknowledgmentClient } from "./robot/robot-acknowledgment-client.js";
 import type {
   DemoPreset,
   InteractionState,
@@ -55,8 +57,18 @@ class RuntimeSession {
   #evidenceState: RuntimeView["evidenceState"] = "NOT STARTED";
   #executionState: RuntimeView["executionState"] = "STATIONARY";
   #interactionState: InteractionState = "INSTRUCTION_ACKNOWLEDGED";
+  readonly #acknowledgments: RobotAcknowledgmentClient | null;
 
   constructor() {
+    this.#acknowledgments = createRobotAcknowledgmentClientFromEnvironment(
+      {
+        CRAS_ROBOT_ACKNOWLEDGMENTS: process.env.CRAS_ROBOT_ACKNOWLEDGMENTS,
+        CRAS_PHYSICAL_WORKER_BASE_URL:
+          process.env.CRAS_PHYSICAL_WORKER_BASE_URL,
+        CRAS_ROBOT_SIGNING_KEY_FILE:
+          process.env.CRAS_ROBOT_SIGNING_KEY_FILE,
+      },
+    );
     this.reset("blocked");
   }
 
@@ -120,7 +132,8 @@ class RuntimeSession {
 
   alertRobot(): RuntimeView {
     if (this.#interactionState !== "IDLE") return this.view();
-    this.#addEvent("ROBOT_ALERTED", "Operator requested robot attention", "OPERATOR");
+    const requestEventId = this.#addEvent("ROBOT_ALERTED", "Operator requested robot attention", "OPERATOR");
+    if (!this.#tryAcknowledge(requestEventId, "ATTENTION")) return this.view();
     this.#interactionState = "ATTENTION_ACKNOWLEDGED";
     this.#addEvent("ATTENTION_ACKNOWLEDGED", "Robot acknowledged and is listening; no authority implied", "ROBOT");
     return this.view();
@@ -128,7 +141,8 @@ class RuntimeSession {
 
   issueInstruction(): RuntimeView {
     if (this.#interactionState !== "ATTENTION_ACKNOWLEDGED") return this.view();
-    this.#addEvent("INSTRUCTION_RECEIVED", INSTRUCTION, "OPERATOR");
+    const requestEventId = this.#addEvent("INSTRUCTION_RECEIVED", INSTRUCTION, "OPERATOR");
+    if (!this.#tryAcknowledge(requestEventId, "INSTRUCTION_RECEIVED")) return this.view();
     this.#interactionState = "INSTRUCTION_ACKNOWLEDGED";
     this.#addEvent("INSTRUCTION_ACKNOWLEDGED", "Robot acknowledged receipt; authorization remains unresolved", "ROBOT");
     this.#evaluate();
@@ -312,7 +326,7 @@ class RuntimeSession {
     detail: string,
     actor: import("../evidence/repository.js").MissionEventActor = "CRAS",
     references: { evidenceRecordId?: string; grantId?: string } = {},
-  ): void {
+  ): string {
     const persisted = this.#requireRepository().appendMissionEvent({
       missionId: MISSION_ID,
       correlationId: CORRELATION_ID,
@@ -330,6 +344,29 @@ class RuntimeSession {
       detail,
       timestamp: persisted.occurredAt,
     });
+    return persisted.missionEventId;
+  }
+
+  #tryAcknowledge(
+    requestEventId: string,
+    acknowledgment: "ATTENTION" | "INSTRUCTION_RECEIVED",
+  ): boolean {
+    if (!this.#acknowledgments) return true;
+    try {
+      this.#acknowledgments.acknowledge({
+        missionId: MISSION_ID,
+        eventId: requestEventId,
+        acknowledgment,
+      });
+      return true;
+    } catch (error) {
+      this.#addEvent(
+        "ACKNOWLEDGMENT_FAILED",
+        `Robot acknowledgment failed (${error instanceof Error ? error.name : "unknown error"}); no authority or execution occurred`,
+        "CRAS",
+      );
+      return false;
+    }
   }
 
   #requireRepository(): EvidenceRepository {

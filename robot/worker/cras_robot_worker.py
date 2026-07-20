@@ -12,6 +12,7 @@ import subprocess
 import threading
 import time
 import traceback
+from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HOST = "127.0.0.1"
@@ -19,10 +20,12 @@ PORT = 9300
 MAX_BODY = 16 * 1024
 MAX_CLOCK_SKEW_MS = 30_000
 BEHAVIOR_ID = "MEDICATION_DELIVERY_DEMO_V1"
+ACKNOWLEDGMENT_TYPES = frozenset(("ATTENTION", "INSTRUCTION_RECEIVED", "AUTHORIZED", "MISSION_COMPLETED"))
 DB_PATH = os.environ.get("CRAS_ROBOT_REPLAY_DB", "/var/lib/cras-robot/replay.sqlite3")
 KEY_PATH = os.environ.get("CRAS_ROBOT_SIGNING_KEY_FILE", "/etc/cras-robot/dispatch.key")
 ACTIVE_LOCK = threading.Lock()
 ACTIVE_PROCESS = None
+OPERATION_LOCK = threading.Lock()
 
 
 def load_key():
@@ -35,16 +38,32 @@ def load_key():
 
 def initialize_replay_store():
     os.makedirs(os.path.dirname(DB_PATH), mode=0o750, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as db:
+    with closing(sqlite3.connect(DB_PATH)) as db:
         db.execute("PRAGMA journal_mode=WAL")
         db.execute("PRAGMA synchronous=FULL")
         db.execute("CREATE TABLE IF NOT EXISTS consumed_grants (grant_id TEXT PRIMARY KEY, nonce TEXT UNIQUE NOT NULL, consumed_at_ms INTEGER NOT NULL)")
+        db.execute("CREATE TABLE IF NOT EXISTS acknowledgments (event_id TEXT PRIMARY KEY, nonce TEXT UNIQUE NOT NULL, acknowledgment TEXT NOT NULL, acknowledged_at_ms INTEGER NOT NULL)")
+        db.commit()
 
 
 def claim_once(grant_id, nonce, consumed_at_ms):
     try:
-        with sqlite3.connect(DB_PATH) as db:
+        with closing(sqlite3.connect(DB_PATH)) as db:
             db.execute("INSERT INTO consumed_grants(grant_id, nonce, consumed_at_ms) VALUES (?, ?, ?)", (grant_id, nonce, consumed_at_ms))
+            db.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+
+def claim_acknowledgment_once(event_id, nonce, acknowledgment, acknowledged_at_ms):
+    try:
+        with closing(sqlite3.connect(DB_PATH)) as db:
+            db.execute(
+                "INSERT INTO acknowledgments(event_id, nonce, acknowledgment, acknowledged_at_ms) VALUES (?, ?, ?, ?)",
+                (event_id, nonce, acknowledgment, acknowledged_at_ms),
+            )
+            db.commit()
         return True
     except sqlite3.IntegrityError:
         return False
@@ -76,6 +95,38 @@ def execute_fixed_demo_action():
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGKILL)
         raise RuntimeError("fixed motion child timed out")
+    finally:
+        with ACTIVE_LOCK:
+            ACTIVE_PROCESS = None
+
+
+def execute_fixed_acknowledgment(acknowledgment):
+    """Execute one fixed pattern; no caller-controlled tone parameters cross."""
+    global ACTIVE_PROCESS
+    process = None
+    try:
+        process = subprocess.Popen(
+            ["/usr/bin/python3", "/opt/cras-robot/audio/acknowledge_once.py", acknowledgment],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            start_new_session=True,
+        )
+        with ACTIVE_LOCK:
+            ACTIVE_PROCESS = process
+        output, _ = process.communicate(timeout=4)
+        marker = f'"acknowledgment":"{acknowledgment}"'
+        if process.returncode != 0 or marker not in output or '"cleanup_completed":true' not in output:
+            diagnostic = output.replace("\x00", "")[-1200:]
+            raise RuntimeError(f"fixed acknowledgment child failed ({process.returncode}): {diagnostic}")
+    except subprocess.TimeoutExpired:
+        if process is not None:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+        raise RuntimeError("fixed acknowledgment child timed out")
     finally:
         with ACTIVE_LOCK:
             ACTIVE_PROCESS = None
@@ -126,7 +177,7 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, {"service": "cras-robot-worker", "status": "ready", "actuators_initialized": False})
 
     def do_POST(self):
-        if self.path != "/dispatch":
+        if self.path not in ("/dispatch", "/acknowledge"):
             return self.reply(404, {"error": "not_found"})
         length = int(self.headers.get("Content-Length", "0"))
         if length <= 0 or length > MAX_BODY:
@@ -141,6 +192,8 @@ class Handler(BaseHTTPRequestHandler):
             if not hmac.compare_digest(expected, signature):
                 return self.reply(401, {"error": "invalid_signature"})
             envelope = json.loads(payload)
+            if self.path == "/acknowledge":
+                return self.handle_acknowledgment(envelope)
             required = ("grant_id", "evidence_record_id", "action_id", "action_digest", "issued_at_ms", "nonce")
             if envelope.get("version") != 1 or any(not envelope.get(field) for field in required):
                 raise ValueError("invalid envelope")
@@ -152,7 +205,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(422, {"error": "unsupported_behavior"})
             if not claim_once(envelope["grant_id"], envelope["nonce"], int(time.time() * 1000)):
                 return self.reply(409, {"error": "replay_rejected"})
-            execute_fixed_demo_action()
+            if not OPERATION_LOCK.acquire(blocking=False):
+                return self.reply(409, {"error": "robot_busy"})
+            try:
+                execute_fixed_demo_action()
+            finally:
+                OPERATION_LOCK.release()
             self.reply(200, {
                 "status": "executed",
                 "final_position": "physical-demo-complete",
@@ -166,6 +224,35 @@ class Handler(BaseHTTPRequestHandler):
                 "traceback": traceback.format_exc(limit=8)[-1800:],
             }), flush=True)
             self.reply(500, {"error": "dispatch_failed"})
+
+    def handle_acknowledgment(self, envelope):
+        required = ("mission_id", "event_id", "acknowledgment", "issued_at_ms", "nonce")
+        if envelope.get("version") != 1 or any(not envelope.get(field) for field in required):
+            raise ValueError("invalid acknowledgment envelope")
+        for field in ("mission_id", "event_id", "nonce"):
+            value = envelope[field]
+            if not isinstance(value, str) or len(value) > 128:
+                raise ValueError("invalid acknowledgment identifier")
+        if abs(int(time.time() * 1000) - int(envelope["issued_at_ms"])) > MAX_CLOCK_SKEW_MS:
+            return self.reply(409, {"error": "stale_acknowledgment"})
+        acknowledgment = envelope["acknowledgment"]
+        if acknowledgment not in ACKNOWLEDGMENT_TYPES:
+            return self.reply(422, {"error": "unsupported_acknowledgment"})
+        if not OPERATION_LOCK.acquire(blocking=False):
+            return self.reply(409, {"error": "robot_busy"})
+        try:
+            if not claim_acknowledgment_once(
+                envelope["event_id"], envelope["nonce"], acknowledgment, int(time.time() * 1000)
+            ):
+                return self.reply(409, {"error": "replay_rejected"})
+            execute_fixed_acknowledgment(acknowledgment)
+        finally:
+            OPERATION_LOCK.release()
+        self.reply(200, {
+            "status": "acknowledged",
+            "acknowledgment": acknowledgment,
+            "cleanup_completed": True,
+        })
 
 
 def main():

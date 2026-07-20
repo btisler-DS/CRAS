@@ -6,12 +6,16 @@ This repository contains Constitutional Runtime, the new Build Week product. Edo
 
 ## Current phase
 
-Phase 5D-11 proves simulator and physical targets use one shared authorization/evidence/Dispatcher composition and differ only at the final injected adapter. Do not create a target-specific bypass. Until a later phase is explicitly authorized:
+The current competition build has a canonical simulator, one protected physical
+behavior, and a private fixed-pattern acknowledgment boundary. Simulator and physical
+targets use one shared authorization/evidence/Dispatcher composition and differ only
+at the final injected adapter. Do not create a target-specific bypass. Until a later
+phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
-- Do not add OpenAI, deployment, or physical robot integrations.
+- Do not add OpenAI integration or additional physical behaviors.
 - Do not expose dispatch or the robot adapter through HTTP.
-- Do not add a physical robot adapter; the deterministic simulator is canonical.
+- Do not broaden the physical adapter; the deterministic simulator remains canonical.
 - Do not add a vision worker, camera access, vision proxy route, or Robot Status page.
 - Do not add speech routing, intent resolution, browser speech behavior, or audible automated tests.
 - Do not run `verify:vosk-microphone` without explicit physical-test authorization.
@@ -19,6 +23,8 @@ Phase 5D-11 proves simulator and physical targets use one shared authorization/e
 - Never download a speech model during application startup or commit a model to Git.
 - Keep speech engines disabled by default; Robot HAT output requires an explicitly injected controller.
 - Do not run `verify:robot-hat-tone` without explicit physical-test authorization.
+- Do not invoke `/acknowledge` or deploy acknowledgment changes without explicit
+  operator authorization; automated tests must inject the transport and child process.
 - Keep `ROBOT_VISION_BASE_URL` server-only and all tunnel credentials and lifecycle outside this repository.
 - Make vision route handlers depend on `VisionClient`; never put SSH, socket, robot-address, or direct `fetch` logic in a route.
 - Do not claim that later-phase proposed behavior has been implemented or verified.

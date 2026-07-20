@@ -19,11 +19,11 @@ operator at the power cutoff.
 
 ## Speech adapter status
 
-Phase 5D-3A provides server-only STT/TTS interfaces, deterministic hardware-free test
-adapters, and a passive Robot HAT tone boundary based on the verified SunFounder
-PyAudio path. Speech engines remain disabled by default. There is no microphone,
-speech routing, browser audio, network speech engine, or physical playback integration
-in the application yet.
+The repository now contains server-only STT/TTS interfaces, a bounded Vosk microphone
+path, deterministic intent routing, and a passive Robot HAT tone boundary based on
+the verified SunFounder PyAudio path. Speech and physical acknowledgment capabilities
+remain disabled by default. There is no conversational loop, browser audio, or network
+speech engine.
 
 ## Optional future vision transport
 
@@ -42,7 +42,12 @@ The canonical demonstration follows a robot asked to deliver medication to Room 
 
 ## Project status
 
-Phase 4 adds the complete local browser demonstration over the unchanged Phase 1–3 runtime. A Next.js server owns the deterministic session, SQLite repository, dispatcher, and simulator; the React client sends only preset, condition, reset, and commit intents and receives a read-only view. No OpenAI API integration, deployment, HTTP dispatch endpoint, or physical robot adapter has been implemented.
+The complete local browser demonstration runs over the deterministic kernel, SQLite
+evidence repository, Dispatcher, and canonical simulator. A separately deployed,
+loopback-only physical worker and server-side physical adapter have also completed a
+wheel-off-ground protected dispatch. The browser cannot address either adapter or the
+robot worker directly, and the simulator remains the no-hardware fallback. No OpenAI
+API integration or autonomous navigation has been implemented.
 
 SQLite is configured with WAL journaling, foreign keys enabled, and `synchronous=FULL`. Evidence records form a SHA-256 hash chain and can be exported as JSON. This chain is **tamper-evident, not tamper-proof**: modification can break detectable links, but a party able to rewrite the database may also be able to recompute the chain.
 
@@ -96,6 +101,13 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The app creates temporary SQLite databases and resets to a deterministic blocked scenario. The separate CLI demo remains available with `npm run demo`.
+
+Robot-local acknowledgments are an optional private capability. With
+`CRAS_ROBOT_ACKNOWLEDGMENTS=physical`, the server sends only four fixed, signed names
+to the loopback worker: attention, instruction received, authorized, and mission
+completed. Callers cannot select frequency, duration, device, file, or command.
+Attention and instruction receipt are currently connected to the live mission flow;
+the latter two remain reserved until that flow owns physical execution state.
 
 ### Optional local speech recognition artifact
 

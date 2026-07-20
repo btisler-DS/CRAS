@@ -244,3 +244,19 @@ Phase 5D-11 composes the shared request-to-execution path once. Simulator and ph
 The Next.js UI, deterministic authorization kernel, SQLite evidence repository, and Dispatcher remain on the CRAS server. `PhysicalRobotAdapter` receives only the branded validated grant and normalized action after atomic grant consumption. It signs a bounded dispatch envelope and sends it through a server-local loopback transport.
 
 An independently supervised SSH forward connects that loopback port to the robot worker, which itself binds only to `127.0.0.1:9300`. The worker verifies the HMAC, freshness, exact canonical action, and durable replay record before constructing `Picarx`. Its only action is a fixed one-second minimum-speed wheel-off-ground maneuver, with `stop()` in `finally` and on SIGTERM/SIGINT. There is no generic movement endpoint.
+
+## Private robot acknowledgments
+
+Audible acknowledgments are not an alternate action or authorization path. The
+server-owned `RobotAcknowledgmentClient` signs one of four closed names and sends it
+through a loopback-only transport to `/acknowledge`. The worker verifies the HMAC and
+freshness, durably rejects event/nonce replay, serializes acknowledgment against
+motion, and maps the name to robot-local fixed tone data. No frequency, duration,
+device, filename, Python expression, or shell command crosses the boundary.
+
+The robot-local child imports `robot_hat` only after explicit invocation, uses the
+verified `Music.play_tone_for()` PyAudio backend, disables the amplifier in `finally`,
+and restores GPIO20 to its verified idle function. The capability is disabled by
+default. Attention and instruction-received acknowledgments do not imply authority;
+they only confirm receipt. Automated tests inject transports and processes and never
+touch audio or GPIO.

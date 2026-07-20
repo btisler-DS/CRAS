@@ -280,6 +280,20 @@ Verified on July 18, 2026:
 - The blocked matrix proves zero simulator calls, zero physical-transport calls, zero evidence records, and zero grants for both targets.
 - Physical alignment tests inject an inert transport; no hardware command occurs.
 
+## Private mission acknowledgment boundary
+
+- Added a server-only, disabled-by-default acknowledgment client for exactly four
+  fixed signals: attention, instruction received, authorized, and mission completed.
+- Added HMAC authentication, timestamp freshness, durable event/nonce replay
+  protection, loopback-only transport, response validation, bounded execution, and
+  motion/audio serialization in the private robot worker.
+- Added the fixed Robot HAT PyAudio child with amplifier cleanup and GPIO20 idle-state
+  restoration. Browser callers cannot provide tone parameters or robot addresses.
+- Connected only attention and instruction-received signals to the interactive mission
+  session. Neither signal authorizes, commits evidence, dispatches, or executes.
+- Verification is hardware-free: 125 TypeScript tests and 3 Python worker tests pass.
+  No sound or physical movement was produced during this implementation checkpoint.
+
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
 ## Future provenance rule

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "demo": "node --import tsx scripts/demo.ts",
     "test": "vitest run",
+    "test:robot-worker": "python3 -m unittest robot/worker/test_cras_robot_worker.py",
     "test:browser": "playwright test",
     "test:watch": "vitest",
     "verify:robot-hat-tone": "node --import tsx scripts/verify-robot-hat-tone.ts",
@@ -28,6 +29,7 @@
     "next": "^16.2.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "server-only": "^0.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
