@@ -112,8 +112,9 @@ the latter two remain reserved until that flow owns physical execution state.
 The single active protected hardware behavior is
 `MEDICATION_DELIVERY_ROUND_TRIP_V1`. It is a fixed minimum-speed
 outbound/stop/return/stop stand maneuver and accepts no caller-selected motion
-parameters. It is currently verified only by hardware-free tests; it does not yet
-constitute physical navigation to Room 312.
+parameters. It is verified by deterministic tests and one separately authorized
+wheel-off-ground physical dispatch. This stand maneuver does not yet constitute
+autonomous navigation to a physical Room 312.
 
 ### Optional local speech recognition artifact
 

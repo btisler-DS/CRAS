@@ -319,9 +319,12 @@ Verified on July 18, 2026:
 - The exact sequence is covered by a hardware-free injected-PiCar-X test. The full
   TypeScript suite remains at 125 passing tests and the Python worker suite now has
   4 passing tests.
-- This active behavior has not yet been executed on hardware. Reverse movement and
-  the complete round trip remain physically unverified and require a separately cued
-  wheel-off-ground test.
+- A separately authorized wheel-off-ground dispatch committed evidence
+  `48105638-fa5e-440d-8fa3-d808f921120a` and single-use grant
+  `7667e470-3128-4949-9d43-9b77ad007bfa`, invoked the adapter exactly once, persisted
+  the worker replay record, and returned `EXECUTED` at `home-base`. The operator
+  confirmed forward movement, the stopped interval, reverse movement, and final stop
+  with no unintended behavior. The active round-trip behavior is physically verified.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 

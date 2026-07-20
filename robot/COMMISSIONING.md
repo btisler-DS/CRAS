@@ -51,16 +51,27 @@ Verified July 20, 2026 with the robot secured on its stand:
 All four fixed patterns are physically verified: attention (one short), instruction
 received (two short), authorized (one long), and mission completed (three short).
 
-## Active round-trip contract — awaiting physical verification
+## Active round-trip contract — physically verified
 
 `MEDICATION_DELIVERY_ROUND_TRIP_V1` supersedes the forward-only behavior as the one
 active physical contract. It commands minimum-speed forward for 1,000 ms, stops,
 holds neutral for 500 ms, commands minimum-speed reverse for 1,000 ms, and stops in
 `finally`. A successful receipt reports `home-base`.
 
-The exact command order passes a hardware-free injected-controller test. It has not
-been executed on the robot. In particular, reverse motion remains physically untested;
-this section is a pending test specification, not commissioning evidence.
+The exact command order passes a hardware-free injected-controller test.
+
+Verified July 20, 2026 on the wheel-off-ground stand:
+
+- Evidence record: `48105638-fa5e-440d-8fa3-d808f921120a`
+- Authorization grant: `7667e470-3128-4949-9d43-9b77ad007bfa`
+- Execution record: `7b7afbfd-d6a5-4ebd-a809-27ad1e046e3d`
+- Server execution state: `EXECUTED`
+- Authenticated adapter calls: exactly one
+- Worker replay record: durably persisted
+- Worker receipt: `home-base`
+- Operator observation: both wheels ran forward and backward with the intended stop;
+  final stop succeeded and no other issue or unintended actuator movement occurred.
+- Post-action state: worker active and healthy; no motion child remained.
 
 Constitutional Runtime exposes exactly one physical behavior for the competition demonstration.
 
