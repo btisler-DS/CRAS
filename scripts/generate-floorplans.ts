@@ -28,6 +28,7 @@ type Scenario = {
   status: "PLACEMENT" | "AUTHORIZED PATH" | "UNAUTHORIZED" | "COMMIT FAILED";
   placements: Placement[];
   route?: string[];
+  robotAt?: string;
   note: string;
 };
 
@@ -157,6 +158,50 @@ const scenarios: Scenario[] = [
     placements: [...baseOperational, ...standardPatientPlacements],
     note: "This is the constitutional failure case: capability and conditions are insufficient without durable evidence.",
   },
+  {
+    slug: "08-video-authorized-departure",
+    title: "Video movement 1 · Authorized departure",
+    instruction: "A committed evidence record and single-use grant now permit the declared Room 312 mission.",
+    outcome: "Robot leaves Home only after AUTHORIZED appears in the live runtime.",
+    status: "AUTHORIZED PATH",
+    placements: [...baseOperational, ...standardPatientPlacements],
+    route: ["LOC-HOME", "LOC-PHARMACY", "LOC-ROOM-312", "LOC-HOME"],
+    robotAt: "LOC-HOME",
+    note: "Video shot: hold on the stationary robot, show the evidence/grant IDs, then begin movement.",
+  },
+  {
+    slug: "09-video-pharmacy-pickup",
+    title: "Video movement 2 · Medication collected",
+    instruction: "Collect the matched insulin lispro package at Pharmacy.",
+    outcome: "Robot reaches Pharmacy; MED-2001 remains bound to the authorized action.",
+    status: "AUTHORIZED PATH",
+    placements: [...baseOperational, ...standardPatientPlacements],
+    route: ["LOC-HOME", "LOC-PHARMACY", "LOC-ROOM-312", "LOC-HOME"],
+    robotAt: "LOC-PHARMACY",
+    note: "Video shot: show the robot beside the MED-2001 image, then continue down the hallway.",
+  },
+  {
+    slug: "10-video-room-312-arrival",
+    title: "Video movement 3 · Room 312 arrival",
+    instruction: "Approach Room 312 and confirm Bed 312-A and PAT-1001.",
+    outcome: "Destination, bed, patient, and medication agree with the committed mission evidence.",
+    status: "AUTHORIZED PATH",
+    placements: [...baseOperational, ...standardPatientPlacements],
+    route: ["LOC-HOME", "LOC-PHARMACY", "LOC-ROOM-312", "LOC-HOME"],
+    robotAt: "LOC-ROOM-312",
+    note: "Video shot: show the doorway QR, bed QR, fictional face, and patient QR separately.",
+  },
+  {
+    slug: "11-video-return-home",
+    title: "Video movement 4 · Return and complete",
+    instruction: "Return from Room 312 to Home after the declared delivery completes.",
+    outcome: "Robot returns to Home; execution and mission-completion records close the interaction.",
+    status: "AUTHORIZED PATH",
+    placements: [...baseOperational, ...standardPatientPlacements],
+    route: ["LOC-HOME", "LOC-PHARMACY", "LOC-ROOM-312", "LOC-HOME"],
+    robotAt: "LOC-HOME",
+    note: "Video shot: reverse into the 12-inch Home bay only after docking is separately commissioned.",
+  },
 ];
 
 const outputDir = path.resolve("demo-assets/floorplans");
@@ -188,7 +233,7 @@ console.log(`Generated ${scenarios.length} floorplan scenarios in ${outputDir}`)
 
 async function renderScenario(scenario: Scenario): Promise<string> {
   const roomSvg = await Promise.all(rooms.map((room) => renderRoom(room, scenario)));
-  const routeSvg = scenario.route ? renderRoute(scenario.route) : "";
+  const routeSvg = scenario.route ? renderRoute(scenario.route, scenario.robotAt) : "";
   const statusColor = scenario.status === "AUTHORIZED PATH" ? "#047857" : scenario.status === "PLACEMENT" ? "#075985" : "#b91c1c";
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img" aria-labelledby="title desc">
   <title id="title">${xml(scenario.title)}</title><desc id="desc">${xml(scenario.instruction)}</desc>
@@ -239,7 +284,7 @@ async function renderRoom(room: Room, scenario: Scenario): Promise<string> {
   </g>`;
 }
 
-function renderRoute(ids: string[]): string {
+function renderRoute(ids: string[], robotAt?: string): string {
   const stops = ids.map((id) => {
     const room = requireRoom(id);
     const y = 165 + room.row * 145;
@@ -258,9 +303,12 @@ function renderRoute(ids: string[]): string {
   const numbers = stops.slice(1, -1).map((stop, index) =>
     `<circle cx="${stop.x}" cy="${stop.y}" r="16" fill="#0f766e"/><text x="${stop.x}" y="${stop.y + 5}" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">${index + 1}</text>`,
   ).join("");
+  const robotRoom = requireRoom(robotAt ?? ids[0]!);
+  const robotX = robotRoom.side === "left" ? 510 : 890;
+  const robotY = 165 + robotRoom.row * 145;
   return `<polyline points="${points.join(" ")}" fill="none" stroke="#0f766e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)" opacity=".9"/>
   ${numbers}
-  <circle cx="510" cy="745" r="18" fill="#0f766e"/><text x="510" y="751" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">R</text>`;
+  <circle cx="${robotX}" cy="${robotY}" r="22" fill="#0f172a" stroke="#5eead4" stroke-width="6"/><text x="${robotX}" y="${robotY + 5}" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#fff">R</text>`;
 }
 
 function requireRoom(id: string): Room {

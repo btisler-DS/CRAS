@@ -734,5 +734,401 @@
       }
     ],
     "note": "This is the constitutional failure case: capability and conditions are insufficient without durable evidence."
+  },
+  {
+    "slug": "08-video-authorized-departure",
+    "title": "Video movement 1 · Authorized departure",
+    "instruction": "A committed evidence record and single-use grant now permit the declared Room 312 mission.",
+    "outcome": "Robot leaves Home only after AUTHORIZED appears in the live runtime.",
+    "status": "AUTHORIZED PATH",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "route": [
+      "LOC-HOME",
+      "LOC-PHARMACY",
+      "LOC-ROOM-312",
+      "LOC-HOME"
+    ],
+    "robotAt": "LOC-HOME",
+    "note": "Video shot: hold on the stationary robot, show the evidence/grant IDs, then begin movement."
+  },
+  {
+    "slug": "09-video-pharmacy-pickup",
+    "title": "Video movement 2 · Medication collected",
+    "instruction": "Collect the matched insulin lispro package at Pharmacy.",
+    "outcome": "Robot reaches Pharmacy; MED-2001 remains bound to the authorized action.",
+    "status": "AUTHORIZED PATH",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "route": [
+      "LOC-HOME",
+      "LOC-PHARMACY",
+      "LOC-ROOM-312",
+      "LOC-HOME"
+    ],
+    "robotAt": "LOC-PHARMACY",
+    "note": "Video shot: show the robot beside the MED-2001 image, then continue down the hallway."
+  },
+  {
+    "slug": "10-video-room-312-arrival",
+    "title": "Video movement 3 · Room 312 arrival",
+    "instruction": "Approach Room 312 and confirm Bed 312-A and PAT-1001.",
+    "outcome": "Destination, bed, patient, and medication agree with the committed mission evidence.",
+    "status": "AUTHORIZED PATH",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "route": [
+      "LOC-HOME",
+      "LOC-PHARMACY",
+      "LOC-ROOM-312",
+      "LOC-HOME"
+    ],
+    "robotAt": "LOC-ROOM-312",
+    "note": "Video shot: show the doorway QR, bed QR, fictional face, and patient QR separately."
+  },
+  {
+    "slug": "11-video-return-home",
+    "title": "Video movement 4 · Return and complete",
+    "instruction": "Return from Room 312 to Home after the declared delivery completes.",
+    "outcome": "Robot returns to Home; execution and mission-completion records close the interaction.",
+    "status": "AUTHORIZED PATH",
+    "placements": [
+      {
+        "marker": "MED-2001",
+        "room": "LOC-PHARMACY",
+        "label": "Insulin lispro · MED-2001",
+        "role": "expected"
+      },
+      {
+        "marker": "STAFF-NURSE-7001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Nurse Adeyemi",
+        "role": "expected"
+      },
+      {
+        "marker": "ORDER-8001",
+        "room": "LOC-NURSE-STATION",
+        "label": "Active order 8001",
+        "role": "expected"
+      },
+      {
+        "marker": "DOCK-HOME-APPROACH",
+        "room": "LOC-HOME",
+        "label": "Approach marker",
+        "role": "context"
+      },
+      {
+        "marker": "DOCK-HOME-FINAL",
+        "room": "LOC-HOME",
+        "label": "Final dock marker",
+        "role": "context"
+      },
+      {
+        "marker": "BED-311-A",
+        "room": "LOC-ROOM-311",
+        "label": "Bed 311-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1002",
+        "room": "LOC-ROOM-311",
+        "label": "Marcus Lee",
+        "role": "context",
+        "face": "PAT-1002"
+      },
+      {
+        "marker": "BED-312-A",
+        "room": "LOC-ROOM-312",
+        "label": "Bed 312-A",
+        "role": "expected"
+      },
+      {
+        "marker": "PAT-1001",
+        "room": "LOC-ROOM-312",
+        "label": "Sarah Johnson · PAT-1001",
+        "role": "expected",
+        "face": "PAT-1001"
+      },
+      {
+        "marker": "BED-313-A",
+        "room": "LOC-ROOM-313",
+        "label": "Bed 313-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1003",
+        "room": "LOC-ROOM-313",
+        "label": "Elena Ruiz",
+        "role": "context",
+        "face": "PAT-1003"
+      },
+      {
+        "marker": "BED-314-A",
+        "room": "LOC-ROOM-314",
+        "label": "Bed 314-A",
+        "role": "context"
+      },
+      {
+        "marker": "PAT-1004",
+        "room": "LOC-ROOM-314",
+        "label": "Daniel Okafor",
+        "role": "context",
+        "face": "PAT-1004"
+      }
+    ],
+    "route": [
+      "LOC-HOME",
+      "LOC-PHARMACY",
+      "LOC-ROOM-312",
+      "LOC-HOME"
+    ],
+    "robotAt": "LOC-HOME",
+    "note": "Video shot: reverse into the 12-inch Home bay only after docking is separately commissioned."
   }
 ]

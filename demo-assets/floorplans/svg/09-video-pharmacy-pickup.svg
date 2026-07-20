@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="950" viewBox="0 0 1400 950" role="img" aria-labelledby="title desc">
-  <title id="title">Scenario 1 · Authorized medication delivery</title><desc id="desc">Deliver insulin lispro to Sarah Johnson in Room 312, Bed 312-A.</desc>
+  <title id="title">Video movement 2 · Medication collected</title><desc id="desc">Collect the matched insulin lispro package at Pharmacy.</desc>
   <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f766e"/></marker></defs>
   <rect width="1400" height="950" fill="#f8fafc"/>
-  <text x="70" y="42" font-family="Arial" font-size="28" font-weight="700" fill="#0f172a">Scenario 1 · Authorized medication delivery</text>
-  <text x="70" y="72" font-family="Arial" font-size="17" fill="#334155">Deliver insulin lispro to Sarah Johnson in Room 312, Bed 312-A.</text>
+  <text x="70" y="42" font-family="Arial" font-size="28" font-weight="700" fill="#0f172a">Video movement 2 · Medication collected</text>
+  <text x="70" y="72" font-family="Arial" font-size="17" fill="#334155">Collect the matched insulin lispro package at Pharmacy.</text>
   <rect x="1040" y="25" width="290" height="48" rx="24" fill="#047857"/>
   <text x="1185" y="56" text-anchor="middle" font-family="Arial" font-size="17" font-weight="700" fill="#fff">AUTHORIZED PATH</text>
   <rect x="450" y="100" width="500" height="725" fill="#dbeafe" stroke="#2563eb" stroke-width="5"/>
   <text x="700" y="135" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="#1e3a8a">CENTRAL HALLWAY</text>
-  <polyline points="510,745 700,745 700,745 700,165 890,165 700,165 700,165 700,165 510,165 700,165 700,165 700,310 890,310 700,310 700,310 700,745 510,745" fill="none" stroke="#0f766e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)" opacity=".9"/>
-  <circle cx="890" cy="165" r="16" fill="#0f766e"/><text x="890" y="170" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">1</text><circle cx="510" cy="165" r="16" fill="#0f766e"/><text x="510" y="170" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">2</text><circle cx="890" cy="310" r="16" fill="#0f766e"/><text x="890" y="315" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">3</text>
-  <circle cx="510" cy="745" r="22" fill="#0f172a" stroke="#5eead4" stroke-width="6"/><text x="510" y="750" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#fff">R</text>
+  <polyline points="510,745 700,745 700,745 700,165 510,165 700,165 700,165 700,310 890,310 700,310 700,310 700,745 510,745" fill="none" stroke="#0f766e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)" opacity=".9"/>
+  <circle cx="510" cy="165" r="16" fill="#0f766e"/><text x="510" y="170" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">1</text><circle cx="890" cy="310" r="16" fill="#0f766e"/><text x="890" y="315" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#fff">2</text>
+  <circle cx="510" cy="165" r="22" fill="#0f172a" stroke="#5eead4" stroke-width="6"/><text x="510" y="170" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#fff">R</text>
   <g>
     <rect x="70" y="100" width="380" height="130" fill="#fff" stroke="#2563eb" stroke-width="5"/>
     <text x="88" y="127" font-family="Arial" font-size="17" font-weight="700" fill="#0f172a">PHARMACY</text>
@@ -163,7 +163,7 @@
 
   </g>
   <rect x="70" y="850" width="1260" height="68" rx="12" fill="#e2e8f0"/>
-  <text x="90" y="877" font-family="Arial" font-size="16" font-weight="700" fill="#047857">All identities match; evidence commits; one grant permits the declared mission.</text>
-  <text x="90" y="903" font-family="Arial" font-size="14" fill="#334155">Show evidence ID and grant ID before movement; return and reverse into Home.</text>
-  <text x="1315" y="936" text-anchor="end" font-family="monospace" font-size="11" fill="#64748b">SIMULATION TESTBED · PROPOSED ROOM ASSIGNMENT · 01-success-room-312</text>
+  <text x="90" y="877" font-family="Arial" font-size="16" font-weight="700" fill="#047857">Robot reaches Pharmacy; MED-2001 remains bound to the authorized action.</text>
+  <text x="90" y="903" font-family="Arial" font-size="14" fill="#334155">Video shot: show the robot beside the MED-2001 image, then continue down the hallway.</text>
+  <text x="1315" y="936" text-anchor="end" font-family="monospace" font-size="11" fill="#64748b">SIMULATION TESTBED · PROPOSED ROOM ASSIGNMENT · 09-video-pharmacy-pickup</text>
   </svg>

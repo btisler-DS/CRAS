@@ -9,6 +9,9 @@ mismatch, wrong medication, held order, moved patient, and evidence-store outage
 
 Each standalone SVG embeds its referenced QR and portrait images and the set includes
 a letter-size landscape print artifact, JSON scenario manifest, and regeneration script.
+Four additional video storyboard frames advance the robot indicator through authorized
+departure, Pharmacy pickup, Room 312 arrival, and return Home without inventing a new
+authorization path.
 The room assignment is explicitly marked proposed pending operator confirmation. These
 maps do not claim marker perception, condition resolution, or ground navigation.
 

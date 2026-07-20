@@ -48,6 +48,14 @@ observation and cannot itself create an authorization grant.
 7. `06-patient-moved.svg` — correct patient found in Room 314, not ordered Room 312.
 8. `07-evidence-outage.svg` — all physical facts satisfied but evidence commit fails;
    the robot remains at Home.
+9. `08-video-authorized-departure.svg` — first movement after evidence and grant.
+10. `09-video-pharmacy-pickup.svg` — robot at Pharmacy with matched medication.
+11. `10-video-room-312-arrival.svg` — robot at the destination and identity markers.
+12. `11-video-return-home.svg` — return and eventual reverse-docking shot.
+
+The last four maps are video storyboard frames of one canonical authorized mission,
+not four separate grants or new physical behaviors. They intentionally move the robot
+indicator along one consistent route while preserving the no-movement failure maps.
 
 Open `print-floorplans.html` or print `CRAS-floorplan-scenarios-letter.pdf` in landscape
 at actual size. Regenerate after configuration changes with:
