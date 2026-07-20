@@ -1,3 +1,7 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, it } from "vitest";
 
 import type {
@@ -5,12 +9,17 @@ import type {
   RobotAdapter,
   ValidatedAuthorizationGrant,
 } from "../dispatch/types.js";
+import { EvidenceRepository } from "../evidence/repository.js";
 import { RuntimeSession } from "./runtime-session.js";
 import type { RobotAcknowledgmentType } from "./robot/robot-acknowledgment-client.js";
 
 const sessions: RuntimeSession[] = [];
+const directories: string[] = [];
 afterEach(() => {
   for (const session of sessions.splice(0)) session.dispose();
+  for (const directory of directories.splice(0)) {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 class PhysicalSpy implements RobotAdapter {
@@ -37,6 +46,7 @@ function readySession(
         acknowledge(request.acknowledgment);
       },
     },
+    databasePath: physicalDatabasePath(),
   });
   sessions.push(session);
   session.beginMission();
@@ -104,4 +114,33 @@ describe("RuntimeSession physical mission composition", () => {
     expect(adapter.calls).toBe(1);
     expect(retried.executionState).toBe("EXECUTED");
   });
+
+  it("keeps physical mission evidence after the session closes", () => {
+    const adapter = new PhysicalSpy();
+    const databasePath = physicalDatabasePath();
+    const session = new RuntimeSession({
+      robotTarget: "physical",
+      robotFactory: () => adapter,
+      acknowledgments: { acknowledge() {} },
+      databasePath,
+    });
+    sessions.push(session);
+    session.alertRobot();
+    session.issueInstruction();
+    session.setCondition("PATIENT_IDENTITY_VERIFIED", true);
+    session.commitAndDispatch();
+    session.dispose();
+    sessions.splice(sessions.indexOf(session), 1);
+
+    const reopened = new EvidenceRepository(databasePath);
+    expect(reopened.countEvidenceRecords()).toBe(1);
+    expect(reopened.countAuthorizationGrants()).toBe(1);
+    reopened.close();
+  });
 });
+
+function physicalDatabasePath(): string {
+  const directory = mkdtempSync(join(tmpdir(), "cras-physical-session-test-"));
+  directories.push(directory);
+  return join(directory, "evidence.db");
+}

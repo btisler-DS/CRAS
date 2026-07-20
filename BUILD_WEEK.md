@@ -341,8 +341,17 @@ Verified on July 18, 2026:
   and the worker's `home-base` receipt without pretending the stand maneuver navigated
   to a real hospital room.
 - Hardware-free composition tests prove the complete acknowledgment order, fail-closed
-  physical configuration, and protected dispatch boundary. The TypeScript suite now
-  contains 128 passing tests.
+  physical configuration, and protected dispatch boundary.
+- The first operator-driven UI integration run exposed that the Phase 4 session still
+  used its temporary simulator database. The worker accepted the signed sequence and
+  retained its replay record, but the server evidence file was not suitable as a
+  restart-durable competition record. That run is classified as diagnostic, not as
+  the official durable-evidence demonstration.
+- Physical UI mode now uses `.runtime/physical-ui-evidence.db` (or the explicit
+  `CRAS_PHYSICAL_EVIDENCE_DB`) with real unique record IDs and a unique mission
+  instance ID. Simulator mode retains deterministic temporary storage. A restart test
+  closes the physical session, reopens the database, and proves its evidence and grant
+  remain present. The TypeScript suite now contains 129 passing tests.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 

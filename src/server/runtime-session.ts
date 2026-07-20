@@ -1,8 +1,9 @@
 import "server-only";
 
-import { mkdtempSync, rmSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import { evaluateAuthorization } from "../authorization-kernel.js";
 import type {
@@ -52,6 +53,7 @@ export interface RuntimeSessionOptions {
   readonly robotFactory?: () => RobotAdapter;
   readonly robotTarget?: "simulator" | "physical";
   readonly acknowledgments?: RobotAcknowledgmentPort | null;
+  readonly databasePath?: string;
 }
 
 export class RuntimeSession {
@@ -79,11 +81,22 @@ export class RuntimeSession {
   readonly #acknowledgments: RobotAcknowledgmentPort | null;
   #authorizationEventId: string | null = null;
   #authorizationAcknowledged = false;
+  #missionId = MISSION_ID;
+  readonly #persistentDatabasePath: string | null;
 
   constructor(options: RuntimeSessionOptions = {}) {
     const configuredTarget =
       process.env.CRAS_ROBOT_ADAPTER === "physical" ? "physical" : "simulator";
     this.#robotTarget = options.robotTarget ?? configuredTarget;
+    this.#persistentDatabasePath =
+      options.databasePath === undefined
+        ? this.#robotTarget === "physical"
+          ? resolve(
+              process.env.CRAS_PHYSICAL_EVIDENCE_DB ??
+                ".runtime/physical-ui-evidence.db",
+            )
+          : null
+        : resolve(options.databasePath);
     this.#robotFactory =
       options.robotFactory ??
       (() =>
@@ -148,15 +161,31 @@ export class RuntimeSession {
     this.#repository?.close();
     if (this.#directory) rmSync(this.#directory, { recursive: true, force: true });
 
-    this.#directory = mkdtempSync(join(tmpdir(), "constitutional-ui-"));
+    this.#directory = this.#persistentDatabasePath
+      ? ""
+      : mkdtempSync(join(tmpdir(), "constitutional-ui-"));
+    this.#missionId =
+      this.#robotTarget === "physical"
+        ? `${MISSION_ID}-${randomUUID()}`
+        : MISSION_ID;
     this.#failureInjected = preset === "evidence-failure";
     let idSequence = 0;
+    const databasePath =
+      this.#persistentDatabasePath ?? join(this.#directory, "evidence.db");
+    if (this.#persistentDatabasePath) {
+      mkdirSync(dirname(databasePath), { recursive: true, mode: 0o750 });
+    }
     this.#repository = new EvidenceRepository(
-      join(this.#directory, "evidence.db"),
+      databasePath,
       {
         failureMode: this.#failureInjected ? "EVIDENCE_WRITE" : "NONE",
-        now: () => new Date(FIXED_NOW),
-        createId: () => `demo-${String(++idSequence).padStart(4, "0")}`,
+        ...(this.#persistentDatabasePath
+          ? {}
+          : {
+              now: () => new Date(FIXED_NOW),
+              createId: () =>
+                `demo-${String(++idSequence).padStart(4, "0")}`,
+            }),
       },
     );
     this.#robot = this.#robotFactory();
@@ -353,7 +382,7 @@ export class RuntimeSession {
       : null;
     const runtimeStatus = this.#runtimeStatus();
     return {
-      missionId: MISSION_ID,
+      missionId: this.#missionId,
       instruction:
         this.#interactionState === "INSTRUCTION_ACKNOWLEDGED"
           ? INSTRUCTION
@@ -456,7 +485,7 @@ export class RuntimeSession {
     references: { evidenceRecordId?: string; grantId?: string } = {},
   ): string {
     const persisted = this.#requireRepository().appendMissionEvent({
-      missionId: MISSION_ID,
+      missionId: this.#missionId,
       correlationId: CORRELATION_ID,
       actionId: ACTION_ID,
       eventType: state,
@@ -482,7 +511,7 @@ export class RuntimeSession {
     if (!this.#acknowledgments) return true;
     try {
       this.#acknowledgments.acknowledge({
-        missionId: MISSION_ID,
+        missionId: this.#missionId,
         eventId: requestEventId,
         acknowledgment,
       });

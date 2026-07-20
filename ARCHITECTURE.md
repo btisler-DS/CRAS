@@ -283,3 +283,9 @@ Acknowledgment receipt is not authority. In physical mode, failure to produce th
 authorization acknowledgment conservatively prevents dispatch and leaves the grant
 unconsumed. Adapter selection and acknowledgment enablement are server environment
 choices, never browser payload fields. Simulator mode remains the default.
+
+Simulator sessions intentionally use disposable deterministic SQLite databases so
+presets reset cleanly. Physical UI sessions instead use the server-owned persistent
+database configured by `CRAS_PHYSICAL_EVIDENCE_DB`; they use unique mission and record
+identifiers and never delete that database during reset or shutdown. This distinction
+prevents demonstration convenience from weakening physical evidence durability.

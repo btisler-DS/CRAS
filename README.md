@@ -110,6 +110,7 @@ CRAS_ROBOT_ADAPTER=physical \
 CRAS_ROBOT_ACKNOWLEDGMENTS=physical \
 CRAS_PHYSICAL_WORKER_BASE_URL=http://127.0.0.1:19300 \
 CRAS_ROBOT_SIGNING_KEY_FILE=.runtime/dispatch.key \
+CRAS_PHYSICAL_EVIDENCE_DB=.runtime/physical-ui-evidence.db \
 npm run dev
 ```
 
