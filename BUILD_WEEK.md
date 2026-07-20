@@ -297,8 +297,17 @@ Verified on July 18, 2026:
   `ATTENTION` request through the HMAC-authenticated private worker. The worker
   returned `200 acknowledged` with cleanup confirmed; GPIO20 returned to `PCM_DIN`,
   no playback or motion child remained, and the operator confirmed one short tone
-  was audible with no actuator movement. The other three patterns remain physically
-  unverified.
+  was audible with no actuator movement.
+- A separately authorized `INSTRUCTION_RECEIVED` verification returned the same safe
+  postconditions. The operator confirmed exactly two short tones were audible with no
+  actuator movement.
+- A separately authorized `AUTHORIZED` verification returned the same safe
+  postconditions. The operator confirmed one long tone was audible with no actuator
+  movement.
+- A separately authorized `MISSION_COMPLETED` verification returned the same safe
+  postconditions. The operator confirmed exactly three short tones were audible with
+  no actuator movement. All four fixed acknowledgment patterns are now physically
+  verified.
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 

@@ -11,7 +11,45 @@ Verified July 20, 2026 with the robot secured on its stand:
 - Postcondition: worker healthy, GPIO20 restored to `PCM_DIN` (`a0`, pull-down), no
   acknowledgment or motion child remained, and no PCM playback owner remained.
 - `INSTRUCTION_RECEIVED`, `AUTHORIZED`, and `MISSION_COMPLETED` patterns were not
-  exercised in this verification and remain unverified on hardware.
+  exercised in that verification.
+
+## Private acknowledgment verification — instruction received
+
+Verified July 20, 2026 with the robot secured on its stand:
+
+- Request: fixed `INSTRUCTION_RECEIVED` acknowledgment through the signed,
+  loopback-only worker boundary.
+- Worker receipt: HTTP 200, `acknowledged`, cleanup completed.
+- Operator observation: exactly two short tones heard; no actuator movement.
+- Postcondition: worker healthy, GPIO20 restored to `PCM_DIN`, no acknowledgment or
+  motion child remained, and no PCM playback owner remained.
+- `AUTHORIZED` and `MISSION_COMPLETED` remain unverified on hardware.
+
+## Private acknowledgment verification — authorized
+
+Verified July 20, 2026 with the robot secured on its stand:
+
+- Request: fixed `AUTHORIZED` acknowledgment through the signed, loopback-only worker
+  boundary. This pattern-only commissioning request did not create a grant or dispatch.
+- Worker receipt: HTTP 200, `acknowledged`, cleanup completed.
+- Operator observation: one long tone heard; no actuator movement.
+- Postcondition: worker healthy, GPIO20 restored to `PCM_DIN`, no acknowledgment or
+  motion child remained, and no PCM playback owner remained.
+- `MISSION_COMPLETED` remains unverified on hardware.
+
+## Private acknowledgment verification — mission completed
+
+Verified July 20, 2026 with the robot secured on its stand:
+
+- Request: fixed `MISSION_COMPLETED` acknowledgment through the signed, loopback-only
+  worker boundary.
+- Worker receipt: HTTP 200, `acknowledged`, cleanup completed.
+- Operator observation: exactly three short tones heard; no actuator movement.
+- Postcondition: worker healthy, GPIO20 restored to `PCM_DIN`, no acknowledgment or
+  motion child remained, and no PCM playback owner remained.
+
+All four fixed patterns are physically verified: attention (one short), instruction
+received (two short), authorized (one long), and mission completed (three short).
 
 Constitutional Runtime exposes exactly one physical behavior for the competition demonstration.
 
