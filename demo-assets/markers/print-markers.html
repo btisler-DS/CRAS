@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CRAS Demonstration Markers</title>
+<style>
+@page { size: letter portrait; margin: 0.35in; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; }
+.sheet { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.18in; }
+.marker { height: 4.95in; border: 3px solid #111; padding: 0.14in; break-inside: avoid; display: grid; grid-template-rows: auto 3.05in auto auto auto auto; text-align: center; align-items: center; }
+.marker.distractor { border-style: dashed; }
+header { display: flex; justify-content: space-between; font: 700 10pt monospace; letter-spacing: .06em; }
+header strong { color: #9b1c1c; }
+img { width: 3.05in; height: 3.05in; justify-self: center; image-rendering: pixelated; }
+h2 { font-size: 19pt; line-height: 1; margin: .04in 0; }
+p { font-size: 10pt; margin: 0; }
+code { font-size: 11pt; font-weight: 700; }
+small { font-size: 7pt; letter-spacing: .05em; }
+@media screen { body { max-width: 8.5in; margin: .25in auto; } }
+</style></head><body><main class="sheet">
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-PHARMACY.svg" alt="QR code for LOC-PHARMACY">
+      <h2>PHARMACY</h2>
+      <p>Medication pickup</p>
+      <code>LOC-PHARMACY</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-HOME.svg" alt="QR code for LOC-HOME">
+      <h2>HOME BASE</h2>
+      <p>Utility room / charging bay</p>
+      <code>LOC-HOME</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-NURSE-STATION.svg" alt="QR code for LOC-NURSE-STATION">
+      <h2>NURSE STATION</h2>
+      <p>Instruction origin</p>
+      <code>LOC-NURSE-STATION</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-SUPPLY.svg" alt="QR code for LOC-SUPPLY">
+      <h2>SUPPLY ROOM</h2>
+      <p>Clinical supplies</p>
+      <code>LOC-SUPPLY</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-LAB.svg" alt="QR code for LOC-LAB">
+      <h2>LAB</h2>
+      <p>Specimen processing</p>
+      <code>LOC-LAB</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-CLEAN-UTILITY.svg" alt="QR code for LOC-CLEAN-UTILITY">
+      <h2>CLEAN UTILITY</h2>
+      <p>Utility room</p>
+      <code>LOC-CLEAN-UTILITY</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-ROOM-311.svg" alt="QR code for LOC-ROOM-311">
+      <h2>ROOM 311</h2>
+      <p>Patient room</p>
+      <code>LOC-ROOM-311</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-ROOM-312.svg" alt="QR code for LOC-ROOM-312">
+      <h2>ROOM 312</h2>
+      <p>Canonical destination</p>
+      <code>LOC-ROOM-312</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-ROOM-313.svg" alt="QR code for LOC-ROOM-313">
+      <h2>ROOM 313</h2>
+      <p>Patient room</p>
+      <code>LOC-ROOM-313</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>LOCATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/LOC-ROOM-314.svg" alt="QR code for LOC-ROOM-314">
+      <h2>ROOM 314</h2>
+      <p>Patient room</p>
+      <code>LOC-ROOM-314</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-311-A.svg" alt="QR code for BED-311-A">
+      <h2>BED 311-A</h2>
+      <p>Inside Room 311</p>
+      <code>BED-311-A</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-311-B.svg" alt="QR code for BED-311-B">
+      <h2>BED 311-B</h2>
+      <p>Inside Room 311</p>
+      <code>BED-311-B</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-312-A.svg" alt="QR code for BED-312-A">
+      <h2>BED 312-A</h2>
+      <p>Inside Room 312</p>
+      <code>BED-312-A</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-312-B.svg" alt="QR code for BED-312-B">
+      <h2>BED 312-B</h2>
+      <p>Inside Room 312</p>
+      <code>BED-312-B</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-313-A.svg" alt="QR code for BED-313-A">
+      <h2>BED 313-A</h2>
+      <p>Inside Room 313</p>
+      <code>BED-313-A</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-313-B.svg" alt="QR code for BED-313-B">
+      <h2>BED 313-B</h2>
+      <p>Inside Room 313</p>
+      <code>BED-313-B</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-314-A.svg" alt="QR code for BED-314-A">
+      <h2>BED 314-A</h2>
+      <p>Inside Room 314</p>
+      <code>BED-314-A</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>BED</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/BED-314-B.svg" alt="QR code for BED-314-B">
+      <h2>BED 314-B</h2>
+      <p>Inside Room 314</p>
+      <code>BED-314-B</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>PATIENT</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/PAT-1001.svg" alt="QR code for PAT-1001">
+      <h2>SARAH JOHNSON</h2>
+      <p>Assigned: Room 312 · Bed 312-A</p>
+      <code>PAT-1001</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>PATIENT</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/PAT-1002.svg" alt="QR code for PAT-1002">
+      <h2>MARCUS LEE</h2>
+      <p>Assigned: Room 311 · Bed 311-A</p>
+      <code>PAT-1002</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>PATIENT</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/PAT-1003.svg" alt="QR code for PAT-1003">
+      <h2>ELENA RUIZ</h2>
+      <p>Assigned: Room 313 · Bed 313-A</p>
+      <code>PAT-1003</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>PATIENT</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/PAT-1004.svg" alt="QR code for PAT-1004">
+      <h2>DANIEL OKAFOR</h2>
+      <p>Assigned: Room 314 · Bed 314-A</p>
+      <code>PAT-1004</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>PATIENT</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/PAT-1901.svg" alt="QR code for PAT-1901">
+      <h2>SARAH JOHNSTON</h2>
+      <p>DISTRACTOR · similar name</p>
+      <code>PAT-1901</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>PATIENT</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/PAT-1902.svg" alt="QR code for PAT-1902">
+      <h2>SARAH JOHNSON</h2>
+      <p>DISTRACTOR · wrong patient number</p>
+      <code>PAT-1902</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>PATIENT</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/PAT-1903.svg" alt="QR code for PAT-1903">
+      <h2>ALEX SMITH</h2>
+      <p>DISTRACTOR · ambiguous surname</p>
+      <code>PAT-1903</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>PATIENT</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/PAT-1904.svg" alt="QR code for PAT-1904">
+      <h2>JORDAN SMITH</h2>
+      <p>DISTRACTOR · ambiguous surname</p>
+      <code>PAT-1904</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>MEDICATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/MED-2001.svg" alt="QR code for MED-2001">
+      <h2>INSULIN LISPRO</h2>
+      <p>Canonical medication · simulated</p>
+      <code>MED-2001</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>MEDICATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/MED-2002.svg" alt="QR code for MED-2002">
+      <h2>MORPHINE</h2>
+      <p>Simulated medication</p>
+      <code>MED-2002</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>MEDICATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/MED-2003.svg" alt="QR code for MED-2003">
+      <h2>AMOXICILLIN</h2>
+      <p>Simulated medication</p>
+      <code>MED-2003</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>MEDICATION</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/MED-2004.svg" alt="QR code for MED-2004">
+      <h2>SALINE</h2>
+      <p>Simulated medication</p>
+      <code>MED-2004</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>MEDICATION</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/MED-2901.svg" alt="QR code for MED-2901">
+      <h2>INSULIN GLARGINE</h2>
+      <p>DISTRACTOR · wrong formulation</p>
+      <code>MED-2901</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>MEDICATION</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/MED-2902.svg" alt="QR code for MED-2902">
+      <h2>INSULIN LISPRO</h2>
+      <p>DISTRACTOR · wrong package ID</p>
+      <code>MED-2902</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>MEDICATION</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/MED-2903.svg" alt="QR code for MED-2903">
+      <h2>INSULIN LISPRO</h2>
+      <p>DISTRACTOR · expired lot</p>
+      <code>MED-2903</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>MEDICATION</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/MED-2904.svg" alt="QR code for MED-2904">
+      <h2>UNLABELED ITEM</h2>
+      <p>DISTRACTOR · identity unresolved</p>
+      <code>MED-2904</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>STAFF</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/STAFF-NURSE-7001.svg" alt="QR code for STAFF-NURSE-7001">
+      <h2>NURSE ADEYEMI</h2>
+      <p>Authorized demo nurse</p>
+      <code>STAFF-NURSE-7001</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>STAFF</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/STAFF-VISITOR-7901.svg" alt="QR code for STAFF-VISITOR-7901">
+      <h2>VISITOR BADGE</h2>
+      <p>DISTRACTOR · not authorized</p>
+      <code>STAFF-VISITOR-7901</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>ORDER</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/ORDER-8001.svg" alt="QR code for ORDER-8001">
+      <h2>ACTIVE ORDER 8001</h2>
+      <p>Sarah Johnson · insulin lispro</p>
+      <code>ORDER-8001</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker distractor">
+      <header><span>ORDER</span><strong>TEST MISMATCH</strong></header>
+      <img src="svg/ORDER-8901.svg" alt="QR code for ORDER-8901">
+      <h2>ORDER 8901 ON HOLD</h2>
+      <p>DISTRACTOR · inactive order</p>
+      <code>ORDER-8901</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>DOCK</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/DOCK-HOME-APPROACH.svg" alt="QR code for DOCK-HOME-APPROACH">
+      <h2>HOME APPROACH</h2>
+      <p>Align before reverse docking</p>
+      <code>DOCK-HOME-APPROACH</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article>
+    <article class="marker canonical">
+      <header><span>DOCK</span><strong>CRAS DEMO</strong></header>
+      <img src="svg/DOCK-HOME-FINAL.svg" alt="QR code for DOCK-HOME-FINAL">
+      <h2>HOME DOCK</h2>
+      <p>Final reverse-docking marker</p>
+      <code>DOCK-HOME-FINAL</code>
+      <small>SIMULATION ONLY · NO REAL PATIENT DATA</small>
+    </article></main></body></html>

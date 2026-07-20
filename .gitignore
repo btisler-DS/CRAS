@@ -23,6 +23,8 @@ evidence-exports/
 
 # Logs and editor/OS artifacts
 *.log
+__pycache__/
+*.py[cod]
 .DS_Store
 .idea/
 .vscode/

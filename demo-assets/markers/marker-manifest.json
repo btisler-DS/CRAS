@@ -1,0 +1,322 @@
+[
+  {
+    "id": "LOC-PHARMACY",
+    "kind": "LOCATION",
+    "title": "PHARMACY",
+    "subtitle": "Medication pickup",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-pharmacy"
+  },
+  {
+    "id": "LOC-HOME",
+    "kind": "LOCATION",
+    "title": "HOME BASE",
+    "subtitle": "Utility room / charging bay",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-home"
+  },
+  {
+    "id": "LOC-NURSE-STATION",
+    "kind": "LOCATION",
+    "title": "NURSE STATION",
+    "subtitle": "Instruction origin",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-nurse-station"
+  },
+  {
+    "id": "LOC-SUPPLY",
+    "kind": "LOCATION",
+    "title": "SUPPLY ROOM",
+    "subtitle": "Clinical supplies",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-supply"
+  },
+  {
+    "id": "LOC-LAB",
+    "kind": "LOCATION",
+    "title": "LAB",
+    "subtitle": "Specimen processing",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-lab"
+  },
+  {
+    "id": "LOC-CLEAN-UTILITY",
+    "kind": "LOCATION",
+    "title": "CLEAN UTILITY",
+    "subtitle": "Utility room",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-clean-utility"
+  },
+  {
+    "id": "LOC-ROOM-311",
+    "kind": "LOCATION",
+    "title": "ROOM 311",
+    "subtitle": "Patient room",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-room-311"
+  },
+  {
+    "id": "LOC-ROOM-312",
+    "kind": "LOCATION",
+    "title": "ROOM 312",
+    "subtitle": "Canonical destination",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-room-312"
+  },
+  {
+    "id": "LOC-ROOM-313",
+    "kind": "LOCATION",
+    "title": "ROOM 313",
+    "subtitle": "Patient room",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-room-313"
+  },
+  {
+    "id": "LOC-ROOM-314",
+    "kind": "LOCATION",
+    "title": "ROOM 314",
+    "subtitle": "Patient room",
+    "role": "canonical",
+    "payload": "cras:v1:location:loc-room-314"
+  },
+  {
+    "id": "BED-311-A",
+    "kind": "BED",
+    "title": "BED 311-A",
+    "subtitle": "Inside Room 311",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-311-a"
+  },
+  {
+    "id": "BED-311-B",
+    "kind": "BED",
+    "title": "BED 311-B",
+    "subtitle": "Inside Room 311",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-311-b"
+  },
+  {
+    "id": "BED-312-A",
+    "kind": "BED",
+    "title": "BED 312-A",
+    "subtitle": "Inside Room 312",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-312-a"
+  },
+  {
+    "id": "BED-312-B",
+    "kind": "BED",
+    "title": "BED 312-B",
+    "subtitle": "Inside Room 312",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-312-b"
+  },
+  {
+    "id": "BED-313-A",
+    "kind": "BED",
+    "title": "BED 313-A",
+    "subtitle": "Inside Room 313",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-313-a"
+  },
+  {
+    "id": "BED-313-B",
+    "kind": "BED",
+    "title": "BED 313-B",
+    "subtitle": "Inside Room 313",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-313-b"
+  },
+  {
+    "id": "BED-314-A",
+    "kind": "BED",
+    "title": "BED 314-A",
+    "subtitle": "Inside Room 314",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-314-a"
+  },
+  {
+    "id": "BED-314-B",
+    "kind": "BED",
+    "title": "BED 314-B",
+    "subtitle": "Inside Room 314",
+    "role": "canonical",
+    "payload": "cras:v1:bed:bed-314-b"
+  },
+  {
+    "id": "PAT-1001",
+    "kind": "PATIENT",
+    "title": "SARAH JOHNSON",
+    "subtitle": "Assigned: Room 312 · Bed 312-A",
+    "role": "canonical",
+    "payload": "cras:v1:patient:pat-1001"
+  },
+  {
+    "id": "PAT-1002",
+    "kind": "PATIENT",
+    "title": "MARCUS LEE",
+    "subtitle": "Assigned: Room 311 · Bed 311-A",
+    "role": "canonical",
+    "payload": "cras:v1:patient:pat-1002"
+  },
+  {
+    "id": "PAT-1003",
+    "kind": "PATIENT",
+    "title": "ELENA RUIZ",
+    "subtitle": "Assigned: Room 313 · Bed 313-A",
+    "role": "canonical",
+    "payload": "cras:v1:patient:pat-1003"
+  },
+  {
+    "id": "PAT-1004",
+    "kind": "PATIENT",
+    "title": "DANIEL OKAFOR",
+    "subtitle": "Assigned: Room 314 · Bed 314-A",
+    "role": "canonical",
+    "payload": "cras:v1:patient:pat-1004"
+  },
+  {
+    "id": "PAT-1901",
+    "kind": "PATIENT",
+    "title": "SARAH JOHNSTON",
+    "subtitle": "DISTRACTOR · similar name",
+    "role": "distractor",
+    "payload": "cras:v1:patient:pat-1901"
+  },
+  {
+    "id": "PAT-1902",
+    "kind": "PATIENT",
+    "title": "SARAH JOHNSON",
+    "subtitle": "DISTRACTOR · wrong patient number",
+    "role": "distractor",
+    "payload": "cras:v1:patient:pat-1902"
+  },
+  {
+    "id": "PAT-1903",
+    "kind": "PATIENT",
+    "title": "ALEX SMITH",
+    "subtitle": "DISTRACTOR · ambiguous surname",
+    "role": "distractor",
+    "payload": "cras:v1:patient:pat-1903"
+  },
+  {
+    "id": "PAT-1904",
+    "kind": "PATIENT",
+    "title": "JORDAN SMITH",
+    "subtitle": "DISTRACTOR · ambiguous surname",
+    "role": "distractor",
+    "payload": "cras:v1:patient:pat-1904"
+  },
+  {
+    "id": "MED-2001",
+    "kind": "MEDICATION",
+    "title": "INSULIN LISPRO",
+    "subtitle": "Canonical medication · simulated",
+    "role": "canonical",
+    "payload": "cras:v1:medication:med-2001"
+  },
+  {
+    "id": "MED-2002",
+    "kind": "MEDICATION",
+    "title": "MORPHINE",
+    "subtitle": "Simulated medication",
+    "role": "canonical",
+    "payload": "cras:v1:medication:med-2002"
+  },
+  {
+    "id": "MED-2003",
+    "kind": "MEDICATION",
+    "title": "AMOXICILLIN",
+    "subtitle": "Simulated medication",
+    "role": "canonical",
+    "payload": "cras:v1:medication:med-2003"
+  },
+  {
+    "id": "MED-2004",
+    "kind": "MEDICATION",
+    "title": "SALINE",
+    "subtitle": "Simulated medication",
+    "role": "canonical",
+    "payload": "cras:v1:medication:med-2004"
+  },
+  {
+    "id": "MED-2901",
+    "kind": "MEDICATION",
+    "title": "INSULIN GLARGINE",
+    "subtitle": "DISTRACTOR · wrong formulation",
+    "role": "distractor",
+    "payload": "cras:v1:medication:med-2901"
+  },
+  {
+    "id": "MED-2902",
+    "kind": "MEDICATION",
+    "title": "INSULIN LISPRO",
+    "subtitle": "DISTRACTOR · wrong package ID",
+    "role": "distractor",
+    "payload": "cras:v1:medication:med-2902"
+  },
+  {
+    "id": "MED-2903",
+    "kind": "MEDICATION",
+    "title": "INSULIN LISPRO",
+    "subtitle": "DISTRACTOR · expired lot",
+    "role": "distractor",
+    "payload": "cras:v1:medication:med-2903"
+  },
+  {
+    "id": "MED-2904",
+    "kind": "MEDICATION",
+    "title": "UNLABELED ITEM",
+    "subtitle": "DISTRACTOR · identity unresolved",
+    "role": "distractor",
+    "payload": "cras:v1:medication:med-2904"
+  },
+  {
+    "id": "STAFF-NURSE-7001",
+    "kind": "STAFF",
+    "title": "NURSE ADEYEMI",
+    "subtitle": "Authorized demo nurse",
+    "role": "canonical",
+    "payload": "cras:v1:staff:staff-nurse-7001"
+  },
+  {
+    "id": "STAFF-VISITOR-7901",
+    "kind": "STAFF",
+    "title": "VISITOR BADGE",
+    "subtitle": "DISTRACTOR · not authorized",
+    "role": "distractor",
+    "payload": "cras:v1:staff:staff-visitor-7901"
+  },
+  {
+    "id": "ORDER-8001",
+    "kind": "ORDER",
+    "title": "ACTIVE ORDER 8001",
+    "subtitle": "Sarah Johnson · insulin lispro",
+    "role": "canonical",
+    "payload": "cras:v1:order:order-8001"
+  },
+  {
+    "id": "ORDER-8901",
+    "kind": "ORDER",
+    "title": "ORDER 8901 ON HOLD",
+    "subtitle": "DISTRACTOR · inactive order",
+    "role": "distractor",
+    "payload": "cras:v1:order:order-8901"
+  },
+  {
+    "id": "DOCK-HOME-APPROACH",
+    "kind": "DOCK",
+    "title": "HOME APPROACH",
+    "subtitle": "Align before reverse docking",
+    "role": "canonical",
+    "payload": "cras:v1:dock:dock-home-approach"
+  },
+  {
+    "id": "DOCK-HOME-FINAL",
+    "kind": "DOCK",
+    "title": "HOME DOCK",
+    "subtitle": "Final reverse-docking marker",
+    "role": "canonical",
+    "payload": "cras:v1:dock:dock-home-final"
+  }
+]

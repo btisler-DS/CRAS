@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-label="Fictional drawn portrait for PAT-1001">
+  <rect width="600" height="600" fill="#e7eef2"/>
+  <circle cx="300" cy="275" r="205" fill="#cbd5e1"/>
+  <path d="M80 600c25-150 105-220 220-220s195 70 220 220" fill="#2563eb"/>
+  <rect x="260" y="340" width="80" height="105" rx="34" fill="#8d5524"/>
+  <ellipse cx="300" cy="265" rx="130" ry="155" fill="#8d5524"/>
+  <path d="M176 255c-14-128 50-196 132-196 99 0 143 71 122 196-22-70-69-108-130-108-61 0-101 38-124 108z" fill="#17120f"/>
+  <ellipse cx="252" cy="267" rx="11" ry="14" fill="#151515"/><ellipse cx="348" cy="267" rx="11" ry="14" fill="#151515"/>
+  <!-- no glasses -->
+  <path d="M255 334q45 40 90 0" fill="none" stroke="#7c2d12" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="300" cy="300" r="7" fill="#9a5c39"/>
+  </svg>

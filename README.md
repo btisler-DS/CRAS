@@ -1,5 +1,10 @@
 # Constitutional Runtime
 
+> **Competition continuation:** Start with [HANDOFF.md](HANDOFF.md). It distinguishes
+> verified implementation from pending ground navigation and records the deadline,
+> testbed, safety protocol, and recommended completion order. Track final gates in
+> [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md).
+
 ## Gated Robot HAT tone verification
 
 Phase 5D-3B includes a concrete local controller for the verified SunFounder PyAudio
@@ -25,16 +30,16 @@ the verified SunFounder PyAudio path. Speech and physical acknowledgment capabil
 remain disabled by default. There is no conversational loop, browser audio, or network
 speech engine.
 
-## Optional future vision transport
+## Observation-only vision transport
 
-Phase 5C-4A defines the server-only transport and typed client for a future
-observational camera interface. It does not yet provide a vision worker, API routes,
-or browser page, and it does not alter the canonical simulator.
+The server-only vision transport, robot-local OV5647 worker, proxy routes, and browser
+video panel are implemented. The camera worker is passive until the operator starts
+the stream, exposes no actuator operations, and releases camera ownership when the
+stream stops or its sole downstream viewer disconnects.
 
-When a later phase adds the proxy routes, the server will read
-`ROBOT_VISION_BASE_URL`. The example value is a local endpoint expected to be supplied
-by separately managed transport infrastructure. Robot addresses, SSH credentials,
-and tunnel lifecycle must not be placed in browser code or committed configuration.
+The server reads `ROBOT_VISION_BASE_URL`. The example value is a local endpoint supplied
+by separately managed transport infrastructure. Robot addresses, SSH credentials, and
+tunnel lifecycle must not be placed in browser code or committed configuration.
 
 Constitutional Runtime is a new OpenAI Build Week product: a pre-execution authorization runtime for autonomous systems. Its purpose is to prevent an autonomous system from executing an unauthorized action and to require a durable evidence record before authorization completes.
 
@@ -58,6 +63,8 @@ See:
 - [BUILD_WEEK.md](BUILD_WEEK.md) for provenance and event scope.
 - [ARCHITECTURE.md](ARCHITECTURE.md) for the intended trust boundary and invariants.
 - [DEMO.md](DEMO.md) for the canonical demonstration.
+- [demo-assets/markers/README.md](demo-assets/markers/README.md) for the printable
+  hospital location, patient, medication, order, staff, and docking marker kit.
 
 ## License
 

@@ -1,5 +1,25 @@
 # Build Week Record
 
+## Physical hospital testbed and marker kit
+
+Prepared July 20, 2026 for the reproducible competition demonstration:
+
+- documented the operator-built 10 ft x 5 ft taped hospital testbed, including ten
+  red-tape doorways, four patient rooms, and a reverse-entry home/charging utility room;
+- added a deterministic generator for 40 QR Code Model 2 markers with ECC H;
+- added ten location, eight bed, eight fictional patient, eight simulated medication,
+  two staff, two order, and two docking identities;
+- added deliberate mismatches for similar/duplicate patient names, wrong medication,
+  expired lot, unlabeled item, unauthorized visitor, and held order;
+- added eight deterministic fictional portrait drawings, explicitly separated from
+  patient identity credentials;
+- added letter-size PDF, HTML, SVG, and JSON print/reproduction artifacts.
+
+This prepares test evidence and does not claim QR perception, identity resolution,
+physical floor navigation, or reverse docking. The marker payload is an observation,
+never an authorization. The generator uses the third-party `qrcode` npm package under
+its own license.
+
 ## Phase 5D-3B — concrete Robot HAT tone controller
 
 Phase 5D-3B implements the concrete, robot-local subprocess bridge behind the existing

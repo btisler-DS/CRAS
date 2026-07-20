@@ -4,20 +4,29 @@
 
 This repository contains Constitutional Runtime, the new Build Week product. Edos, TraceStack, and Edos-R are pre-existing concepts only; do not imply that their code, services, credentials, data, or hardware are available.
 
-## Current phase
+Read `HANDOFF.md` before beginning competition work. It records the verified physical
+state, testbed, deadline, remaining risks, and recommended completion order.
 
-The current competition build has a canonical simulator, one protected physical
-behavior, and a private fixed-pattern acknowledgment boundary. Simulator and physical
-targets use one shared authorization/evidence/Dispatcher composition and differ only
-at the final injected adapter. Do not create a target-specific bypass. Until a later
-phase is explicitly authorized:
+## Current state
+
+The competition build has a canonical simulator, one protected round-trip physical
+behavior, a private fixed-pattern acknowledgment boundary, a bounded local speech
+pipeline, and an observation-only camera worker and browser proxy. Simulator and
+physical targets use one shared authorization/evidence/Dispatcher composition and
+differ only at the final injected adapter. Do not create a target-specific bypass.
+
+The robot has not navigated the taped physical hospital layout. Do not imply that
+stand commissioning or simulator animation proves ground navigation.
+
+Until a later phase is explicitly authorized:
 
 - Do not create authorization grants outside the evidence repository transaction.
-- Do not add OpenAI integration or additional physical behaviors.
+- Do not add a second public actuator path or a generic physical behavior.
 - Do not expose dispatch or the robot adapter through HTTP.
 - Do not broaden the physical adapter; the deterministic simulator remains canonical.
-- Do not add a vision worker, camera access, vision proxy route, or Robot Status page.
-- Do not add speech routing, intent resolution, browser speech behavior, or audible automated tests.
+- Keep vision observational; do not add pan, tilt, steering, motor, GPIO, or arbitrary-command routes.
+- Do not make speech, intent resolution, QR data, a model response, or the browser an authority.
+- Do not add audible automated tests.
 - Do not run `verify:vosk-microphone` without explicit physical-test authorization.
 - Do not run `verify:physical-dispatch` unless the operator has explicitly confirmed every driven wheel is off the ground and immediate power cutoff is available.
 - Never download a speech model during application startup or commit a model to Git.
@@ -28,6 +37,8 @@ phase is explicitly authorized:
 - Keep `ROBOT_VISION_BASE_URL` server-only and all tunnel credentials and lifecycle outside this repository.
 - Make vision route handlers depend on `VisionClient`; never put SSH, socket, robot-address, or direct `fetch` logic in a route.
 - Do not claim that later-phase proposed behavior has been implemented or verified.
+- Do not run ground motion or change the active physical behavior without a separately
+  reviewed, versioned contract and explicit operator safety authorization.
 
 ## Non-negotiable invariants
 
