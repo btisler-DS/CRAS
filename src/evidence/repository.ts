@@ -92,6 +92,53 @@ interface ExecutionRow {
   final_position: string | null;
 }
 
+export type MissionEventActor =
+  | "OPERATOR"
+  | "ROBOT"
+  | "CRAS"
+  | "EVIDENCE_STORE"
+  | "DISPATCHER"
+  | "ADAPTER";
+
+export interface MissionEventRecord {
+  readonly missionEventId: string;
+  readonly missionId: string;
+  readonly sequence: number;
+  readonly correlationId: string;
+  readonly actionId: string | null;
+  readonly eventType: string;
+  readonly actor: MissionEventActor;
+  readonly detail: string;
+  readonly occurredAt: string;
+  readonly evidenceRecordId: string | null;
+  readonly grantId: string | null;
+}
+
+export interface AppendMissionEventInput {
+  readonly missionId: string;
+  readonly correlationId: string;
+  readonly actionId?: string | null;
+  readonly eventType: string;
+  readonly actor: MissionEventActor;
+  readonly detail: string;
+  readonly evidenceRecordId?: string | null;
+  readonly grantId?: string | null;
+}
+
+interface MissionEventRow {
+  mission_event_id: string;
+  mission_id: string;
+  sequence: number;
+  correlation_id: string;
+  action_id: string | null;
+  event_type: string;
+  actor: MissionEventActor;
+  detail: string;
+  occurred_at: string;
+  evidence_record_id: string | null;
+  grant_id: string | null;
+}
+
 export type GrantConsumptionResult =
   | {
       readonly accepted: true;
@@ -464,6 +511,68 @@ export class EvidenceRepository {
     ).count;
   }
 
+  appendMissionEvent(input: AppendMissionEventInput): MissionEventRecord {
+    return this.#database.transaction(() => {
+      const row = this.#database
+        .prepare(
+          `SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence
+             FROM mission_events
+            WHERE mission_id = ?`,
+        )
+        .get(input.missionId) as { sequence: number };
+      const sequence = row.sequence;
+      const event: MissionEventRecord = {
+        missionEventId: `${input.missionId}:event:${sequence}`,
+        missionId: input.missionId,
+        sequence,
+        correlationId: input.correlationId,
+        actionId: input.actionId ?? null,
+        eventType: input.eventType,
+        actor: input.actor,
+        detail: input.detail,
+        occurredAt: this.#now().toISOString(),
+        evidenceRecordId: input.evidenceRecordId ?? null,
+        grantId: input.grantId ?? null,
+      };
+      this.#database
+        .prepare(
+          `INSERT INTO mission_events (
+             mission_event_id, mission_id, sequence, correlation_id,
+             action_id, event_type, actor, detail, occurred_at,
+             evidence_record_id, grant_id
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          event.missionEventId,
+          event.missionId,
+          event.sequence,
+          event.correlationId,
+          event.actionId,
+          event.eventType,
+          event.actor,
+          event.detail,
+          event.occurredAt,
+          event.evidenceRecordId,
+          event.grantId,
+        );
+      return event;
+    })();
+  }
+
+  listMissionEvents(missionId: string): readonly MissionEventRecord[] {
+    const rows = this.#database
+      .prepare(
+        `SELECT mission_event_id, mission_id, sequence, correlation_id,
+                action_id, event_type, actor, detail, occurred_at,
+                evidence_record_id, grant_id
+           FROM mission_events
+          WHERE mission_id = ?
+          ORDER BY sequence ASC`,
+      )
+      .all(missionId) as MissionEventRow[];
+    return rows.map(mapMissionEventRow);
+  }
+
   exportEvidenceRecord(evidenceRecordId: string): string {
     const record = this.findEvidenceRecord(evidenceRecordId);
     if (!record) {
@@ -614,5 +723,21 @@ function mapExecutionRow(row: ExecutionRow): ExecutionRecord {
     adapterError: row.adapter_error,
     adapterCallCount: row.adapter_call_count,
     finalPosition: row.final_position,
+  };
+}
+
+function mapMissionEventRow(row: MissionEventRow): MissionEventRecord {
+  return {
+    missionEventId: row.mission_event_id,
+    missionId: row.mission_id,
+    sequence: row.sequence,
+    correlationId: row.correlation_id,
+    actionId: row.action_id,
+    eventType: row.event_type,
+    actor: row.actor,
+    detail: row.detail,
+    occurredAt: row.occurred_at,
+    evidenceRecordId: row.evidence_record_id,
+    grantId: row.grant_id,
   };
 }

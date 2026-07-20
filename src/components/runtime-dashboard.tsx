@@ -66,6 +66,13 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           </div>
         </div>
         <div className="topbar-actions" aria-label="Scenario presets">
+          <button
+            className="button--mission"
+            onClick={() => void run({ command: "begin-mission" })}
+            disabled={pending}
+          >
+            Live mission
+          </button>
           <button onClick={() => selectPreset("blocked")} disabled={pending}>
             Blocked
           </button>
@@ -89,10 +96,39 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       </header>
 
       <div className="page-shell">
+        <section className="interaction-panel" aria-labelledby="interaction-heading">
+          <div>
+            <span className="eyebrow">Mission interaction · {view.missionId}</span>
+            <h2 id="interaction-heading">Alert, instruct, then authorize</h2>
+            <p data-testid="interaction-acknowledgment">
+              {view.interaction.acknowledgment}
+            </p>
+          </div>
+          <div className="interaction-actions">
+            <button
+              onClick={() => void run({ command: "alert-robot" })}
+              disabled={!view.interaction.canAlert || pending}
+            >
+              Alert robot
+            </button>
+            <button
+              onClick={() => void run({ command: "issue-instruction" })}
+              disabled={!view.interaction.canInstruct || pending}
+            >
+              Give instruction
+            </button>
+            <span className="interaction-state" data-testid="interaction-state">
+              {view.interaction.state.replaceAll("_", " ")}
+            </span>
+          </div>
+        </section>
+
         <div className="hero-copy">
           <span className="eyebrow">Live authorization trace · medication delivery</span>
           <p className="instruction-label">Instruction</p>
-          <blockquote data-testid="instruction">“{view.instruction}”</blockquote>
+          <blockquote data-testid="instruction">
+            {view.instruction ? `“${view.instruction}”` : "Awaiting instruction…"}
+          </blockquote>
         </div>
 
         <StatusPanel view={view} />
@@ -116,7 +152,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                   <input
                     type="checkbox"
                     checked={condition.satisfied}
-                    disabled={pending || view.runtimeStatus === "AUTHORIZED"}
+                    disabled={pending || view.runtimeStatus === "AUTHORIZED" || view.interaction.state !== "INSTRUCTION_ACKNOWLEDGED"}
                     onChange={(event) =>
                       setCondition(condition.id, event.currentTarget.checked)
                     }

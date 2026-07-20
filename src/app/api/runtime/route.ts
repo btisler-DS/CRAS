@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 
 const commandSchema = z.discriminatedUnion("command", [
   z.object({ command: z.literal("reset") }).strict(),
+  z.object({ command: z.literal("begin-mission") }).strict(),
+  z.object({ command: z.literal("alert-robot") }).strict(),
+  z.object({ command: z.literal("issue-instruction") }).strict(),
   z
     .object({
       command: z.literal("preset"),
@@ -59,6 +62,15 @@ export async function POST(request: Request): Promise<Response> {
   const session = getRuntimeSession();
   const command = parsed.data;
   if (command.command === "reset") return Response.json(session.reset());
+  if (command.command === "begin-mission") {
+    return Response.json(session.beginMission());
+  }
+  if (command.command === "alert-robot") {
+    return Response.json(session.alertRobot());
+  }
+  if (command.command === "issue-instruction") {
+    return Response.json(session.issueInstruction());
+  }
   if (command.command === "preset") {
     return Response.json(session.reset(command.preset));
   }

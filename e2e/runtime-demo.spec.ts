@@ -26,6 +26,46 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("no-grant")).toBeVisible();
   });
 
+  test("live mission logs attention and instruction acknowledgments without authority", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Live mission", exact: true }).click();
+    await expect(page.getByTestId("interaction-state")).toHaveText("IDLE");
+    await expect(page.getByTestId("instruction")).toHaveText(
+      "Awaiting instruction…",
+    );
+    await expect(page.getByTestId("adapter-calls")).toHaveText("0");
+
+    await page.getByRole("button", { name: "Alert robot", exact: true }).click();
+    await expect(page.getByTestId("interaction-state")).toHaveText(
+      "ATTENTION ACKNOWLEDGED",
+    );
+    await expect(page.getByTestId("interaction-acknowledgment")).toContainText(
+      "listening",
+    );
+    await expect(page.getByTestId("instruction")).toHaveText(
+      "Awaiting instruction…",
+    );
+    await expect(page.getByTestId("runtime-status")).toHaveText("UNAUTHORIZED");
+    await expect(page.getByTestId("adapter-calls")).toHaveText("0");
+
+    await page.getByRole("button", { name: "Give instruction", exact: true }).click();
+    await expect(page.getByTestId("interaction-state")).toHaveText(
+      "INSTRUCTION ACKNOWLEDGED",
+    );
+    await expect(page.getByTestId("instruction")).toContainText(
+      "Deliver medication to Room 312.",
+    );
+    await expect(page.getByTestId("event-timeline")).toContainText(
+      "INSTRUCTION ACKNOWLEDGED",
+    );
+    await expect(page.getByTestId("runtime-status")).toHaveText("UNAUTHORIZED");
+    await expect(page.getByTestId("blocking-reasons")).toContainText(
+      "Patient identity is unresolved",
+    );
+    await expect(page.getByTestId("adapter-calls")).toHaveText("0");
+  });
+
   test("Scene 2: satisfying conditions reaches ready, never early authorization", async ({
     page,
   }) => {

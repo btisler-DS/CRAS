@@ -140,6 +140,60 @@ button:disabled {
   padding: clamp(1.5rem, 3vw, 3.5rem);
 }
 
+.interaction-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(15, 30, 26, 0.72);
+}
+
+.interaction-panel h2,
+.interaction-panel p {
+  margin: 0;
+}
+
+.interaction-panel h2 {
+  margin-bottom: 0.28rem;
+  font-size: 1rem;
+}
+
+.interaction-panel p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.interaction-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.interaction-actions button {
+  padding: 0.58rem 0.78rem;
+  white-space: nowrap;
+}
+
+.interaction-state {
+  border: 1px solid rgba(114, 242, 177, 0.28);
+  border-radius: 999px;
+  padding: 0.48rem 0.65rem;
+  color: var(--green);
+  font: 700 0.68rem var(--mono);
+  white-space: nowrap;
+}
+
+.button--mission {
+  border-color: rgba(114, 242, 177, 0.4);
+  color: var(--green);
+}
+
 .hero-copy {
   margin-bottom: 1.4rem;
 }
@@ -677,6 +731,15 @@ pre {
 
   .state-strip {
     grid-template-columns: 1fr;
+  }
+
+  .interaction-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .interaction-actions {
+    justify-content: flex-start;
   }
 }
 

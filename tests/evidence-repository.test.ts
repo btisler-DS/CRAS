@@ -83,6 +83,71 @@ describe("evidence-before-authorization transaction", () => {
     });
   });
 
+  it("persists ordered mission interactions across repository restart", () => {
+    const databasePath = createDatabasePath();
+    const repository = openRepository(databasePath);
+    repository.appendMissionEvent({
+      missionId: "mission-312",
+      correlationId: "correlation-312",
+      actionId: baseProposal.actionId,
+      eventType: "ROBOT_ALERTED",
+      actor: "OPERATOR",
+      detail: "Operator requested robot attention",
+    });
+    repository.appendMissionEvent({
+      missionId: "mission-312",
+      correlationId: "correlation-312",
+      actionId: baseProposal.actionId,
+      eventType: "ATTENTION_ACKNOWLEDGED",
+      actor: "ROBOT",
+      detail: "Robot acknowledged attention",
+    });
+    repository.close();
+    openRepositories.splice(openRepositories.indexOf(repository), 1);
+
+    const restarted = openRepository(databasePath);
+    expect(restarted.listMissionEvents("mission-312")).toMatchObject([
+      {
+        missionEventId: "mission-312:event:1",
+        sequence: 1,
+        eventType: "ROBOT_ALERTED",
+        actor: "OPERATOR",
+      },
+      {
+        missionEventId: "mission-312:event:2",
+        sequence: 2,
+        eventType: "ATTENTION_ACKNOWLEDGED",
+        actor: "ROBOT",
+      },
+    ]);
+  });
+
+  it("binds authorization mission events to committed evidence and grant rows", () => {
+    const repository = openRepository();
+    const authorization = repository.authorize(createRequest());
+    expect(authorization.state).toBe("AUTHORIZED");
+    if (authorization.state !== "AUTHORIZED") {
+      throw new Error(authorization.error);
+    }
+
+    const event = repository.appendMissionEvent({
+      missionId: "mission-312",
+      correlationId: "correlation-312",
+      actionId: authorization.grant.actionId,
+      eventType: "AUTHORIZED",
+      actor: "EVIDENCE_STORE",
+      detail: "Evidence committed; authorization completed",
+      evidenceRecordId: authorization.evidenceRecord.evidenceRecordId,
+      grantId: authorization.grant.grantId,
+    });
+
+    expect(event).toMatchObject({
+      evidenceRecordId: authorization.evidenceRecord.evidenceRecordId,
+      grantId: authorization.grant.grantId,
+    });
+    expect(repository.listMissionEvents("mission-312")).toEqual([event]);
+  });
+
   it("returns AUTHORIZED only with a grant referencing committed evidence", () => {
     const repository = openRepository();
     const result = repository.authorize(createRequest());

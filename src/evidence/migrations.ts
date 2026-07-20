@@ -7,6 +7,7 @@ const MIGRATIONS = [
   "001_create_evidence_records.sql",
   "002_create_authorization_grants.sql",
   "003_create_execution_records.sql",
+  "004_create_mission_events.sql",
 ] as const;
 
 export function migrate(database: Database.Database): void {

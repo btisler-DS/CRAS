@@ -18,12 +18,16 @@ import { EvidenceRepository } from "../evidence/repository.js";
 import { SimulatedRobotAdapter } from "../robot/simulated-robot-adapter.js";
 import type {
   DemoPreset,
+  InteractionState,
   RuntimeEvent,
   RuntimeView,
 } from "../ui/runtime-view.js";
 
 const INSTRUCTION = "Deliver medication to Room 312.";
 const FIXED_NOW = "2026-07-18T12:00:00.000Z";
+const MISSION_ID = "mission-medication-room-312";
+const CORRELATION_ID = "demo-room-312";
+const ACTION_ID = "action-medication-room-312";
 
 interface ConditionFacts {
   patientIdentityVerified: boolean;
@@ -50,12 +54,31 @@ class RuntimeSession {
   #failureInjected = false;
   #evidenceState: RuntimeView["evidenceState"] = "NOT STARTED";
   #executionState: RuntimeView["executionState"] = "STATIONARY";
+  #interactionState: InteractionState = "INSTRUCTION_ACKNOWLEDGED";
 
   constructor() {
     this.reset("blocked");
   }
 
   reset(preset: DemoPreset = "blocked"): RuntimeView {
+    this.#initialize(preset);
+    this.#interactionState = "INSTRUCTION_ACKNOWLEDGED";
+    this.#addEvent("ROBOT_ALERTED", "Robot attention requested", "OPERATOR");
+    this.#addEvent("ATTENTION_ACKNOWLEDGED", "Robot acknowledged and is listening", "ROBOT");
+    this.#addEvent("RECEIVED", "Instruction received", "OPERATOR");
+    this.#addEvent("INSTRUCTION_ACKNOWLEDGED", "Robot acknowledged the requested mission; no authority implied", "ROBOT");
+    this.#evaluate();
+    return this.view();
+  }
+
+  beginMission(): RuntimeView {
+    this.#initialize("blocked");
+    this.#interactionState = "IDLE";
+    this.#addEvent("MISSION_OPENED", "Medication-delivery mission opened at home base", "CRAS");
+    return this.view();
+  }
+
+  #initialize(preset: DemoPreset): void {
     this.#repository?.close();
     if (this.#directory) rmSync(this.#directory, { recursive: true, force: true });
 
@@ -89,14 +112,31 @@ class RuntimeSession {
     this.#executionRecord = null;
     this.#evidenceState = "NOT STARTED";
     this.#executionState = "STATIONARY";
+    this.#interactionState = "IDLE";
     this.#events = [];
     this.#eventSequence = 0;
-    this.#addEvent("RECEIVED", "Instruction received");
+    this.#decision = evaluateAuthorization(this.#proposal(), this.#facts);
+  }
+
+  alertRobot(): RuntimeView {
+    if (this.#interactionState !== "IDLE") return this.view();
+    this.#addEvent("ROBOT_ALERTED", "Operator requested robot attention", "OPERATOR");
+    this.#interactionState = "ATTENTION_ACKNOWLEDGED";
+    this.#addEvent("ATTENTION_ACKNOWLEDGED", "Robot acknowledged and is listening; no authority implied", "ROBOT");
+    return this.view();
+  }
+
+  issueInstruction(): RuntimeView {
+    if (this.#interactionState !== "ATTENTION_ACKNOWLEDGED") return this.view();
+    this.#addEvent("INSTRUCTION_RECEIVED", INSTRUCTION, "OPERATOR");
+    this.#interactionState = "INSTRUCTION_ACKNOWLEDGED";
+    this.#addEvent("INSTRUCTION_ACKNOWLEDGED", "Robot acknowledged receipt; authorization remains unresolved", "ROBOT");
     this.#evaluate();
     return this.view();
   }
 
   setCondition(id: RequiredConditionId, satisfied: boolean): RuntimeView {
+    if (this.#interactionState !== "INSTRUCTION_ACKNOWLEDGED") return this.view();
     const factByCondition: Record<RequiredConditionId, keyof ConditionFacts> = {
       PATIENT_IDENTITY_VERIFIED: "patientIdentityVerified",
       PHYSICIAN_ORDER_ACTIVE: "physicianOrderActive",
@@ -125,7 +165,7 @@ class RuntimeSession {
     const result = this.#requireRepository().authorize({
       proposal,
       decision: this.#decision,
-      correlationId: "demo-room-312",
+      correlationId: CORRELATION_ID,
       policyVersion: "medication-delivery/v1",
       identityReferences: ["patient:patient-demo-312"],
     });
@@ -137,7 +177,10 @@ class RuntimeSession {
 
     this.#authorization = result;
     this.#evidenceState = "COMMITTED";
-    this.#addEvent("AUTHORIZED", "Evidence committed; authorization completed");
+    this.#addEvent("AUTHORIZED", "Evidence committed; authorization completed", "EVIDENCE_STORE", {
+      evidenceRecordId: result.evidenceRecord.evidenceRecordId,
+      grantId: result.grant.grantId,
+    });
     const dispatch = new Dispatcher(
       this.#requireRepository(),
       this.#robot,
@@ -172,10 +215,29 @@ class RuntimeSession {
       : null;
     const runtimeStatus = this.#runtimeStatus();
     return {
-      instruction: INSTRUCTION,
+      missionId: MISSION_ID,
+      instruction:
+        this.#interactionState === "INSTRUCTION_ACKNOWLEDGED"
+          ? INSTRUCTION
+          : "",
+      interaction: {
+        state: this.#interactionState,
+        acknowledgment:
+          this.#interactionState === "IDLE"
+            ? "Robot is at home base and has not been alerted."
+            : this.#interactionState === "ATTENTION_ACKNOWLEDGED"
+              ? "Robot acknowledged attention and is listening."
+              : "Robot acknowledged the instruction. Authorization is evaluated separately.",
+        canAlert: this.#interactionState === "IDLE",
+        canInstruct: this.#interactionState === "ATTENTION_ACKNOWLEDGED",
+      },
       runtimeStatus,
       authorizationDetail:
-        runtimeStatus === "UNAUTHORIZED"
+        this.#interactionState === "IDLE"
+          ? "No request is active. Alerting the robot begins listening but grants no authority."
+          : this.#interactionState === "ATTENTION_ACKNOWLEDGED"
+            ? "Robot is listening. No instruction has been admitted for authorization."
+            : runtimeStatus === "UNAUTHORIZED"
           ? "Authorization denied until every required condition is satisfied."
           : runtimeStatus === "READY FOR EVIDENCE"
             ? "Conditions satisfied. Authorization is still incomplete."
@@ -185,7 +247,10 @@ class RuntimeSession {
       evidenceState: this.#evidenceState,
       executionState: this.#executionState,
       conditions: this.#decision.conditionResults.map(toConditionView),
-      blockingReasons: this.#decision.blockingReasons,
+      blockingReasons:
+        this.#interactionState === "INSTRUCTION_ACKNOWLEDGED"
+          ? this.#decision.blockingReasons
+          : [],
       evidenceRecord,
       grant: persistedGrant
         ? {
@@ -202,6 +267,7 @@ class RuntimeSession {
       events: this.#events,
       failureInjected: this.#failureInjected,
       canCommit:
+        this.#interactionState === "INSTRUCTION_ACKNOWLEDGED" &&
         this.#decision.state === "READY_FOR_EVIDENCE" &&
         this.#evidenceState !== "COMMITTED" &&
         this.#evidenceState !== "FAILED",
@@ -222,7 +288,7 @@ class RuntimeSession {
 
   #proposal() {
     return {
-      actionId: "action-medication-room-312",
+      actionId: ACTION_ID,
       kind: "MEDICATION_DELIVERY" as const,
       instruction: INSTRUCTION,
       destination: "Room 312",
@@ -241,12 +307,28 @@ class RuntimeSession {
       : "UNAUTHORIZED";
   }
 
-  #addEvent(state: string, detail: string): void {
+  #addEvent(
+    state: string,
+    detail: string,
+    actor: import("../evidence/repository.js").MissionEventActor = "CRAS",
+    references: { evidenceRecordId?: string; grantId?: string } = {},
+  ): void {
+    const persisted = this.#requireRepository().appendMissionEvent({
+      missionId: MISSION_ID,
+      correlationId: CORRELATION_ID,
+      actionId: ACTION_ID,
+      eventType: state,
+      actor,
+      detail,
+      evidenceRecordId: references.evidenceRecordId ?? null,
+      grantId: references.grantId ?? null,
+    });
+    this.#eventSequence = persisted.sequence;
     this.#events.push({
-      id: ++this.#eventSequence,
+      id: persisted.sequence,
       state,
       detail,
-      timestamp: FIXED_NOW,
+      timestamp: persisted.occurredAt,
     });
   }
 

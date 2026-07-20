@@ -7,6 +7,11 @@ import type {
 
 export type DemoPreset = "blocked" | "successful" | "evidence-failure";
 
+export type InteractionState =
+  | "IDLE"
+  | "ATTENTION_ACKNOWLEDGED"
+  | "INSTRUCTION_ACKNOWLEDGED";
+
 export interface RuntimeEvent {
   readonly id: number;
   readonly state: string;
@@ -15,7 +20,14 @@ export interface RuntimeEvent {
 }
 
 export interface RuntimeView {
+  readonly missionId: string;
   readonly instruction: string;
+  readonly interaction: {
+    readonly state: InteractionState;
+    readonly acknowledgment: string;
+    readonly canAlert: boolean;
+    readonly canInstruct: boolean;
+  };
   readonly runtimeStatus:
     | "UNAUTHORIZED"
     | "READY FOR EVIDENCE"
