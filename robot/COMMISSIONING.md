@@ -108,3 +108,29 @@ Repeatability verification, July 19, 2026:
 - Remote replay record: persisted
 - Operator observation: both raised rear wheels again moved for approximately one second and fully stopped
 - Post-action state: worker healthy and passive; no motion child remained
+
+## QR seek commissioning — physically verified
+
+Verified July 21, 2026 on the taped ground testbed as a bounded commissioning
+diagnostic, not as a CRAS-authorized mission or production actuator path:
+
+- Contract label: `QR_SEEK_COMMISSIONING_V1`.
+- Pre-run battery: 8.09 V; both private workers healthy and passive.
+- Initial state: robot centered in a clear hallway; operator beside the whole-robot
+  OFF switch with the battery connector accessible.
+- Camera pose: pan `20`, tilt `65`; capture: 1296 x 972.
+- Bound: at most three straight advances, speed `1`, 500 ms each, with a complete
+  stop and two-second pause before every subsequent scan.
+- Initial stationary scan: no marker decoded.
+- Advance 1: both drive motors commanded for 500 ms, followed by `stop()`.
+- Second stationary scan: decoded `cras:v1:location:loc-home` as `LOC-HOME`.
+- Termination: marker detection ended the run; advances 2 and 3 were not executed.
+- Software cleanup: final `stop()` completed and all temporary images were deleted.
+- Operator observation: the robot moved straight briefly and stopped cleanly; no
+  unexpected actuator behavior occurred.
+- Postcondition: no motion or camera child remained; robot and vision workers were
+  active, healthy, and actuator/camera idle.
+
+This result verifies one bounded stop-scan-advance-stop-recognize sequence. It does
+not establish general navigation, route completion, doorway traversal, or a protected
+mission dispatch. The temporary commissioning script was removed from the robot.

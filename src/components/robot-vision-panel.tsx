@@ -11,11 +11,28 @@ interface VisionStatus {
   readonly error: string | null;
 }
 
+interface MarkerObservation {
+  readonly sequence: number;
+  readonly observation_id: string;
+  readonly marker_id: string;
+  readonly kind: string;
+  readonly observed_at: string;
+}
+
+interface MarkerBatch {
+  readonly marker_scanner_active: boolean;
+  readonly observations: readonly MarkerObservation[];
+  readonly error: string | null;
+}
+
 export function RobotVisionPanel() {
   const [status, setStatus] = useState<VisionStatus | null>(null);
   const [streamKey, setStreamKey] = useState(0);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [markers, setMarkers] = useState<readonly MarkerObservation[]>([]);
+  const [scannerActive, setScannerActive] = useState(false);
+  const [markerError, setMarkerError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -46,10 +63,50 @@ export function RobotVisionPanel() {
     };
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const refreshMarkers = async () => {
+      try {
+        const response = await fetch("/api/robot/vision/markers/observations?after=0", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("QR observation is unavailable.");
+        const batch = (await response.json()) as MarkerBatch;
+        setScannerActive(batch.marker_scanner_active);
+        setMarkers(batch.observations.slice(-6).reverse());
+        setMarkerError(batch.error);
+      } catch (refreshError) {
+        if (!controller.signal.aborted) {
+          setScannerActive(false);
+          setMarkerError(
+            refreshError instanceof Error
+              ? refreshError.message
+              : "QR observation is unavailable.",
+          );
+        }
+      }
+    };
+    void refreshMarkers();
+    const timer = setInterval(() => void refreshMarkers(), 1_000);
+    return () => {
+      controller.abort();
+      clearInterval(timer);
+    };
+  }, []);
+
   async function changeStream(command: "start" | "stop"): Promise<void> {
     setPending(true);
     setError(null);
     try {
+      const markerResponse = await fetch(`/api/robot/vision/markers/${command}`, {
+        method: "POST",
+      });
+      if (!markerResponse.ok) throw new Error(`QR observation could not ${command}.`);
+      const markerResult = (await markerResponse.json()) as {
+        marker_scanner_active: boolean;
+      };
+      setScannerActive(markerResult.marker_scanner_active);
       const response = await fetch(`/api/robot/vision/${command}`, {
         method: "POST",
       });
@@ -97,8 +154,31 @@ export function RobotVisionPanel() {
           <div><dt>Camera</dt><dd>{status?.camera_detected ? (status.sensor?.toUpperCase() ?? "Detected") : "Unavailable"}</dd></div>
           <div><dt>Stream</dt><dd>{active ? "Live" : "Stopped"}</dd></div>
           <div><dt>Signal</dt><dd>{status?.resolution ? `${status.resolution.width}×${status.resolution.height} · ${status.measured_fps.toFixed(1)} fps` : "Waiting"}</dd></div>
+          <div><dt>QR observer</dt><dd>{scannerActive ? "Watching" : "Stopped"}</dd></div>
         </dl>
         {error ? <p className="vision-error" role="status">{error}</p> : null}
+        {markerError ? <p className="vision-error" role="status">{markerError}</p> : null}
+        <div className="marker-observations" data-testid="marker-observations">
+          <div className="marker-observations__heading">
+            <strong>What the robot recognized</strong>
+            <span>{markers.length > 0 ? `${markers.length} recent` : "None yet"}</span>
+          </div>
+          {markers.length > 0 ? (
+            <ol>
+              {markers.map((marker) => (
+                <li key={`${marker.observation_id}-${marker.sequence}`}>
+                  <span>{marker.kind}</span>
+                  <strong>{marker.marker_id}</strong>
+                  <time dateTime={marker.observed_at}>
+                    {new Date(marker.observed_at).toLocaleTimeString()}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p>Place a CRAS QR marker in the camera view.</p>
+          )}
+        </div>
       </div>
       <div className="vision-frame" data-testid="vision-frame">
         {active ? (

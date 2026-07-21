@@ -18,6 +18,10 @@ import type { RobotAdapter } from "../dispatch/types.js";
 import type { EvidenceAuthorizationResult } from "../evidence/repository.js";
 import { EvidenceRepository } from "../evidence/repository.js";
 import { SimulatedRobotAdapter } from "../robot/simulated-robot-adapter.js";
+import {
+  resolveMedicationObservations,
+  ROOM_312_MISSION_REGISTRY,
+} from "../mission/medication-observation-resolver.js";
 import type {
   DemoPreset,
   InteractionState,
@@ -69,6 +73,7 @@ export class RuntimeSession {
     medicationMatched: true,
     administrationWindowValid: true,
   };
+  #conditionEvidenceReferences: readonly string[] = [];
   #decision!: AuthorizationDecision;
   #authorization: Extract<EvidenceAuthorizationResult, { state: "AUTHORIZED" }> | null = null;
   #executionRecord: ExecutionRecord | null = null;
@@ -192,7 +197,14 @@ export class RuntimeSession {
     this.#robot = this.#robotFactory();
     this.#physicalRobotView = initialRobotView(this.#robotTarget);
     this.#facts =
-      preset === "blocked"
+      this.#robotTarget === "physical"
+        ? {
+            patientIdentityVerified: false,
+            physicianOrderActive: false,
+            medicationMatched: false,
+            administrationWindowValid: true,
+          }
+        : preset === "blocked"
         ? {
             patientIdentityVerified: false,
             physicianOrderActive: true,
@@ -212,6 +224,7 @@ export class RuntimeSession {
     this.#interactionState = "IDLE";
     this.#authorizationEventId = null;
     this.#authorizationAcknowledged = false;
+    this.#conditionEvidenceReferences = [];
     this.#events = [];
     this.#eventSequence = 0;
     this.#decision = evaluateAuthorization(this.#proposal(), this.#facts);
@@ -237,6 +250,7 @@ export class RuntimeSession {
   }
 
   setCondition(id: RequiredConditionId, satisfied: boolean): RuntimeView {
+    if (this.#robotTarget === "physical") return this.view();
     if (this.#interactionState !== "INSTRUCTION_ACKNOWLEDGED") return this.view();
     if (this.#authorization || this.#executionRecord) return this.view();
     const factByCondition: Record<RequiredConditionId, keyof ConditionFacts> = {
@@ -256,12 +270,51 @@ export class RuntimeSession {
     return this.view();
   }
 
+  resolveObservedConditions(
+    observations: unknown,
+    evaluatedAt = new Date().toISOString(),
+  ): RuntimeView {
+    if (this.#interactionState !== "INSTRUCTION_ACKNOWLEDGED") return this.view();
+    if (this.#authorization || this.#executionRecord) return this.view();
+    const resolved = resolveMedicationObservations(
+      observations,
+      ROOM_312_MISSION_REGISTRY,
+      {
+        administrationWindowValid: true,
+        evaluatedAt,
+        maximumObservationAgeMs: 60_000,
+      },
+    );
+    this.#facts = { ...resolved.facts };
+    this.#conditionEvidenceReferences = resolved.evidenceReferences;
+    this.#evidenceState = "NOT STARTED";
+    this.#authorizationEventId = null;
+    this.#authorizationAcknowledged = false;
+    this.#addEvent(
+      "OBSERVATIONS_RESOLVED",
+      `${resolved.evidenceReferences.length} trusted condition references resolved from typed observations`,
+      "CRAS",
+    );
+    this.#evaluate();
+    return this.view();
+  }
+
   commitAndDispatch(): RuntimeView {
     if (this.#decision.state !== "READY_FOR_EVIDENCE") {
       this.#addEvent("BLOCKED", "Evidence commit refused while conditions are unresolved");
       return this.view();
     }
     if (this.#executionRecord) return this.view();
+    if (
+      this.#robotTarget === "physical" &&
+      this.#conditionEvidenceReferences.length === 0
+    ) {
+      this.#addEvent(
+        "BLOCKED",
+        "Physical dispatch refused because typed observation evidence is absent",
+      );
+      return this.view();
+    }
 
     const proposal = this.#proposal();
     if (!this.#authorization) {
@@ -272,7 +325,10 @@ export class RuntimeSession {
         decision: this.#decision,
         correlationId: CORRELATION_ID,
         policyVersion: "medication-delivery/v1",
-        identityReferences: ["patient:patient-demo-312"],
+        identityReferences:
+          this.#conditionEvidenceReferences.length > 0
+            ? this.#conditionEvidenceReferences
+            : ["patient:patient-demo-312"],
       });
       if (result.state === "EVIDENCE_COMMIT_FAILED") {
         this.#evidenceState = "FAILED";

@@ -1,5 +1,11 @@
 # Constitutional Runtime
 
+> Current physical status (July 21): typed QR observation and server-side condition
+> resolution are implemented and tested. A bounded ground commissioning diagnostic
+> decoded `LOC-HOME` after one stopped 500 ms approach increment. That diagnostic was
+> not a CRAS-authorized mission; the protected Pharmacy → Room 312 → Home route remains
+> uncommissioned and is not claimed as complete navigation.
+
 > **Competition continuation:** Start with [HANDOFF.md](HANDOFF.md). It distinguishes
 > verified implementation from pending ground navigation and records the deadline,
 > testbed, safety protocol, and recommended completion order. Track final gates in

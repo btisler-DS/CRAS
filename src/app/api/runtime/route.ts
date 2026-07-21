@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { REQUIRED_CONDITION_IDS } from "../../../domain.js";
 import { getRuntimeSession } from "../../../server/runtime-session.js";
+import { getVisionClient } from "../../../server/vision/vision-client.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ const commandSchema = z.discriminatedUnion("command", [
   z.object({ command: z.literal("begin-mission") }).strict(),
   z.object({ command: z.literal("alert-robot") }).strict(),
   z.object({ command: z.literal("issue-instruction") }).strict(),
+  z.object({ command: z.literal("resolve-observations") }).strict(),
   z
     .object({
       command: z.literal("preset"),
@@ -70,6 +72,10 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (command.command === "issue-instruction") {
     return Response.json(session.issueInstruction());
+  }
+  if (command.command === "resolve-observations") {
+    const batch = await getVisionClient().markerObservations(0, request.signal);
+    return Response.json(session.resolveObservedConditions(batch.observations));
   }
   if (command.command === "preset") {
     return Response.json(session.reset(command.preset));

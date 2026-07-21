@@ -1,5 +1,16 @@
 # Build Week Record
 
+## July 20 — QR observation and condition-evidence checkpoint
+
+- Added passive, robot-local OpenCV QR decoding behind the existing camera owner. Import and service startup still perform no camera acquisition or actuator initialization.
+- Added a strict `cras:v1:<kind>:<id>` marker grammar, a bounded 128-observation buffer, timestamped typed reports, and loopback-only marker start/stop/status/observation endpoints.
+- Added CRAS server proxy contracts and routes. The browser never receives the robot address and no marker endpoint admits actuator commands.
+- Added a server-owned Room 312 mission registry. Fresh observations must exactly match `PAT-1001`, `BED-312-A`, `LOC-ROOM-312`, `MED-2001`, and `ORDER-8001`; the administration window remains a server policy fact.
+- A QR observation is untrusted evidence input. It cannot create a grant or dispatch. Wrong patient, wrong medication, malformed, future, and stale observations fail closed.
+- Successful condition resolution carries observation IDs into the durable evidence record before authorization and dispatch.
+- Local verification passed on July 21: TypeScript, 136 Vitest tests, five vision-worker tests, production build, seven Playwright tests, and `git diff --check`.
+- The observational worker was deployed to the robot. After repairing a loose camera-ribbon connection, a bounded temporary commissioning diagnostic decoded the physical `LOC-HOME` marker after one stopped 500 ms approach increment. The operator confirmed straight movement and a clean stop. This was not an authorized mission dispatch; the protected ground route remains uncommissioned and must not be represented as complete.
+
 ## Reproducible hospital scenario floorplans
 
 Prepared a deterministic, editable floorplan asset set over the existing marker and

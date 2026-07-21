@@ -2,6 +2,7 @@
 """Loopback-only observational OV5647 MJPEG worker; no actuator imports."""
 
 import json
+import re
 import signal
 import subprocess
 import threading
@@ -9,6 +10,7 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 
 
 HOST = "127.0.0.1"
@@ -19,6 +21,11 @@ TARGET_FPS = 15
 MAX_FRAME_BYTES = 2 * 1024 * 1024
 RPICAM_VID = "/usr/bin/rpicam-vid"
 RPICAM_HELLO = "/usr/bin/rpicam-hello"
+MARKER_PAYLOAD = re.compile(
+    r"^cras:v1:(location|bed|patient|medication|staff|order|dock):([a-z0-9]+(?:-[a-z0-9]+)*)$"
+)
+MAX_OBSERVATIONS = 128
+MARKER_DEBOUNCE_SECONDS = 1.5
 
 
 def utc_now():
@@ -153,6 +160,186 @@ class CameraOwner:
 OWNER = CameraOwner()
 
 
+def parse_marker_payload(payload):
+    """Parse only the bounded CRAS marker namespace; never grant authority."""
+    if not isinstance(payload, str) or len(payload) > 200:
+        return None
+    match = MARKER_PAYLOAD.fullmatch(payload)
+    if match is None:
+        return None
+    kind, marker_id = match.groups()
+    return {"kind": kind, "marker_id": marker_id.upper()}
+
+
+class OpenCvQrDecoder:
+    """OpenCV detector with the installed Vilib/pyzbar recognition fallback."""
+
+    def __init__(self):
+        import cv2
+        import numpy
+
+        self.cv2 = cv2
+        self.numpy = numpy
+        self.detector = cv2.QRCodeDetector()
+        try:
+            from pyzbar import pyzbar
+            self.pyzbar = pyzbar
+        except ImportError:
+            self.pyzbar = None
+
+    def decode(self, jpeg):
+        encoded = self.numpy.frombuffer(jpeg, dtype=self.numpy.uint8)
+        image = self.cv2.imdecode(encoded, self.cv2.IMREAD_COLOR)
+        if image is None:
+            raise RuntimeError("camera frame could not be decoded")
+        found, values, points, _ = self.detector.detectAndDecodeMulti(image)
+        results = []
+        for index, value in enumerate(values or ()):
+            if not value:
+                continue
+            corners = None
+            if points is not None and index < len(points):
+                height, width = image.shape[:2]
+                corners = [
+                    {
+                        "x": round(float(point[0]) / width, 6),
+                        "y": round(float(point[1]) / height, 6),
+                    }
+                    for point in points[index]
+                ]
+            results.append({"payload": value, "corners": corners})
+        if results or self.pyzbar is None:
+            return results
+        height, width = image.shape[:2]
+        for barcode in self.pyzbar.decode(image):
+            try:
+                value = barcode.data.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            x, y, w, h = barcode.rect
+            results.append({
+                "payload": value,
+                "corners": [
+                    {"x": round(x / width, 6), "y": round(y / height, 6)},
+                    {"x": round((x + w) / width, 6), "y": round(y / height, 6)},
+                    {"x": round((x + w) / width, 6), "y": round((y + h) / height, 6)},
+                    {"x": round(x / width, 6), "y": round((y + h) / height, 6)},
+                ],
+            })
+        return results
+
+
+class MarkerScanner:
+    """Bounded observational QR scanner sharing frames with the camera owner."""
+
+    def __init__(self, camera_owner, decoder_factory=OpenCvQrDecoder):
+        self.camera_owner = camera_owner
+        self.decoder_factory = decoder_factory
+        self.lock = threading.RLock()
+        self.active = False
+        self.thread = None
+        self.decoder = None
+        self.observations = deque(maxlen=MAX_OBSERVATIONS)
+        self.sequence = 0
+        self.last_observation_at = None
+        self.last_emitted = {}
+        self.error = None
+
+    def status(self):
+        with self.lock:
+            return {
+                "marker_scanner_active": self.active,
+                "observation_count": len(self.observations),
+                "last_observation_at": self.last_observation_at,
+                "error": self.error,
+            }
+
+    def start(self):
+        with self.lock:
+            if self.active:
+                return False
+            self.decoder = self.decoder_factory()
+            self.error = None
+            self.active = True
+            self.camera_owner.start()
+            self.thread = threading.Thread(target=self._run, daemon=True)
+            self.thread.start()
+            return True
+
+    def stop(self):
+        with self.lock:
+            changed = self.active
+            self.active = False
+            thread = self.thread
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=2)
+        with self.lock:
+            self.thread = None
+            self.decoder = None
+        self.camera_owner.stop()
+        return changed
+
+    def list_observations(self, after_sequence=0):
+        with self.lock:
+            return [dict(item) for item in self.observations if item["sequence"] > after_sequence]
+
+    def _run(self):
+        frame_sequence = 0
+        while True:
+            with self.lock:
+                if not self.active:
+                    return
+            frame, frame_sequence = self.camera_owner.wait_frame(frame_sequence, timeout=2)
+            if frame is None:
+                continue
+            try:
+                self._process_frame(frame, frame_sequence)
+            except Exception as error:
+                with self.lock:
+                    self.error = f"{type(error).__name__}: {error}"[:300]
+
+    def _process_frame(self, frame, frame_sequence, observed_monotonic=None):
+        decoder = self.decoder
+        if decoder is None:
+            return
+        now = time.monotonic() if observed_monotonic is None else observed_monotonic
+        for decoded in decoder.decode(frame):
+            payload = decoded.get("payload")
+            parsed = parse_marker_payload(payload)
+            if parsed is None:
+                continue
+            with self.lock:
+                last = self.last_emitted.get(payload)
+                if last is not None and now - last < MARKER_DEBOUNCE_SECONDS:
+                    continue
+                self.last_emitted[payload] = now
+                self.sequence += 1
+                timestamp = utc_now()
+                observation = {
+                    "sequence": self.sequence,
+                    "observation_id": f"marker-{self.sequence:08d}",
+                    "marker_id": parsed["marker_id"],
+                    "kind": parsed["kind"],
+                    "payload": payload,
+                    "observed_at": timestamp,
+                    "frame_sequence": frame_sequence,
+                    "decoder": "opencv-qrcode-detector",
+                    "confidence": None,
+                    "corners": decoded.get("corners"),
+                }
+                self.observations.append(observation)
+                self.last_observation_at = timestamp
+                print(json.dumps({
+                    "event": "vision.marker.observed",
+                    "observation_id": observation["observation_id"],
+                    "marker_id": observation["marker_id"],
+                    "kind": observation["kind"],
+                }), flush=True)
+
+
+SCANNER = MarkerScanner(OWNER)
+
+
 def camera_detected():
     try:
         result = subprocess.run(
@@ -182,7 +369,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path == "/health":
+        parsed_url = urlparse(self.path)
+        if parsed_url.path == "/health":
             active, fps, last_frame_at, error = OWNER.status()
             detected = camera_detected()
             return self.reply(200, {
@@ -197,7 +385,23 @@ class Handler(BaseHTTPRequestHandler):
                 "last_frame_at": last_frame_at,
                 "error": error,
             })
-        if self.path == "/stream.mjpg":
+        if parsed_url.path == "/markers/status":
+            return self.reply(200, SCANNER.status())
+        if parsed_url.path == "/markers/observations":
+            values = parse_qs(parsed_url.query).get("after", ["0"])
+            try:
+                after = int(values[0])
+                if after < 0:
+                    raise ValueError()
+            except (TypeError, ValueError):
+                return self.reply(400, {"error": {"code": "BAD_REQUEST", "message": "Invalid observation cursor.", "retryable": False}})
+            status = SCANNER.status()
+            return self.reply(200, {
+                "marker_scanner_active": status["marker_scanner_active"],
+                "observations": SCANNER.list_observations(after),
+                "error": status["error"],
+            })
+        if parsed_url.path == "/stream.mjpg":
             active, _, _, _ = OWNER.status()
             if not active:
                 return self.reply(409, {"error": {"code": "STREAM_INACTIVE", "message": "Camera stream is stopped.", "retryable": True}})
@@ -218,8 +422,9 @@ class Handler(BaseHTTPRequestHandler):
                 pass
             finally:
                 # One worker owns one camera stream. Losing its sole downstream
-                # viewer releases the camera instead of recording indefinitely.
-                OWNER.stop()
+                # viewer releases the camera unless marker observation still owns it.
+                if not SCANNER.status()["marker_scanner_active"]:
+                    OWNER.stop()
             return
         self.reply(404, {"error": {"code": "BAD_REQUEST", "message": "Not found.", "retryable": False}})
 
@@ -228,13 +433,24 @@ class Handler(BaseHTTPRequestHandler):
             changed = OWNER.start()
             return self.reply(200, {"camera_active": True, "changed": changed})
         if self.path == "/stream/stop":
+            if SCANNER.status()["marker_scanner_active"]:
+                return self.reply(200, {"camera_active": True, "changed": False})
             changed = OWNER.stop()
             return self.reply(200, {"camera_active": False, "changed": changed})
+        if self.path == "/markers/start":
+            try:
+                changed = SCANNER.start()
+            except Exception as error:
+                return self.reply(503, {"error": {"code": "MARKER_SCANNER_UNAVAILABLE", "message": f"Marker scanner could not start: {type(error).__name__}.", "retryable": True}})
+            return self.reply(200, {"marker_scanner_active": True, "changed": changed})
+        if self.path == "/markers/stop":
+            changed = SCANNER.stop()
+            return self.reply(200, {"marker_scanner_active": False, "changed": changed})
         self.reply(404, {"error": {"code": "BAD_REQUEST", "message": "Not found.", "retryable": False}})
 
 
 def shutdown(signum=None, frame=None):
-    OWNER.stop()
+    SCANNER.stop()
     if signum is not None:
         raise SystemExit(128 + signum)
 

@@ -94,6 +94,56 @@ describe("VisionClient", () => {
       code: "UPSTREAM_PROTOCOL_ERROR",
     });
   });
+
+  it("validates typed marker observations through the injected transport", async () => {
+    const transport = new InMemoryVisionTransport();
+    const client = new VisionClient(transport);
+    transport.response = {
+      status: 200,
+      headers: new Headers(),
+      body: {
+        marker_scanner_active: true,
+        observations: [{
+          sequence: 1,
+          observation_id: "marker-00000001",
+          marker_id: "PAT-1001",
+          kind: "patient",
+          payload: "cras:v1:patient:pat-1001",
+          observed_at: "2026-07-20T12:00:00.000Z",
+          frame_sequence: 42,
+          decoder: "opencv-qrcode-detector",
+          confidence: null,
+          corners: null,
+        }],
+        error: null,
+      },
+    };
+    await expect(client.markerObservations(0)).resolves.toMatchObject({
+      observations: [{ marker_id: "PAT-1001", kind: "patient" }],
+    });
+    expect(transport.requests.at(-1)).toMatchObject({
+      method: "GET",
+      path: "/markers/observations?after=0",
+    });
+  });
+
+  it("rejects malformed marker payloads and invalid cursors", async () => {
+    const transport = new InMemoryVisionTransport();
+    const client = new VisionClient(transport);
+    transport.response = {
+      status: 200,
+      headers: new Headers(),
+      body: {
+        marker_scanner_active: true,
+        observations: [{ marker_id: "MOVE-FORWARD", payload: "move-forward" }],
+        error: null,
+      },
+    };
+    await expect(client.markerObservations()).rejects.toMatchObject({
+      code: "UPSTREAM_PROTOCOL_ERROR",
+    });
+    expect(() => client.markerObservations(-1)).toThrow(TypeError);
+  });
 });
 
 describe("HttpVisionTransport", () => {

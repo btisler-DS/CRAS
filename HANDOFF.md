@@ -290,6 +290,20 @@ change state without developer tools. Never show a transcript as authorized.
 
 ### Gate 2 — read-only marker perception
 
+Implementation checkpoint (July 20): passive OpenCV decoding, typed bounded marker
+observations, loopback worker endpoints, CRAS proxy contracts, and server-owned
+condition resolution were implemented and locally verified. At that checkpoint,
+deployment and physical printed-marker detection were still unverified. No actuator
+path was added to the vision worker.
+
+Commissioning checkpoint (July 21): after a camera ribbon connection was corrected,
+the OV5647 produced stable frames again. A fixed, temporary ground diagnostic performed
+one 500 ms straight advance between stopped 1296 x 972 scans and decoded the nearest
+printed marker as `LOC-HOME`. The operator confirmed straight movement, a clean stop,
+and no unexpected actuator behavior. The temporary script was removed. This verifies
+the physical marker, camera, decoder, and one bounded approach increment, but it was
+not a CRAS-authorized dispatch and must not be described as mission navigation.
+
 - Robot-local observational decoder that imports no actuator library.
 - Test approach distances/angles and all canonical/distractor payloads.
 - Return typed, timestamped, untrusted observations.
