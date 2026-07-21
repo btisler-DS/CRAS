@@ -74,7 +74,7 @@
   display: grid;
   min-height: calc(100svh - 4.5rem);
   align-content: center;
-  gap: clamp(1rem, 2.5vh, 1.8rem);
+  gap: clamp(0.85rem, 2vh, 1.5rem);
   overflow: hidden;
   padding: clamp(1.25rem, 4vw, 4.5rem);
   border-bottom: 1px solid rgba(170, 214, 195, 0.14);
@@ -86,13 +86,14 @@
   z-index: -1;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 48%, rgba(255, 124, 119, 0.1), transparent 34%),
-    radial-gradient(circle at 10% 18%, rgba(114, 242, 177, 0.08), transparent 26%);
+    radial-gradient(circle at 50% 52%, rgba(255, 124, 119, 0.11), transparent 32%),
+    radial-gradient(circle at 10% 18%, rgba(114, 242, 177, 0.09), transparent 28%);
   content: "";
 }
 
 .missionBlock {
-  max-width: 65rem;
+  max-width: 72rem;
+  animation: fadeUp 620ms 80ms both cubic-bezier(0.22, 0.8, 0.25, 1);
 }
 
 .eyebrow {
@@ -103,16 +104,48 @@
 }
 
 .missionBlock h1 {
-  margin: 0.5rem 0 0.45rem;
-  font-size: clamp(2.5rem, 5vw, 5.8rem);
+  max-width: 15ch;
+  margin: 0.35rem 0 0.55rem;
+  font-size: clamp(2.6rem, 4.8vw, 5.45rem);
   line-height: 0.94;
   letter-spacing: -0.06em;
 }
 
-.missionBlock p {
+.missionLabel {
+  display: block;
   margin: 0;
   color: #9fb7ae;
-  font-size: clamp(0.76rem, 1vw, 0.9rem);
+  font: 700 0.68rem ui-monospace, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.missionBlock .missionLabel {
+  margin-top: clamp(0.65rem, 1.5vh, 1rem);
+}
+
+.thesis {
+  max-width: 58rem;
+  margin: 0;
+  color: #afc4bc;
+  font-size: clamp(0.78rem, 1.05vw, 0.94rem);
+  line-height: 1.55;
+}
+
+.thesis strong {
+  color: #eaf6f1;
+  font-weight: 720;
+}
+
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .decisionGrid {
@@ -125,7 +158,7 @@
 .decisionCard,
 .verdict {
   min-width: 0;
-  min-height: 14rem;
+  min-height: clamp(11.5rem, 24vh, 13.5rem);
   padding: clamp(1.1rem, 2vw, 1.75rem);
   border: 1px solid rgba(170, 214, 195, 0.14);
   border-radius: 1.15rem;
@@ -136,6 +169,7 @@
   display: grid;
   align-content: center;
   gap: 0.65rem;
+  animation: fadeUp 620ms 260ms both cubic-bezier(0.22, 0.8, 0.25, 1);
 }
 
 .decisionCard > span,
@@ -162,24 +196,12 @@
   border-color: rgba(159, 183, 174, 0.2);
 }
 
-.modelCard select {
-  width: 100%;
-  min-width: 0;
-  padding: 0.35rem 2.2rem 0.42rem 0;
-  overflow: hidden;
-  border: 0;
-  border-bottom: 1px solid rgba(170, 214, 195, 0.24);
-  border-radius: 0;
+.modelCard > strong {
   color: #f7fbf9;
-  background: #091411;
-  font: 800 clamp(1.55rem, 2.2vw, 2.5rem) ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.75rem, 2.5vw, 2.8rem);
+  line-height: 0.98;
   letter-spacing: -0.04em;
-  text-overflow: ellipsis;
-}
-
-.modelCard select:focus-visible {
-  outline: 3px solid rgba(114, 242, 177, 0.7);
-  outline-offset: 4px;
+  overflow-wrap: anywhere;
 }
 
 .verdict {
@@ -190,6 +212,11 @@
   background:
     linear-gradient(145deg, rgba(82, 28, 30, 0.93), rgba(46, 24, 24, 0.92));
   box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.25);
+  transition:
+    border-color 500ms ease,
+    background 500ms ease,
+    box-shadow 500ms ease;
+  animation: verdictReveal 760ms 180ms both cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .verdict > span {
@@ -202,6 +229,7 @@
   line-height: 0.86;
   letter-spacing: -0.075em;
   overflow-wrap: anywhere;
+  animation: verdictWord 520ms both cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .verdictReason {
@@ -251,6 +279,7 @@
 .verdictAUTHORIZED {
   border-color: rgba(114, 242, 177, 0.48);
   background: linear-gradient(145deg, rgba(18, 67, 50, 0.94), rgba(15, 40, 32, 0.92));
+  box-shadow: 0 1.4rem 4rem rgba(28, 126, 87, 0.18);
 }
 
 .verdictAUTHORIZED > span,
@@ -272,6 +301,13 @@
 
 .endpointCard {
   border-color: rgba(255, 124, 119, 0.2);
+  transition:
+    opacity 500ms ease,
+    border-color 500ms ease,
+    background 500ms ease,
+    box-shadow 500ms ease,
+    filter 500ms ease;
+  animation-delay: 340ms;
 }
 
 .endpointCard strong {
@@ -280,12 +316,30 @@
   line-height: 0.95;
   letter-spacing: -0.055em;
   overflow-wrap: anywhere;
+  animation: verdictWord 440ms both cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.endpointPaused {
+  opacity: 0.62;
+  filter: saturate(0.62);
+}
+
+.endpointActive {
+  border-color: rgba(114, 242, 177, 0.46);
+  background: rgba(20, 61, 47, 0.72);
+  box-shadow: 0 0 3.5rem rgba(114, 242, 177, 0.12);
+  opacity: 1;
+}
+
+.endpointActive strong {
+  color: #72f2b1;
 }
 
 .heroActions {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  animation: fadeUp 620ms 440ms both cubic-bezier(0.22, 0.8, 0.25, 1);
 }
 
 .primaryButton,
@@ -314,15 +368,45 @@
   padding: 0.9rem 1.25rem;
 }
 
-.actionPromise {
-  margin-left: 0.4rem;
-  color: #78938a;
-  font: 650 0.68rem ui-monospace, monospace;
-}
-
 .error {
   margin: 0;
   color: #ff9f9a;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(0.85rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes verdictReveal {
+  from {
+    opacity: 0;
+    transform: scaleX(0.94) translateY(0.65rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1) translateY(0);
+  }
+}
+
+@keyframes verdictWord {
+  from {
+    opacity: 0;
+    transform: translateY(0.45rem) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .inspectionLayer,
@@ -369,36 +453,100 @@
   line-height: 1.5;
 }
 
-.conditionGrid {
+.inspectionSummary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: minmax(16rem, 0.72fr) minmax(24rem, 1.28fr);
+  gap: 0.8rem;
   margin-bottom: 0.8rem;
 }
 
-.conditionNode {
-  position: relative;
+.modelControl {
   display: grid;
-  grid-template-columns: 2rem 1fr;
-  gap: 0.65rem;
-  align-items: center;
-  min-height: 5.5rem;
-  padding: 0.8rem;
+  align-content: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 1rem;
   border: 1px solid rgba(170, 214, 195, 0.14);
-  border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease;
+  border-radius: 0.9rem;
+  background: rgba(7, 16, 14, 0.58);
 }
 
-.conditionNode:hover {
-  border-color: rgba(114, 242, 177, 0.34);
+.modelControl label {
+  color: #9fb7ae;
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.modelControl select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.7rem 2.2rem 0.7rem 0.75rem;
+  border: 1px solid rgba(170, 214, 195, 0.2);
+  border-radius: 0.65rem;
+  color: #f7fbf9;
+  background: #091411;
+  font: 750 0.9rem ui-sans-serif, system-ui, sans-serif;
+}
+
+.modelControl small {
+  color: #78938a;
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+
+.protocolMap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin: 0;
+  padding: 1px;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.9rem;
+  background: rgba(170, 214, 195, 0.11);
+  list-style: none;
+}
+
+.protocolMap li,
+.protocolMap label {
+  min-width: 0;
+}
+
+.protocolMap li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 3.15rem;
+  padding: 0.62rem 0.75rem;
+  background: rgba(7, 16, 14, 0.88);
+}
+
+.protocolMap label {
+  position: relative;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  margin: -0.62rem -0.75rem;
+  padding: 0.62rem 0.75rem;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.protocolMap label:hover {
   background: rgba(114, 242, 177, 0.045);
 }
 
-.conditionNode:has(.conditionInput:disabled) {
+.protocolMap label:has(.conditionInput:disabled) {
   cursor: not-allowed;
-  opacity: 0.72;
+}
+
+.protocolMap label:has(.conditionInput:focus-visible) {
+  outline: 3px solid rgba(114, 242, 177, 0.72);
+  outline-offset: -3px;
 }
 
 .conditionInput {
@@ -409,45 +557,45 @@
   opacity: 0;
 }
 
-.conditionIndicator {
+.protocolMap span {
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.protocolMap small {
+  color: #9fb7ae;
+  font: 650 0.62rem ui-monospace, monospace;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.protocolMap strong {
   display: grid;
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 1.55rem;
+  height: 1.55rem;
   place-items: center;
   border-radius: 50%;
-  font-weight: 850;
+  font-size: 0.82rem;
+  font-weight: 880;
 }
 
-.conditionInput:focus-visible + .conditionIndicator {
-  outline: 3px solid rgba(114, 242, 177, 0.72);
-  outline-offset: 3px;
-}
-
-.conditionNode strong,
-.conditionNode small {
-  display: block;
-}
-
-.conditionNode strong {
-  font-size: 0.8rem;
-  line-height: 1.25;
-}
-
-.conditionNode small {
-  margin-top: 0.2rem;
-  color: #9fb7ae;
-  font-size: 0.68rem;
-  line-height: 1.35;
-}
-
-.conditionPass .conditionIndicator {
+.protocolPassed strong {
   color: #07100e;
   background: #72f2b1;
 }
 
-.conditionFail .conditionIndicator {
+.protocolFailed strong {
   color: #fff;
   background: #ff7c77;
+}
+
+.protocolWaiting strong {
+  border: 1px solid rgba(255, 206, 115, 0.38);
+  color: #ffce73;
+  background: rgba(255, 206, 115, 0.08);
 }
 
 .blockingBox {
@@ -741,7 +889,7 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(17rem, 0.34fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 
@@ -771,47 +919,78 @@
   font: 700 0.68rem ui-monospace, monospace;
 }
 
-.scenarioList,
 .modifierPanel,
 .markerPanel {
   display: grid;
   gap: 0.65rem;
 }
 
-.scenarioCard {
+.scenarioList {
   display: grid;
-  grid-template-columns: 2.3rem 1fr;
-  align-items: center;
-  gap: 0.7rem;
-  width: 100%;
-  padding: 0.8rem;
-  text-align: left;
-  border: 1px solid rgba(170, 214, 195, 0.14);
-  border-radius: 0.8rem;
-  color: #f7fbf9;
-  background: rgba(255, 255, 255, 0.025);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-.scenarioCard strong,
-.scenarioCard small {
+.scenarioCard {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  align-items: start;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 10.5rem;
+  padding: 1rem;
+  text-align: left;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 1rem;
+  color: #f7fbf9;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 60%),
+    rgba(7, 16, 14, 0.62);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.scenarioCard:hover:not(:disabled) {
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.18);
+  transform: translateY(-3px);
+}
+
+.scenarioCardCopy,
+.scenarioCardCopy strong,
+.scenarioCardCopy small {
   display: block;
 }
 
-.scenarioCard small {
-  margin-top: 0.2rem;
+.scenarioCardCopy {
+  align-self: center;
+}
+
+.scenarioCardCopy strong {
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.scenarioCardCopy small {
+  margin-top: 0.35rem;
   color: #9fb7ae;
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 
 .scenarioIcon {
   display: grid;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 3rem;
+  height: 3rem;
   place-items: center;
   border: 1px solid rgba(255, 124, 119, 0.32);
-  border-radius: 0.65rem;
+  border-radius: 0.85rem;
   color: #ff7c77;
   background: rgba(255, 124, 119, 0.08);
-  font-weight: 850;
+  font: 850 0.78rem ui-monospace, monospace;
 }
 
 .scenarioIconAuthorized {
@@ -823,10 +1002,32 @@
 .selectedScenario {
   border-color: rgba(114, 242, 177, 0.52);
   background: rgba(114, 242, 177, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(114, 242, 177, 0.1);
 }
 
 .selectedScenario .scenarioIcon {
   box-shadow: 0 0 0 1px currentColor;
+}
+
+.outcomeBadge {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0.38rem 0.52rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 700 0.58rem ui-monospace, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.outcomeAuthorized {
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.07);
+}
+
+.outcomeBlocked {
+  color: #ff9f9a;
+  background: rgba(255, 124, 119, 0.06);
 }
 
 .modifierPanel p {
@@ -898,7 +1099,7 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 0.65rem;
   align-items: center;
-  margin-bottom: 0.8rem;
+  margin-top: 0.8rem;
 }
 
 .comparisonGrid article {
@@ -928,18 +1129,18 @@
 
 .visualGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.65fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.8rem;
 }
 
 .markerPanel {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .markerCard {
   display: grid;
   align-content: center;
-  min-height: 7.3rem;
+  min-height: 6.25rem;
   padding: 0.9rem;
   border: 1px solid rgba(170, 214, 195, 0.14);
   border-radius: 0.85rem;
@@ -991,7 +1192,12 @@
     grid-template-columns: 1fr;
   }
 
-  .conditionGrid {
+  .inspectionSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .scenarioList,
+  .markerPanel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1023,10 +1229,9 @@
     font-size: clamp(2.15rem, 10vw, 3.25rem);
   }
 
-  .missionBlock p {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  .thesis {
+    font-size: 0.75rem;
+    line-height: 1.42;
   }
 
   .decisionGrid {
@@ -1066,7 +1271,7 @@
     font-size: 0.73rem;
   }
 
-  .modelCard select {
+  .modelCard > strong {
     font-size: clamp(1.2rem, 6vw, 1.7rem);
   }
 
@@ -1090,13 +1295,6 @@
     min-width: 0;
     width: 100%;
     padding: 0.78rem 0.8rem;
-  }
-
-  .actionPromise {
-    grid-column: 1 / -1;
-    margin: 0;
-    text-align: center;
-    font-size: 0.59rem;
   }
 
   .inspectionHeader,
@@ -1136,11 +1334,15 @@
     justify-content: flex-start;
   }
 
-  .conditionGrid,
+  .scenarioList,
+  .protocolMap,
   .actionFlow,
-  .markerPanel,
   .comparisonGrid {
     grid-template-columns: 1fr;
+  }
+
+  .scenarioCard {
+    min-height: 8.5rem;
   }
 
   .comparisonArrow {
@@ -1178,7 +1380,22 @@
     font-size: 2.75rem;
   }
 
+  .markerPanel {
+    grid-template-columns: 1fr;
+  }
+
   .toolbarActions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .missionBlock,
+  .decisionCard,
+  .verdict,
+  .heroActions,
+  .verdict > strong,
+  .endpointCard strong {
+    animation: none;
   }
 }

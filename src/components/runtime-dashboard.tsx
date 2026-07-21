@@ -16,6 +16,7 @@ interface RuntimeDashboardProps {
 
 interface ScenarioCard {
   readonly id: string;
+  readonly glyph: string;
   readonly title: string;
   readonly subtitle: string;
   readonly preset: DemoPreset;
@@ -26,13 +27,15 @@ interface ScenarioCard {
 const SCENARIOS: readonly ScenarioCard[] = [
   {
     id: "success",
-    title: "Authorized delivery",
-    subtitle: "All required evidence is satisfied",
+    glyph: "→",
+    title: "Successful delivery",
+    subtitle: "Every required fact can be committed",
     preset: "successful",
     expected: "AUTHORIZED",
   },
   {
     id: "wrong-patient",
+    glyph: "ID",
     title: "Wrong patient",
     subtitle: "Patient identity does not match",
     preset: "successful",
@@ -41,6 +44,7 @@ const SCENARIOS: readonly ScenarioCard[] = [
   },
   {
     id: "order-hold",
+    glyph: "Rx",
     title: "Order on hold",
     subtitle: "The physician order is inactive",
     preset: "successful",
@@ -49,6 +53,7 @@ const SCENARIOS: readonly ScenarioCard[] = [
   },
   {
     id: "wrong-medication",
+    glyph: "≠",
     title: "Wrong medication",
     subtitle: "Scanned medication does not match",
     preset: "successful",
@@ -57,6 +62,7 @@ const SCENARIOS: readonly ScenarioCard[] = [
   },
   {
     id: "outside-window",
+    glyph: "12",
     title: "Outside administration window",
     subtitle: "Timing condition is unresolved",
     preset: "successful",
@@ -65,6 +71,7 @@ const SCENARIOS: readonly ScenarioCard[] = [
   },
   {
     id: "evidence-failure",
+    glyph: "DB",
     title: "Evidence store unavailable",
     subtitle: "Facts pass, persistence fails",
     preset: "evidence-failure",
@@ -76,6 +83,13 @@ const PRESET_SCENARIO: Record<DemoPreset, string> = {
   blocked: "wrong-patient",
   successful: "success",
   "evidence-failure": "evidence-failure",
+};
+
+const CONDITION_SHORT_LABELS: Record<RequiredConditionId, string> = {
+  PATIENT_IDENTITY_VERIFIED: "Identity",
+  MEDICATION_MATCHED: "Medication",
+  PHYSICIAN_ORDER_ACTIVE: "Order",
+  ADMINISTRATION_WINDOW_VALID: "Window",
 };
 
 async function sendCommand(command: object): Promise<RuntimeView> {
@@ -130,6 +144,36 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     (view.runtimeStatus === "AUTHORIZED"
       ? "Durable evidence committed and grant consumed."
       : view.authorizationDetail);
+  const hasPatientIdentityBlock = view.blockingReasons.some((reason) =>
+    reason.startsWith("Patient identity"),
+  );
+  const judgeReason =
+    hasPatientIdentityBlock
+      ? "Patient identity unresolved"
+      : headlineReason;
+  const endpointConsequence =
+    view.robot.movementState === "ARRIVED"
+      ? "Arrived"
+      : view.robot.movementState === "MOVING"
+        ? "Moving"
+        : view.robot.movementState === "RETURNED"
+          ? "Returned"
+          : view.robot.movementState === "FAILED"
+            ? "Stopped"
+            : "Stationary";
+  const endpointActive = view.executionState === "EXECUTED";
+  const evidenceProtocolState =
+    view.evidenceState === "COMMITTED"
+      ? "passed"
+      : view.evidenceState === "FAILED"
+        ? "failed"
+        : "waiting";
+  const authorizationProtocolState =
+    view.runtimeStatus === "AUTHORIZED"
+      ? "passed"
+      : view.runtimeStatus === "READY FOR EVIDENCE"
+        ? "waiting"
+        : "failed";
 
   async function run(command: object): Promise<RuntimeView | null> {
     setPending(true);
@@ -277,8 +321,8 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           </div>
         </div>
         <div className={styles.environmentStatus}>
-          <span>Canonical simulator</span>
-          <strong>Protocol online</strong>
+          <span>Live demonstration</span>
+          <strong>Simulator ready</strong>
         </div>
       </header>
 
@@ -289,52 +333,55 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           data-testid="first-glance"
         >
           <div className={styles.missionBlock}>
-            <span className={styles.eyebrow}>Mission · {view.missionId}</span>
+            <span className={styles.eyebrow}>Medication delivery</span>
+            <span className={styles.missionLabel}>Mission</span>
             <h1 id="mission-heading">Deliver insulin to Room 312</h1>
-            <p data-testid="instruction">
+            <p className={styles.thesis}>
+              <strong>CRAS authorizes actions using deterministic protocols.</strong>{" "}
+              AI may recommend an action, but cannot authorize one.
+            </p>
+            <p className={styles.visuallyHidden} data-testid="instruction">
               {view.instruction ? `“${view.instruction}”` : "Awaiting instruction…"}
             </p>
           </div>
 
           <div className={styles.decisionGrid} aria-label="Mission decision path">
             <article className={`${styles.decisionCard} ${styles.modelCard}`}>
-              <label htmlFor="model-recommendation">Model</label>
-              <select
-                id="model-recommendation"
-                value={modelRecommendation}
-                aria-describedby="model-boundary-note"
-                onChange={(event) => setModelRecommendation(event.currentTarget.value)}
-              >
-                <option>Proceed</option>
-                <option>Do not proceed</option>
-                <option>Patient is probably correct. Proceed</option>
-              </select>
-              <small id="model-boundary-note">Recommendation only · no authority</small>
+              <span>Model recommendation</span>
+              <strong data-testid="model-recommendation-display">
+                {modelRecommendation}
+              </strong>
+              <small>Proposal only</small>
             </article>
 
             <article
               className={`${styles.verdict} ${verdictToneClass}`}
               aria-live="polite"
             >
-              <span>CRAS protocol verdict</span>
-              <strong data-testid="protocol-verdict">{displayVerdict}</strong>
+              <span>CRAS decision</span>
+              <strong key={displayVerdict} data-testid="protocol-verdict">
+                {displayVerdict}
+              </strong>
               <p className={styles.verdictReason} data-testid="headline-reason">
                 <span>Reason</span>
-                {headlineReason}
+                {judgeReason}
               </p>
-              <small>
-                Runtime state · <b data-testid="runtime-status">{view.runtimeStatus}</b>
-              </small>
             </article>
 
-            <article className={`${styles.decisionCard} ${styles.endpointCard}`}>
+            <article
+              className={`${styles.decisionCard} ${styles.endpointCard} ${
+                endpointActive ? styles.endpointActive : styles.endpointPaused
+              }`}
+              aria-live="polite"
+            >
               <span>Endpoint</span>
-              <strong data-testid="execution-state">{view.executionState}</strong>
-              <small>
-                {view.robot.dispatchCount === 0
-                  ? "No movement · zero adapter calls"
-                  : `${view.robot.dispatchCount} protected adapter call`}
-              </small>
+              <strong key={endpointConsequence} data-testid="endpoint-consequence">
+                {endpointConsequence}
+              </strong>
+              <small>{endpointActive ? "Protected action completed" : "No movement"}</small>
+              <span className={styles.visuallyHidden} data-testid="execution-state">
+                {view.executionState}
+              </span>
             </article>
           </div>
 
@@ -357,8 +404,8 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
             >
               See why
             </button>
-            <span className={styles.actionPromise} id="run-scenario-note">
-              Model proposes → CRAS decides → endpoint obeys
+            <span className={styles.visuallyHidden} id="run-scenario-note">
+              Model proposes. CRAS decides. The endpoint obeys.
             </span>
           </div>
 
@@ -392,33 +439,98 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
             </button>
           </div>
 
-          <div className={styles.conditionGrid} aria-label="Required protocol conditions">
-            {view.conditions.map((condition) => (
-              <label
-                key={condition.id}
-                className={`${styles.conditionNode} ${
-                  condition.satisfied ? styles.conditionPass : styles.conditionFail
-                }`}
+          <div className={styles.inspectionSummary}>
+            <div className={styles.modelControl}>
+              <label htmlFor="model-recommendation">Model recommendation</label>
+              <select
+                id="model-recommendation"
+                aria-label="Model"
+                value={modelRecommendation}
+                aria-describedby="model-boundary-note"
+                onChange={(event) => setModelRecommendation(event.currentTarget.value)}
               >
-                <input
-                  className={styles.conditionInput}
-                  type="checkbox"
-                  aria-label={condition.label}
-                  checked={condition.satisfied}
-                  disabled={conditionsLocked}
-                  onChange={(event) =>
-                    void setCondition(condition.id, event.currentTarget.checked)
+                <option>Proceed</option>
+                <option>Do not proceed</option>
+                <option>Patient is probably correct. Proceed</option>
+              </select>
+              <small id="model-boundary-note">
+                Untrusted proposal · never submitted as authority
+              </small>
+            </div>
+
+            <ul className={styles.protocolMap} aria-label="Protocol state">
+              {view.conditions.map((condition) => (
+                <li
+                  key={condition.id}
+                  className={
+                    condition.satisfied ? styles.protocolPassed : styles.protocolFailed
                   }
-                />
-                <span className={styles.conditionIndicator} aria-hidden="true">
-                  {condition.satisfied ? "✓" : "×"}
-                </span>
-                <span>
-                  <strong>{condition.label}</strong>
-                  <small>{condition.satisfied ? "Resolved" : condition.reason}</small>
-                </span>
-              </label>
-            ))}
+                >
+                  <label>
+                    <input
+                      className={styles.conditionInput}
+                      type="checkbox"
+                      aria-label={condition.label}
+                      checked={condition.satisfied}
+                      disabled={conditionsLocked}
+                      onChange={(event) =>
+                        void setCondition(condition.id, event.currentTarget.checked)
+                      }
+                    />
+                    <span>{CONDITION_SHORT_LABELS[condition.id]}</span>
+                    <small>{condition.satisfied ? "Resolved" : "Unresolved"}</small>
+                    <strong aria-hidden="true">{condition.satisfied ? "✓" : "×"}</strong>
+                  </label>
+                </li>
+              ))}
+              <li
+                className={
+                  evidenceProtocolState === "passed"
+                    ? styles.protocolPassed
+                    : evidenceProtocolState === "failed"
+                      ? styles.protocolFailed
+                      : styles.protocolWaiting
+                }
+              >
+                <span>Evidence</span>
+                <small>{view.evidenceState}</small>
+                <strong aria-hidden="true">
+                  {evidenceProtocolState === "passed"
+                    ? "✓"
+                    : evidenceProtocolState === "failed"
+                      ? "×"
+                      : "·"}
+                </strong>
+              </li>
+              <li
+                className={
+                  authorizationProtocolState === "passed"
+                    ? styles.protocolPassed
+                    : authorizationProtocolState === "failed"
+                      ? styles.protocolFailed
+                      : styles.protocolWaiting
+                }
+              >
+                <span>Authorization</span>
+                <small data-testid="runtime-status">{view.runtimeStatus}</small>
+                <strong aria-hidden="true">
+                  {authorizationProtocolState === "passed"
+                    ? "✓"
+                    : authorizationProtocolState === "failed"
+                      ? "×"
+                      : "·"}
+                </strong>
+              </li>
+              <li
+                className={
+                  endpointActive ? styles.protocolPassed : styles.protocolWaiting
+                }
+              >
+                <span>Endpoint</span>
+                <small>{endpointConsequence}</small>
+                <strong aria-hidden="true">{endpointActive ? "→" : "Ⅱ"}</strong>
+              </li>
+            </ul>
           </div>
 
           {view.blockingReasons.length > 0 ? (
@@ -649,11 +761,20 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                         }`}
                         aria-hidden="true"
                       >
-                        {scenario.expected === "AUTHORIZED" ? "✓" : "×"}
+                        {scenario.glyph}
                       </span>
-                      <span>
+                      <span className={styles.scenarioCardCopy}>
                         <strong>{scenario.title}</strong>
                         <small>{scenario.subtitle}</small>
+                      </span>
+                      <span
+                        className={`${styles.outcomeBadge} ${
+                          scenario.expected === "AUTHORIZED"
+                            ? styles.outcomeAuthorized
+                            : styles.outcomeBlocked
+                        }`}
+                      >
+                        Expected · {scenario.expected}
                       </span>
                     </button>
                   ))}
@@ -661,8 +782,8 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
               ) : (
                 <div className={styles.modifierPanel}>
                   <p>
-                    Change the model recommendation above, then edit the four protocol
-                    conditions. The recommendation is never submitted to CRAS.
+                    Use See why to change the model recommendation and edit the four
+                    protocol conditions. The recommendation is never submitted to CRAS.
                   </p>
                   <button
                     className={styles.secondaryButton}
@@ -696,24 +817,6 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                 <span className={styles.runBadge}>Run · {selectedScenario}</span>
               </div>
 
-              <div className={styles.comparisonGrid} aria-label="Run comparison">
-                <article>
-                  <span>Original scenario</span>
-                  <strong>{originalScenario?.title}</strong>
-                  <small>Expected · {originalScenario?.expected}</small>
-                </article>
-                <span className={styles.comparisonArrow} aria-hidden="true">
-                  →
-                </span>
-                <article>
-                  <span>{selectedScenario === "modified" ? "Modified run" : "Current run"}</span>
-                  <strong>{currentRunTitle}</strong>
-                  <small>
-                    {satisfiedCount}/4 conditions · {view.runtimeStatus}
-                  </small>
-                </article>
-              </div>
-
               <div className={styles.visualGrid}>
                 <RobotFloorMap robot={view.robot} />
                 <div className={styles.markerPanel} aria-label="Prepared mission identifiers">
@@ -738,6 +841,24 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                     <small>Active physician order</small>
                   </div>
                 </div>
+              </div>
+
+              <div className={styles.comparisonGrid} aria-label="Run comparison">
+                <article>
+                  <span>Original scenario</span>
+                  <strong>{originalScenario?.title}</strong>
+                  <small>Expected · {originalScenario?.expected}</small>
+                </article>
+                <span className={styles.comparisonArrow} aria-hidden="true">
+                  →
+                </span>
+                <article>
+                  <span>{selectedScenario === "modified" ? "Modified run" : "Current run"}</span>
+                  <strong>{currentRunTitle}</strong>
+                  <small>
+                    {satisfiedCount}/4 conditions · {view.runtimeStatus}
+                  </small>
+                </article>
               </div>
             </section>
           </div>

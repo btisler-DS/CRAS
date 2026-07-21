@@ -8,7 +8,12 @@ export function RobotFloorMap({ robot }: RobotFloorMapProps) {
   const arrived = robot.position === "Room 312";
   const physical = robot.target === "physical";
   return (
-    <section className="panel floor-panel" aria-labelledby="floor-heading">
+    <section
+      className={`panel floor-panel ${
+        arrived ? "floor-panel--active" : "floor-panel--idle"
+      }`}
+      aria-labelledby="floor-heading"
+    >
       <div className="panel-heading">
         <div>
           <span className="eyebrow">
@@ -18,16 +23,25 @@ export function RobotFloorMap({ robot }: RobotFloorMapProps) {
             {physical ? "Commissioning round trip" : "Medication route"}
           </h2>
         </div>
-        <span className={`pill ${arrived ? "pill--success" : ""}`}>
-          {robot.movementState}
+        <span className={`pill movement-pill ${arrived ? "pill--success" : ""}`}>
+          Endpoint · {robot.movementState}
         </span>
       </div>
-      <div className="floor-map" data-testid="floor-map">
-        <div className="room room--pharmacy">
-          <span>Start</span>
+      <div
+        className={`floor-map ${arrived ? "floor-map--arrived" : "floor-map--idle"}`}
+        data-testid="floor-map"
+      >
+        <div className={`room room--pharmacy ${arrived ? "" : "room--current"}`}>
+          <span>{arrived ? "Start" : "Current"}</span>
           <strong>Pharmacy</strong>
         </div>
-        <div className="route-line" />
+        <div className="route-track" aria-hidden="true">
+          <span className="route-line" />
+          <span className="route-progress" />
+          <span className="route-status">
+            {arrived ? "Authorized route completed" : "Route locked until authorization"}
+          </span>
+        </div>
         <div
           className={`robot ${arrived ? "robot--arrived" : ""}`}
           aria-label={`Robot at ${robot.position}`}
@@ -36,7 +50,7 @@ export function RobotFloorMap({ robot }: RobotFloorMapProps) {
           <span className="robot-light" />
           CR
         </div>
-        <div className="room room--destination">
+        <div className={`room room--destination ${arrived ? "room--current" : ""}`}>
           <span>Destination</span>
           <strong>Room 312</strong>
         </div>

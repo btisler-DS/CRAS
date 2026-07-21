@@ -12,8 +12,8 @@
   --red: #ff7c77;
   --red-deep: #421f1f;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --sans: "SF Pro Display", "SF Pro Text", "Helvetica Neue", Inter, ui-sans-serif,
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -506,18 +506,25 @@ blockquote {
 .floor-map {
   position: relative;
   display: grid;
-  min-height: 16rem;
-  grid-template-columns: 8rem 1fr 8rem;
+  min-height: clamp(19rem, 34vw, 27rem);
+  grid-template-columns: 9rem 1fr 9rem;
   align-items: center;
   overflow: hidden;
-  padding: 1.2rem;
+  padding: clamp(1rem, 2.5vw, 2rem);
   border: 1px solid var(--line);
   border-radius: 0.8rem;
   background:
+    radial-gradient(circle at 50% 50%, rgba(114, 242, 177, 0.055), transparent 32%),
     linear-gradient(rgba(114, 242, 177, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(114, 242, 177, 0.025) 1px, transparent 1px),
-    rgba(4, 13, 10, 0.65);
+    rgba(4, 13, 10, 0.72);
   background-size: 24px 24px;
+  transition: border-color 500ms ease, box-shadow 500ms ease;
+}
+
+.floor-map--arrived {
+  border-color: rgba(114, 242, 177, 0.34);
+  box-shadow: inset 0 0 5rem rgba(114, 242, 177, 0.045);
 }
 
 .room {
@@ -529,6 +536,22 @@ blockquote {
   border: 1px solid rgba(170, 214, 195, 0.24);
   border-radius: 0.65rem;
   background: #10251f;
+  transition:
+    border-color 500ms ease,
+    background 500ms ease,
+    box-shadow 500ms ease,
+    opacity 500ms ease;
+}
+
+.room--current {
+  border-color: rgba(114, 242, 177, 0.58);
+  background: #15382c;
+  box-shadow: 0 0 2.5rem rgba(114, 242, 177, 0.13);
+}
+
+.floor-map--arrived .room--pharmacy,
+.floor-map--idle .room--destination {
+  opacity: 0.62;
 }
 
 .room span {
@@ -542,15 +565,57 @@ blockquote {
   font-size: 0.8rem;
 }
 
-.route-line {
+.route-track {
+  position: relative;
+  height: 4rem;
+}
+
+.route-line,
+.route-progress {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
   height: 2px;
-  background: repeating-linear-gradient(90deg, rgba(114, 242, 177, 0.45) 0 8px, transparent 8px 15px);
+  transform: translateY(-50%);
+}
+
+.route-line {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(170, 214, 195, 0.28) 0 8px,
+    transparent 8px 15px
+  );
+}
+
+.route-progress {
+  right: auto;
+  width: 0;
+  background: linear-gradient(90deg, #72f2b1, #c7ffe1);
+  box-shadow: 0 0 1rem rgba(114, 242, 177, 0.65);
+  transition: width 1.4s cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+
+.floor-map--arrived .route-progress {
+  width: 100%;
+}
+
+.route-status {
+  position: absolute;
+  top: calc(50% + 0.8rem);
+  left: 50%;
+  color: var(--muted);
+  font: 700 0.58rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 
 .robot {
   position: absolute;
   z-index: 3;
-  left: 7rem;
+  left: 8rem;
   display: grid;
   width: 3.1rem;
   height: 3.1rem;
@@ -561,11 +626,16 @@ blockquote {
   background: #0d2c22;
   box-shadow: 0 0 2rem rgba(114, 242, 177, 0.24);
   font: 800 0.72rem var(--mono);
-  transition: left 1.4s cubic-bezier(0.22, 0.8, 0.25, 1);
+  transition:
+    left 1.4s cubic-bezier(0.22, 0.8, 0.25, 1),
+    box-shadow 500ms ease,
+    transform 500ms ease;
 }
 
 .robot--arrived {
-  left: calc(100% - 10rem);
+  left: calc(100% - 11rem);
+  box-shadow: 0 0 3rem rgba(114, 242, 177, 0.48);
+  transform: scale(1.08);
 }
 
 .robot-light {
@@ -577,6 +647,26 @@ blockquote {
   border-radius: 50%;
   background: var(--green);
   box-shadow: 0 0 0.5rem var(--green);
+}
+
+.floor-map--idle .robot-light {
+  background: var(--red);
+  box-shadow: 0 0 0.5rem var(--red);
+}
+
+.floor-panel {
+  transition: border-color 500ms ease, box-shadow 500ms ease;
+}
+
+.floor-panel--active {
+  border-color: rgba(114, 242, 177, 0.26);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.025),
+    0 1.2rem 3.5rem rgba(0, 0, 0, 0.18);
+}
+
+.movement-pill {
+  transition: color 500ms ease, border-color 500ms ease, background 500ms ease;
 }
 
 .metric-row {
@@ -951,7 +1041,7 @@ pre {
   }
 
   .floor-map {
-    min-height: 13rem;
+    min-height: 17rem;
     grid-template-columns: 6rem 1fr 6rem;
     padding: 0.65rem;
   }
@@ -974,6 +1064,8 @@ pre {
   *::before,
   *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

@@ -32,12 +32,19 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("instruction")).toContainText(
       "Deliver medication to Room 312.",
     );
+    await expect(page.getByTestId("first-glance")).toContainText(
+      "CRAS authorizes actions using deterministic protocols.",
+    );
     await expect(page.getByLabel("Model", { exact: true })).toHaveValue("Proceed");
+    await expect(page.getByTestId("model-recommendation-display")).toHaveText(
+      "Proceed",
+    );
     await expect(page.getByTestId("protocol-verdict")).toHaveText("BLOCKED");
     await expect(page.getByTestId("runtime-status")).toHaveText("UNAUTHORIZED");
     await expect(page.getByTestId("execution-state")).toHaveText("STATIONARY");
+    await expect(page.getByTestId("endpoint-consequence")).toHaveText("Stationary");
     await expect(page.getByTestId("headline-reason")).toContainText(
-      "Patient identity is unresolved",
+      "Patient identity unresolved",
     );
     await expect(
       page.getByRole("button", { name: "Run scenario", exact: true }),
@@ -132,6 +139,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("runtime-status")).toHaveText("AUTHORIZED");
     await expect(page.getByTestId("evidence-state")).toHaveText("COMMITTED");
     await expect(page.getByTestId("execution-state")).toHaveText("EXECUTED");
+    await expect(page.getByTestId("endpoint-consequence")).toHaveText("Arrived");
     await expect(page.getByTestId("adapter-calls")).toHaveText("1");
     await expect(page.getByTestId("robot-position")).toHaveText("Room 312");
     await expect(page.getByTestId("evidence-record")).toContainText("demo-0001");
