@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { RequiredConditionId } from "../domain.js";
 import type { DemoPreset, RuntimeView } from "../ui/runtime-view.js";
 import { EventTimeline } from "./event-timeline.js";
+import {
+  GuidedProtocolPresentation,
+  type GuidedPresentationStage,
+} from "./guided-protocol-presentation.js";
 import { RobotFloorMap } from "./robot-floor-map.js";
 import { RobotVisionPanel } from "./robot-vision-panel.js";
 import { RuntimeRecords } from "./runtime-records.js";
@@ -92,6 +96,46 @@ const CONDITION_SHORT_LABELS: Record<RequiredConditionId, string> = {
   ADMINISTRATION_WINDOW_VALID: "Window",
 };
 
+const PRESENTATION_TIMING = {
+  standard: {
+    mission: 520,
+    model: 520,
+    condition: 230,
+    evidenceLead: 180,
+    evidenceMinimum: 320,
+    evidenceResult: 220,
+    verdict: 900,
+    endpoint: 1450,
+  },
+  reduced: {
+    mission: 450,
+    model: 450,
+    condition: 180,
+    evidenceLead: 150,
+    evidenceMinimum: 250,
+    evidenceResult: 180,
+    verdict: 700,
+    endpoint: 900,
+  },
+} as const;
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+function getJudgeReason(runtimeView: RuntimeView): string {
+  const headlineReason =
+    runtimeView.blockingReasons[0] ??
+    (runtimeView.runtimeStatus === "AUTHORIZED"
+      ? "Durable evidence committed and grant consumed."
+      : runtimeView.authorizationDetail);
+  return runtimeView.blockingReasons.some((reason) =>
+    reason.startsWith("Patient identity"),
+  )
+    ? "Patient identity unresolved"
+    : headlineReason;
+}
+
 async function sendCommand(command: object): Promise<RuntimeView> {
   const response = await fetch("/api/runtime", {
     method: "POST",
@@ -116,8 +160,26 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
   const [mode, setMode] = useState<"canned" | "modified">("canned");
   const [modelRecommendation, setModelRecommendation] = useState("Proceed");
   const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [presentationStage, setPresentationStage] =
+    useState<GuidedPresentationStage>("idle");
+  const [presentationView, setPresentationView] = useState<RuntimeView | null>(null);
+  const [visiblePresentationConditions, setVisiblePresentationConditions] =
+    useState(0);
+  const [presentationEvidencePending, setPresentationEvidencePending] =
+    useState(false);
+  const [presentationComplete, setPresentationComplete] = useState(false);
   const presetMenuRef = useRef<HTMLDetailsElement>(null);
   const inspectionRef = useRef<HTMLElement>(null);
+  const firstGlanceRef = useRef<HTMLElement>(null);
+  const presentationFocusRef = useRef<HTMLDivElement>(null);
+  const presentationRunRef = useRef(0);
+
+  useEffect(
+    () => () => {
+      presentationRunRef.current += 1;
+    },
+    [],
+  );
 
   const satisfiedCount = useMemo(
     () => view.conditions.filter((condition) => condition.satisfied).length,
@@ -139,18 +201,9 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     view.runtimeStatus === "EVIDENCE COMMIT FAILED"
       ? "BLOCKED"
       : view.runtimeStatus;
-  const headlineReason =
-    view.blockingReasons[0] ??
-    (view.runtimeStatus === "AUTHORIZED"
-      ? "Durable evidence committed and grant consumed."
-      : view.authorizationDetail);
-  const hasPatientIdentityBlock = view.blockingReasons.some((reason) =>
-    reason.startsWith("Patient identity"),
-  );
-  const judgeReason =
-    hasPatientIdentityBlock
-      ? "Patient identity unresolved"
-      : headlineReason;
+  const judgeReason = getJudgeReason(view);
+  const presentationReason = getJudgeReason(presentationView ?? view);
+  const presentationActive = presentationStage !== "idle";
   const endpointConsequence =
     view.robot.movementState === "ARRIVED"
       ? "Arrived"
@@ -176,6 +229,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
         : "failed";
 
   async function run(command: object): Promise<RuntimeView | null> {
+    setPresentationComplete(false);
     setPending(true);
     setError(null);
     try {
@@ -213,6 +267,11 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
   }
 
   async function resetRuntime(): Promise<void> {
+    presentationRunRef.current += 1;
+    setPresentationStage("idle");
+    setPresentationView(null);
+    setVisiblePresentationConditions(0);
+    setPresentationEvidencePending(false);
     presetMenuRef.current?.removeAttribute("open");
     const nextView = await run({ command: "reset" });
     if (nextView) {
@@ -221,10 +280,12 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       setMode("canned");
       setModelRecommendation("Proceed");
       setInspectionOpen(false);
+      setPresentationComplete(false);
     }
   }
 
   async function loadScenario(scenario: ScenarioCard): Promise<void> {
+    setPresentationComplete(false);
     setPending(true);
     setError(null);
     try {
@@ -253,6 +314,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     conditionId: RequiredConditionId,
     satisfied: boolean,
   ): Promise<void> {
+    setPresentationComplete(false);
     const nextView = await run({ command: "set-condition", conditionId, satisfied });
     if (nextView) {
       setSelectedScenario("modified");
@@ -261,16 +323,44 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
   }
 
   async function runSelectedScenario(): Promise<void> {
+    const runId = presentationRunRef.current + 1;
+    presentationRunRef.current = runId;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timing = reducedMotion
+      ? PRESENTATION_TIMING.reduced
+      : PRESENTATION_TIMING.standard;
+    const pause = async (milliseconds: number): Promise<boolean> => {
+      await delay(milliseconds);
+      return presentationRunRef.current === runId;
+    };
+
     setPending(true);
     setError(null);
+    setInspectionOpen(false);
+    setPresentationComplete(false);
+    setPresentationView(view);
+    setVisiblePresentationConditions(0);
+    setPresentationEvidencePending(false);
+    setPresentationStage("mission");
+    requestAnimationFrame(() => {
+      firstGlanceRef.current?.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+      presentationFocusRef.current?.focus({ preventScroll: true });
+    });
+
     try {
-      let nextView = view;
+      let preparedView = view;
       const scenario = SCENARIOS.find((candidate) => candidate.id === selectedScenario);
 
       if (mode === "canned" && scenario) {
-        nextView = await sendCommand({ command: "preset", preset: scenario.preset });
+        preparedView = await sendCommand({
+          command: "preset",
+          preset: scenario.preset,
+        });
         if (scenario.condition) {
-          nextView = await sendCommand({
+          preparedView = await sendCommand({
             command: "set-condition",
             conditionId: scenario.condition,
             satisfied: false,
@@ -278,17 +368,58 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
         }
       }
 
-      if (nextView.canCommit) {
-        nextView = await sendCommand({ command: "commit-and-dispatch" });
+      if (!(await pause(timing.mission))) return;
+      setPresentationStage("model");
+
+      if (!(await pause(timing.model))) return;
+      setPresentationView(preparedView);
+      setPresentationStage("conditions");
+
+      for (let conditionCount = 1; conditionCount <= 4; conditionCount += 1) {
+        if (!(await pause(timing.condition))) return;
+        setVisiblePresentationConditions(conditionCount);
       }
 
-      setView(nextView);
+      if (!(await pause(timing.condition))) return;
+      setPresentationEvidencePending(preparedView.canCommit);
+      setVisiblePresentationConditions(5);
+
+      if (!(await pause(timing.evidenceLead))) return;
+      let finalView = preparedView;
+      if (preparedView.canCommit) {
+        const [committedView] = await Promise.all([
+          sendCommand({ command: "commit-and-dispatch" }),
+          delay(timing.evidenceMinimum),
+        ]);
+        finalView = committedView;
+      } else if (!(await pause(timing.evidenceMinimum))) {
+        return;
+      }
+
+      if (presentationRunRef.current !== runId) return;
+      setPresentationEvidencePending(false);
+      setPresentationView(finalView);
+
+      if (!(await pause(timing.evidenceResult))) return;
+      setPresentationStage("verdict");
+
+      if (!(await pause(timing.verdict))) return;
+      setPresentationStage("endpoint");
+      setView(finalView);
+
+      if (!(await pause(timing.endpoint))) return;
+      setPresentationStage("idle");
+      setPresentationComplete(true);
     } catch (commandError) {
+      if (presentationRunRef.current !== runId) return;
+      setPresentationStage("idle");
+      setPresentationView(null);
+      setPresentationEvidencePending(false);
       setError(
         commandError instanceof Error ? commandError.message : "Runtime command failed.",
       );
     } finally {
-      setPending(false);
+      if (presentationRunRef.current === runId) setPending(false);
     }
   }
 
@@ -311,7 +442,11 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     view.interaction.state !== "INSTRUCTION_ACKNOWLEDGED";
 
   return (
-    <main className={styles.app}>
+    <main
+      className={`${styles.app} ${presentationActive ? styles.appPresenting : ""} ${
+        presentationComplete ? styles.appPresented : ""
+      }`}
+    >
       <header className={styles.topbar}>
         <div className={styles.brand}>
           <span className={styles.brandMark}>CR</span>
@@ -328,99 +463,142 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
 
       <div className={styles.shell}>
         <section
-          className={styles.firstGlance}
-          aria-labelledby="mission-heading"
+          className={`${styles.firstGlance} ${
+            presentationActive ? styles.firstGlancePresenting : ""
+          }`}
+          ref={firstGlanceRef}
+          aria-labelledby={presentationActive ? undefined : "mission-heading"}
+          aria-label={presentationActive ? "Guided protocol presentation" : undefined}
           data-testid="first-glance"
         >
-          <div className={styles.missionBlock}>
-            <span className={styles.eyebrow}>Medication delivery</span>
-            <span className={styles.missionLabel}>Mission</span>
-            <h1 id="mission-heading">Deliver insulin to Room 312</h1>
-            <p className={styles.thesis}>
-              <strong>CRAS authorizes actions using deterministic protocols.</strong>{" "}
-              AI may recommend an action, but cannot authorize one.
-            </p>
-            <p className={styles.visuallyHidden} data-testid="instruction">
-              {view.instruction ? `“${view.instruction}”` : "Awaiting instruction…"}
-            </p>
-          </div>
-
-          <div className={styles.decisionGrid} aria-label="Mission decision path">
-            <article className={`${styles.decisionCard} ${styles.modelCard}`}>
-              <span>Model recommendation</span>
-              <strong data-testid="model-recommendation-display">
-                {modelRecommendation}
-              </strong>
-              <small>Proposal only</small>
-            </article>
-
-            <article
-              className={`${styles.verdict} ${verdictToneClass}`}
-              aria-live="polite"
+          {presentationStage !== "idle" ? (
+            <div
+              className={styles.presentationFocus}
+              ref={presentationFocusRef}
+              tabIndex={-1}
             >
-              <span>CRAS decision</span>
-              <strong key={displayVerdict} data-testid="protocol-verdict">
-                {displayVerdict}
-              </strong>
-              <p className={styles.verdictReason} data-testid="headline-reason">
-                <span>Reason</span>
-                {judgeReason}
-              </p>
-            </article>
+              <GuidedProtocolPresentation
+                stage={presentationStage}
+                view={presentationView ?? view}
+                modelRecommendation={modelRecommendation}
+                visibleConditionCount={visiblePresentationConditions}
+                evidencePending={presentationEvidencePending}
+                verdictReason={presentationReason}
+              />
+            </div>
+          ) : (
+            <>
+              <div className={styles.missionBlock}>
+                <span className={styles.eyebrow}>Medication delivery</span>
+                <span className={styles.missionLabel}>Mission</span>
+                <h1 id="mission-heading">Deliver insulin to Room 312</h1>
+                <p className={styles.thesis}>
+                  <strong>CRAS authorizes actions using deterministic protocols.</strong>{" "}
+                  AI may recommend an action, but cannot authorize one.
+                </p>
+                <p className={styles.visuallyHidden} data-testid="instruction">
+                  {view.instruction ? `“${view.instruction}”` : "Awaiting instruction…"}
+                </p>
+              </div>
 
-            <article
-              className={`${styles.decisionCard} ${styles.endpointCard} ${
-                endpointActive ? styles.endpointActive : styles.endpointPaused
-              }`}
-              aria-live="polite"
-            >
-              <span>Endpoint</span>
-              <strong key={endpointConsequence} data-testid="endpoint-consequence">
-                {endpointConsequence}
-              </strong>
-              <small>{endpointActive ? "Protected action completed" : "No movement"}</small>
-              <span className={styles.visuallyHidden} data-testid="execution-state">
-                {view.executionState}
-              </span>
-            </article>
-          </div>
+              <div className={styles.decisionGrid} aria-label="Mission decision path">
+                <article className={`${styles.decisionCard} ${styles.modelCard}`}>
+                  <span>Model recommendation</span>
+                  <strong data-testid="model-recommendation-display">
+                    {modelRecommendation}
+                  </strong>
+                  <small>Proposal only</small>
+                </article>
 
-          <div className={styles.heroActions}>
-            <button
-              className={styles.primaryButton}
-              type="button"
-              onClick={() => void runSelectedScenario()}
-              disabled={pending}
-              aria-describedby="run-scenario-note"
-            >
-              {pending ? "Running…" : "Run scenario"}
-            </button>
-            <button
-              className={styles.secondaryButton}
-              type="button"
-              onClick={revealInspection}
-              aria-controls="protocol-explanation"
-              aria-expanded={inspectionOpen}
-            >
-              See why
-            </button>
-            <span className={styles.visuallyHidden} id="run-scenario-note">
-              Model proposes. CRAS decides. The endpoint obeys.
-            </span>
-          </div>
+                <article
+                  className={`${styles.verdict} ${verdictToneClass}`}
+                  aria-live="polite"
+                >
+                  <span>CRAS decision</span>
+                  <strong key={displayVerdict} data-testid="protocol-verdict">
+                    {displayVerdict}
+                  </strong>
+                  <p className={styles.verdictReason} data-testid="headline-reason">
+                    <span>Reason</span>
+                    {judgeReason}
+                  </p>
+                </article>
 
-          {error ? (
-            <p className={styles.error} role="alert">
-              {error}
-            </p>
-          ) : null}
+                <article
+                  className={`${styles.decisionCard} ${styles.endpointCard} ${
+                    endpointActive ? styles.endpointActive : styles.endpointPaused
+                  }`}
+                  aria-live="polite"
+                >
+                  <span>Endpoint</span>
+                  <strong key={endpointConsequence} data-testid="endpoint-consequence">
+                    {endpointConsequence}
+                  </strong>
+                  <small>
+                    {endpointActive ? "Protected action completed" : "No movement"}
+                  </small>
+                  <span className={styles.visuallyHidden} data-testid="execution-state">
+                    {view.executionState}
+                  </span>
+                </article>
+              </div>
+
+              <div className={styles.heroActions}>
+                <button
+                  className={styles.primaryButton}
+                  type="button"
+                  onClick={() => void runSelectedScenario()}
+                  disabled={pending}
+                  aria-describedby="run-scenario-note"
+                >
+                  {pending ? "Running…" : "Run scenario"}
+                </button>
+                <button
+                  className={styles.secondaryButton}
+                  type="button"
+                  onClick={revealInspection}
+                  aria-controls="protocol-explanation"
+                  aria-expanded={inspectionOpen}
+                >
+                  See why
+                </button>
+                <span className={styles.visuallyHidden} id="run-scenario-note">
+                  Model proposes. CRAS decides. The endpoint obeys.
+                </span>
+              </div>
+
+              {presentationComplete ? (
+                <div
+                  className={styles.presentationComplete}
+                  role="status"
+                  data-testid="presentation-complete"
+                >
+                  <span aria-hidden="true">↓</span>
+                  <p>
+                    <strong>Presentation complete.</strong> Inspect why, or explore the
+                    experiments below.
+                  </p>
+                </div>
+              ) : null}
+
+              {error ? (
+                <p className={styles.error} role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </>
+          )}
         </section>
 
         <section
-          className={styles.inspectionLayer}
+          className={`${styles.inspectionLayer} ${
+            presentationActive ? styles.presentationBackground : ""
+          } ${presentationComplete ? styles.presentationBackgroundRevealed : ""}`}
           id="protocol-explanation"
           ref={inspectionRef}
           hidden={!inspectionOpen}
+          inert={presentationActive}
+          aria-hidden={presentationActive || undefined}
           data-testid="protocol-explanation"
           aria-labelledby="inspection-heading"
         >
@@ -632,7 +810,15 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           </details>
         </section>
 
-        <section className={styles.interactionLayer} aria-labelledby="interaction-layer-heading">
+        <section
+          className={`${styles.interactionLayer} ${
+            presentationActive ? styles.presentationBackground : ""
+          } ${presentationComplete ? styles.presentationBackgroundRevealed : ""}`}
+          aria-labelledby="interaction-layer-heading"
+          inert={presentationActive}
+          aria-hidden={presentationActive || undefined}
+          data-testid="interaction-layer"
+        >
           <div className={styles.layerHeader}>
             <span className={styles.eyebrow}>Explore the proof</span>
             <h2 id="interaction-layer-heading">Change the run. The rules stay fixed.</h2>

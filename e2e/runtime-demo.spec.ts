@@ -20,6 +20,50 @@ async function openExplanation(
   await expect(page.getByTestId("protocol-explanation")).toBeVisible();
 }
 
+async function runGuidedScenario(
+  page: import("@playwright/test").Page,
+  expectedVerdict: "AUTHORIZED" | "BLOCKED",
+  expectedEndpoint: "Moving" | "Stationary",
+): Promise<void> {
+  await page.getByRole("button", { name: "Run scenario", exact: true }).click();
+
+  const presentation = page.getByTestId("guided-presentation");
+  await expect(presentation).toBeVisible();
+  await expect(presentation).toHaveAttribute("data-stage", "mission");
+  await expect(page.getByTestId("guided-mission")).toContainText(
+    "Deliver insulin to Room 312",
+  );
+  await expect(page.getByTestId("interaction-layer")).toHaveAttribute("inert", "");
+
+  await expect(presentation).toHaveAttribute("data-stage", "model");
+  await expect(page.getByTestId("guided-model")).toContainText("Proceed");
+  await expect(page.getByTestId("guided-model")).toContainText(
+    "Recommendation only · no authority",
+  );
+
+  await expect(presentation).toHaveAttribute("data-stage", "conditions");
+  await expect(
+    page.getByTestId("guided-condition-PATIENT_IDENTITY_VERIFIED"),
+  ).toHaveAttribute("data-revealed", "true");
+  await expect(page.getByTestId("guided-condition-evidence")).toHaveAttribute(
+    "data-revealed",
+    "true",
+  );
+
+  await expect(presentation).toHaveAttribute("data-stage", "verdict");
+  await expect(page.getByTestId("guided-verdict")).toContainText(expectedVerdict);
+
+  await expect(presentation).toHaveAttribute("data-stage", "endpoint");
+  await expect(page.getByTestId("guided-endpoint")).toContainText(expectedEndpoint);
+  await expect(page.getByTestId("guided-floorplan")).toBeVisible();
+
+  await expect(page.getByTestId("presentation-complete")).toBeVisible({
+    timeout: 7_000,
+  });
+  await expect(presentation).toHaveCount(0);
+  await expect(page.getByTestId("interaction-layer")).not.toHaveAttribute("inert", "");
+}
+
 test.describe("Constitutional Runtime browser demonstration", () => {
   test.beforeEach(async ({ page }) => {
     await reset(page);
@@ -46,6 +90,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("headline-reason")).toContainText(
       "Patient identity unresolved",
     );
+    await expect(page.getByTestId("guided-presentation")).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Run scenario", exact: true }),
     ).toBeVisible();
@@ -54,7 +99,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     ).toBeVisible();
     await expect(page.getByTestId("protocol-explanation")).toBeHidden();
 
-    await page.getByRole("button", { name: "Run scenario", exact: true }).click();
+    await runGuidedScenario(page, "BLOCKED", "Stationary");
     await expect(page.getByTestId("protocol-verdict")).toHaveText("BLOCKED");
     await expect(page.getByTestId("blocking-reasons")).toContainText(
       "Patient identity is unresolved",
@@ -131,10 +176,8 @@ test.describe("Constitutional Runtime browser demonstration", () => {
       "READY FOR EVIDENCE",
     );
 
+    await runGuidedScenario(page, "AUTHORIZED", "Moving");
     await openExplanation(page);
-    await page
-      .getByRole("button", { name: "Commit evidence & execute" })
-      .click();
 
     await expect(page.getByTestId("runtime-status")).toHaveText("AUTHORIZED");
     await expect(page.getByTestId("evidence-state")).toHaveText("COMMITTED");
