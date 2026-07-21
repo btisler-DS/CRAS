@@ -190,6 +190,10 @@ export class VisionClient {
     );
   }
 
+  scanMarkers(signal?: AbortSignal): Promise<MarkerObservationBatch> {
+    return this.#request("POST", "/markers/scan", markerObservationBatchSchema, signal);
+  }
+
   async #request<T>(
     method: "GET" | "POST",
     path: `/${string}`,

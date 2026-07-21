@@ -304,6 +304,13 @@ and no unexpected actuator behavior. The temporary script was removed. This veri
 the physical marker, camera, decoder, and one bounded approach increment, but it was
 not a CRAS-authorized dispatch and must not be described as mission navigation.
 
+Observation checkpoint (July 21): the deployed loopback worker performed a fixed
+1296 x 972 scan and the CRAS server proxy returned a schema-valid typed `LOC-HOME`
+observation. This verifies the physical camera -> decoder -> private worker -> server
+transport path without importing an actuator library or moving the robot. The normal
+640 x 480 stream remains the operator view; the higher-resolution capture is a bounded
+recognition operation.
+
 - Robot-local observational decoder that imports no actuator library.
 - Test approach distances/angles and all canonical/distractor payloads.
 - Return typed, timestamped, untrusted observations.

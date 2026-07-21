@@ -21,6 +21,9 @@ TARGET_FPS = 15
 MAX_FRAME_BYTES = 2 * 1024 * 1024
 RPICAM_VID = "/usr/bin/rpicam-vid"
 RPICAM_HELLO = "/usr/bin/rpicam-hello"
+RPICAM_STILL = "/usr/bin/rpicam-still"
+MARKER_SCAN_WIDTH = 1296
+MARKER_SCAN_HEIGHT = 972
 MARKER_PAYLOAD = re.compile(
     r"^cras:v1:(location|bed|patient|medication|staff|order|dock):([a-z0-9]+(?:-[a-z0-9]+)*)$"
 )
@@ -30,6 +33,10 @@ MARKER_DEBOUNCE_SECONDS = 1.5
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def normalized_coordinate(value, extent):
+    return round(min(1.0, max(0.0, float(value) / float(extent))), 6)
 
 
 class CameraOwner:
@@ -194,7 +201,7 @@ class OpenCvQrDecoder:
             raise RuntimeError("camera frame could not be decoded")
         found, values, points, _ = self.detector.detectAndDecodeMulti(image)
         results = []
-        for index, value in enumerate(values or ()):
+        for index, value in enumerate(values if values is not None else ()):
             if not value:
                 continue
             corners = None
@@ -202,8 +209,8 @@ class OpenCvQrDecoder:
                 height, width = image.shape[:2]
                 corners = [
                     {
-                        "x": round(float(point[0]) / width, 6),
-                        "y": round(float(point[1]) / height, 6),
+                        "x": normalized_coordinate(point[0], width),
+                        "y": normalized_coordinate(point[1], height),
                     }
                     for point in points[index]
                 ]
@@ -220,22 +227,50 @@ class OpenCvQrDecoder:
             results.append({
                 "payload": value,
                 "corners": [
-                    {"x": round(x / width, 6), "y": round(y / height, 6)},
-                    {"x": round((x + w) / width, 6), "y": round(y / height, 6)},
-                    {"x": round((x + w) / width, 6), "y": round((y + h) / height, 6)},
-                    {"x": round(x / width, 6), "y": round((y + h) / height, 6)},
+                    {"x": normalized_coordinate(x, width), "y": normalized_coordinate(y, height)},
+                    {"x": normalized_coordinate(x + w, width), "y": normalized_coordinate(y, height)},
+                    {"x": normalized_coordinate(x + w, width), "y": normalized_coordinate(y + h, height)},
+                    {"x": normalized_coordinate(x, width), "y": normalized_coordinate(y + h, height)},
                 ],
             })
         return results
 
 
+def capture_high_resolution_still():
+    """Capture one fixed observational frame; accepts no caller-controlled options."""
+    result = subprocess.run(
+        [
+            RPICAM_STILL,
+            "--nopreview",
+            "--timeout", "1200",
+            "--width", str(MARKER_SCAN_WIDTH),
+            "--height", str(MARKER_SCAN_HEIGHT),
+            "--output", "-",
+        ],
+        capture_output=True,
+        timeout=8,
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout.startswith(b"\xff\xd8"):
+        diagnostic = result.stderr.decode("utf-8", errors="replace")[-400:]
+        raise RuntimeError(f"high-resolution marker capture failed ({result.returncode}): {diagnostic}")
+    return result.stdout
+
+
 class MarkerScanner:
     """Bounded observational QR scanner sharing frames with the camera owner."""
 
-    def __init__(self, camera_owner, decoder_factory=OpenCvQrDecoder):
+    def __init__(
+        self,
+        camera_owner,
+        decoder_factory=OpenCvQrDecoder,
+        still_capture=capture_high_resolution_still,
+    ):
         self.camera_owner = camera_owner
         self.decoder_factory = decoder_factory
+        self.still_capture = still_capture
         self.lock = threading.RLock()
+        self.scan_lock = threading.Lock()
         self.active = False
         self.thread = None
         self.decoder = None
@@ -283,6 +318,31 @@ class MarkerScanner:
         with self.lock:
             return [dict(item) for item in self.observations if item["sequence"] > after_sequence]
 
+    def scan_high_resolution(self):
+        """Pause streaming ownership, scan one fixed still, then restore prior state."""
+        if not self.scan_lock.acquire(blocking=False):
+            raise RuntimeError("high-resolution marker scan is already active")
+        with self.lock:
+            restore_active = self.active
+            before_sequence = self.sequence
+        try:
+            if restore_active:
+                self.stop()
+            else:
+                self.camera_owner.stop()
+            decoder = self.decoder_factory()
+            frame = self.still_capture()
+            self._process_with_decoder(decoder, frame, 0)
+            return self.list_observations(before_sequence)
+        except Exception as error:
+            with self.lock:
+                self.error = f"{type(error).__name__}: {error}"[:300]
+            raise
+        finally:
+            if restore_active:
+                self.start()
+            self.scan_lock.release()
+
     def _run(self):
         frame_sequence = 0
         while True:
@@ -302,6 +362,9 @@ class MarkerScanner:
         decoder = self.decoder
         if decoder is None:
             return
+        self._process_with_decoder(decoder, frame, frame_sequence, observed_monotonic)
+
+    def _process_with_decoder(self, decoder, frame, frame_sequence, observed_monotonic=None):
         now = time.monotonic() if observed_monotonic is None else observed_monotonic
         for decoded in decoder.decode(frame):
             payload = decoded.get("payload")
@@ -443,6 +506,16 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as error:
                 return self.reply(503, {"error": {"code": "MARKER_SCANNER_UNAVAILABLE", "message": f"Marker scanner could not start: {type(error).__name__}.", "retryable": True}})
             return self.reply(200, {"marker_scanner_active": True, "changed": changed})
+        if self.path == "/markers/scan":
+            try:
+                observations = SCANNER.scan_high_resolution()
+            except Exception as error:
+                return self.reply(503, {"error": {"code": "MARKER_SCAN_FAILED", "message": f"High-resolution marker scan failed: {type(error).__name__}.", "retryable": True}})
+            return self.reply(200, {
+                "marker_scanner_active": SCANNER.status()["marker_scanner_active"],
+                "observations": observations,
+                "error": SCANNER.status()["error"],
+            })
         if self.path == "/markers/stop":
             changed = SCANNER.stop()
             return self.reply(200, {"marker_scanner_active": False, "changed": changed})

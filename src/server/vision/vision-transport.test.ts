@@ -127,6 +127,30 @@ describe("VisionClient", () => {
     });
   });
 
+  it("requests one fixed high-resolution marker scan through the injected transport", async () => {
+    const transport = new InMemoryVisionTransport();
+    transport.response = {
+      status: 200,
+      headers: new Headers(),
+      body: {
+        marker_scanner_active: false,
+        observations: [],
+        error: null,
+      },
+    };
+    const client = new VisionClient(transport);
+
+    await expect(client.scanMarkers()).resolves.toEqual({
+      marker_scanner_active: false,
+      observations: [],
+      error: null,
+    });
+    expect(transport.requests.at(-1)).toMatchObject({
+      method: "POST",
+      path: "/markers/scan",
+    });
+  });
+
   it("rejects malformed marker payloads and invalid cursors", async () => {
     const transport = new InMemoryVisionTransport();
     const client = new VisionClient(transport);

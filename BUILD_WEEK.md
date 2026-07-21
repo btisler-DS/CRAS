@@ -10,6 +10,9 @@
 - Successful condition resolution carries observation IDs into the durable evidence record before authorization and dispatch.
 - Local verification passed on July 21: TypeScript, 136 Vitest tests, five vision-worker tests, production build, seven Playwright tests, and `git diff --check`.
 - The observational worker was deployed to the robot. After repairing a loose camera-ribbon connection, a bounded temporary commissioning diagnostic decoded the physical `LOC-HOME` marker after one stopped 500 ms approach increment. The operator confirmed straight movement and a clean stop. This was not an authorized mission dispatch; the protected ground route remains uncommissioned and must not be represented as complete.
+- Added a parameterless high-resolution marker scan to the loopback-only observational worker. It pauses camera streaming, captures one fixed 1296 x 972 frame, clamps display geometry to image bounds, restores prior scanner state, and accepts no device, resolution, file, actuator, or command input.
+- Physically verified the scan through the CRAS server proxy: `LOC-HOME` crossed the robot worker, private transport, schema validation, and server route as `marker-00000002`. No actuator library was imported and no movement occurred.
+- Updated verification: 137 Vitest tests and eight vision-worker tests pass alongside typecheck and `git diff --check`.
 
 ## Reproducible hospital scenario floorplans
 

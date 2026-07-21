@@ -134,3 +134,9 @@ diagnostic, not as a CRAS-authorized mission or production actuator path:
 This result verifies one bounded stop-scan-advance-stop-recognize sequence. It does
 not establish general navigation, route completion, doorway traversal, or a protected
 mission dispatch. The temporary commissioning script was removed from the robot.
+
+The follow-up passive observation was then repeated through the deployed vision worker
+and CRAS server proxy with no actuator access or movement. The fixed 1296 x 972 scan
+emitted `marker-00000002` for `LOC-HOME`; its typed payload and normalized image
+geometry passed the server schema. This verifies physical observation transport, not
+authorization or execution.

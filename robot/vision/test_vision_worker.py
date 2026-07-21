@@ -69,6 +69,11 @@ class VisionWorkerTests(unittest.TestCase):
         ):
             self.assertIsNone(vision.parse_marker_payload(value))
 
+    def test_normalized_marker_geometry_is_clamped_to_image_bounds(self):
+        self.assertEqual(vision.normalized_coordinate(-5, 100), 0.0)
+        self.assertEqual(vision.normalized_coordinate(25, 100), 0.25)
+        self.assertEqual(vision.normalized_coordinate(105, 100), 1.0)
+
     def test_scanner_records_bounded_typed_observations_and_debounces(self):
         class FakeDecoder:
             def decode(self, frame):
@@ -90,6 +95,48 @@ class VisionWorkerTests(unittest.TestCase):
         self.assertEqual(observations[0]["frame_sequence"], 7)
         self.assertIsNone(observations[0]["confidence"])
         self.assertEqual(observations[1]["frame_sequence"], 9)
+
+    def test_high_resolution_scan_is_fixed_observational_and_records_typed_result(self):
+        class FakeOwner:
+            def __init__(self):
+                self.stop_calls = 0
+
+            def stop(self):
+                self.stop_calls += 1
+
+        class FakeDecoder:
+            def decode(self, frame):
+                self.frame = frame
+                return [{"payload": "cras:v1:location:loc-home", "corners": None}]
+
+        owner = FakeOwner()
+        capture_calls = []
+        scanner = vision.MarkerScanner(
+            owner,
+            decoder_factory=FakeDecoder,
+            still_capture=lambda: capture_calls.append("capture") or b"jpeg",
+        )
+
+        observations = scanner.scan_high_resolution()
+
+        self.assertEqual(capture_calls, ["capture"])
+        self.assertEqual(owner.stop_calls, 1)
+        self.assertEqual(len(observations), 1)
+        self.assertEqual(observations[0]["marker_id"], "LOC-HOME")
+        self.assertEqual(observations[0]["kind"], "location")
+        self.assertEqual(observations[0]["frame_sequence"], 0)
+
+    def test_high_resolution_capture_uses_only_fixed_arguments(self):
+        with patch("robot.vision.vision_worker.subprocess.run") as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = b"\xff\xd8jpeg\xff\xd9"
+            run.return_value.stderr = b""
+            self.assertEqual(vision.capture_high_resolution_still(), b"\xff\xd8jpeg\xff\xd9")
+            command = run.call_args.args[0]
+            self.assertEqual(command[0], "/usr/bin/rpicam-still")
+            self.assertIn("1296", command)
+            self.assertIn("972", command)
+            self.assertEqual(command[-2:], ["--output", "-"])
 
 
 if __name__ == "__main__":
