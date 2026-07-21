@@ -1,5 +1,45 @@
 # Build Week Record
 
+## July 21 — hosted Vercel simulator verification
+
+Vercel is used only to host the simulator-based public browser demonstration. The
+GitHub repository at <https://github.com/btisler-DS/CRAS> remains the authoritative,
+reproducible source. The hosted UI, local simulator, automated tests, and the optional
+physical endpoint all use the same CRAS protocol implementation and protected
+authorization/evidence/Dispatcher composition; targets differ only at the final
+injected robot adapter.
+
+The hosted simulator does not require a language model, OpenAI API key, physical robot,
+Ubuntu server, or private runtime credentials. The PiCar-X remains an optional endpoint
+and is not required to reproduce CRAS authorization, evidence-commit, fail-closed, or
+single-use dispatch behavior.
+
+The protected preview at
+<https://cras-i25za2qe8-hdt-2-quantum-inquiry.vercel.app> was verified through
+Vercel's temporary authenticated access mechanism. No Vercel token, local project ID,
+browser credential, bypass value, or temporary authentication artifact is recorded in
+the repository. Hosted verification produced:
+
+- a successful Next.js 16.2.10 production build and TypeScript check;
+- seven of seven passing hosted Chromium/Playwright scenarios;
+- blocked condition scenarios with zero robot-adapter calls;
+- a modified run reaching `READY FOR EVIDENCE` without early authorization or dispatch;
+- an injected evidence-store failure returning `EVIDENCE COMMIT FAILED`, with no grant,
+  no dispatch, and zero adapter calls;
+- successful simulator authorization only after evidence commit, followed by one
+  single-use dispatch and final position `Room 312`;
+- confirmation that model recommendations cannot grant, deny, or otherwise override
+  the deterministic protocol verdict;
+- twenty of twenty passing sequential reset/condition state-consistency cycles; and
+- no unexpected browser, console, page, or Vercel runtime errors. The unconfigured
+  observation-only vision routes returned their expected `503` unavailable state.
+
+The initial alias <https://cras-eta.vercel.app> was created during first-time Vercel
+project setup. It was not the validated preview, was not promoted as the competition
+production deployment, and was not connected to a new actuator or authorization path.
+The local `.vercel/` directory contains project-link metadata and is intentionally
+ignored by Git.
+
 ## July 20 — QR observation and condition-evidence checkpoint
 
 - Added passive, robot-local OpenCV QR decoding behind the existing camera owner. Import and service startup still perform no camera acquisition or actuator initialization.
