@@ -1,0 +1,520 @@
+.app {
+  min-height: 100vh;
+  color: #f7fbf9;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4.5rem;
+  padding: 0.8rem clamp(1rem, 3vw, 3rem);
+  border-bottom: 1px solid rgba(170, 214, 195, 0.14);
+  background: rgba(7, 16, 14, 0.92);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.brand > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.brand strong {
+  font-size: 0.95rem;
+}
+
+.brand div span {
+  color: #9fb7ae;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.brandMark {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  place-items: center;
+  border: 1px solid rgba(114, 242, 177, 0.44);
+  border-radius: 0.75rem;
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.08);
+  font: 800 0.74rem ui-monospace, monospace;
+}
+
+.modeSwitch {
+  display: flex;
+  padding: 0.25rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.modeSwitch button {
+  padding: 0.55rem 0.8rem;
+  border: 0;
+  border-radius: 0.55rem;
+  color: #9fb7ae;
+  background: transparent;
+  font-size: 0.78rem;
+}
+
+.modeSwitch .activeMode {
+  color: #07100e;
+  background: #72f2b1;
+}
+
+.shell {
+  width: min(1500px, 100%);
+  margin: 0 auto;
+  padding: clamp(1rem, 2.5vw, 2.75rem);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr minmax(17rem, 0.42fr);
+  gap: 1.25rem;
+  align-items: stretch;
+  margin-bottom: 1rem;
+}
+
+.hero > div:first-child {
+  display: grid;
+  align-content: center;
+  min-height: 12rem;
+  padding: clamp(1.3rem, 3vw, 2.5rem);
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 1.15rem;
+  background: linear-gradient(135deg, rgba(17, 38, 32, 0.94), rgba(9, 20, 17, 0.78));
+}
+
+.eyebrow {
+  color: #72f2b1;
+  font: 750 0.66rem ui-monospace, monospace;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  max-width: 54rem;
+  margin: 0.55rem 0 0.65rem;
+  font-size: clamp(2rem, 5vw, 4.7rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.hero p {
+  max-width: 50rem;
+  margin: 0;
+  color: #b7cac3;
+}
+
+.verdict {
+  display: grid;
+  align-content: center;
+  gap: 0.5rem;
+  min-height: 12rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 124, 119, 0.34);
+  border-radius: 1.15rem;
+  background: rgba(66, 31, 31, 0.78);
+}
+
+.verdict span,
+.verdict small,
+.proofStrip span,
+.sectionHeading span,
+.markerCard span,
+.actionBar span {
+  color: #9fb7ae;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.verdict strong {
+  color: #ff7c77;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1;
+}
+
+.verdictREADY {
+  border-color: rgba(255, 206, 115, 0.4);
+  background: rgba(70, 54, 25, 0.8);
+}
+
+.verdictREADY strong {
+  color: #ffce73;
+}
+
+.verdictAUTHORIZED {
+  border-color: rgba(114, 242, 177, 0.4);
+  background: rgba(19, 63, 49, 0.8);
+}
+
+.verdictAUTHORIZED strong {
+  color: #72f2b1;
+}
+
+.proofStrip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.9rem;
+  background: rgba(170, 214, 195, 0.14);
+}
+
+.proofStrip div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  background: rgba(9, 20, 17, 0.94);
+}
+
+.proofStrip strong {
+  font-size: 0.92rem;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(17rem, 0.34fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.scenarioRail,
+.stage,
+.inspector {
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 1rem;
+  background: rgba(15, 30, 26, 0.78);
+}
+
+.scenarioRail,
+.stage {
+  padding: 1rem;
+}
+
+.sectionHeading,
+.stageHeader,
+.actionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sectionHeading {
+  margin-bottom: 0.85rem;
+}
+
+.sectionHeading strong,
+.runBadge {
+  color: #72f2b1;
+  font: 700 0.68rem ui-monospace, monospace;
+}
+
+.scenarioList,
+.modifierPanel,
+.conditionGrid,
+.markerPanel {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.scenarioCard {
+  display: grid;
+  grid-template-columns: 2.3rem 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.8rem;
+  text-align: left;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.8rem;
+  color: #f7fbf9;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.scenarioCard strong,
+.scenarioCard small {
+  display: block;
+}
+
+.scenarioCard small {
+  margin-top: 0.2rem;
+  color: #9fb7ae;
+}
+
+.scenarioIcon {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border: 1px solid rgba(255, 124, 119, 0.32);
+  border-radius: 0.65rem;
+  color: #ff7c77;
+  background: rgba(255, 124, 119, 0.08);
+  font-weight: 850;
+}
+
+.selectedScenario {
+  border-color: rgba(114, 242, 177, 0.52);
+  background: rgba(114, 242, 177, 0.07);
+}
+
+.selectedScenario .scenarioIcon {
+  border-color: rgba(114, 242, 177, 0.42);
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.1);
+}
+
+.modifierPanel p {
+  margin: 0 0 0.25rem;
+  color: #b7cac3;
+  font-size: 0.86rem;
+}
+
+.conditionToggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.conditionToggle strong,
+.conditionToggle small {
+  display: block;
+}
+
+.conditionToggle small {
+  margin-top: 0.18rem;
+  color: #9fb7ae;
+}
+
+.modelField {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.modelField span {
+  color: #9fb7ae;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.modelField select {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid rgba(170, 214, 195, 0.18);
+  border-radius: 0.7rem;
+  color: #f7fbf9;
+  background: #10231e;
+}
+
+.stageHeader {
+  margin-bottom: 1rem;
+}
+
+.stageHeader h2 {
+  margin: 0.35rem 0 0;
+  font-size: 1.25rem;
+}
+
+.runBadge {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(114, 242, 177, 0.28);
+  border-radius: 999px;
+  background: rgba(114, 242, 177, 0.06);
+}
+
+.visualGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.65fr);
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.markerPanel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.markerCard {
+  display: grid;
+  align-content: center;
+  min-height: 7.3rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.85rem;
+  background: rgba(7, 16, 14, 0.6);
+}
+
+.markerCard strong {
+  margin: 0.38rem 0 0.2rem;
+  color: #72f2b1;
+  font: 800 0.88rem ui-monospace, monospace;
+}
+
+.markerCard small {
+  color: #b7cac3;
+}
+
+.conditionGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0.8rem;
+}
+
+.conditionNode {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 5.2rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.conditionNode > span {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 850;
+}
+
+.conditionNode strong,
+.conditionNode small {
+  display: block;
+}
+
+.conditionNode small {
+  margin-top: 0.18rem;
+  color: #9fb7ae;
+}
+
+.conditionPass > span {
+  color: #07100e;
+  background: #72f2b1;
+}
+
+.conditionFail > span {
+  color: #fff;
+  background: #ff7c77;
+}
+
+.actionBar {
+  padding: 0.8rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.85rem;
+  background: rgba(7, 16, 14, 0.58);
+}
+
+.actionBar > div {
+  display: grid;
+  gap: 0.25rem;
+  margin-right: auto;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.72rem 0.9rem;
+  border-radius: 0.7rem;
+  font-weight: 800;
+}
+
+.primaryButton {
+  border: 1px solid #72f2b1;
+  color: #07100e;
+  background: #72f2b1;
+}
+
+.secondaryButton {
+  border: 1px solid rgba(170, 214, 195, 0.2);
+  color: #f7fbf9;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.error {
+  margin: 0.8rem 0 0;
+  color: #ff9f9a;
+}
+
+.inspector {
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.inspector summary {
+  cursor: pointer;
+  color: #72f2b1;
+  font-weight: 750;
+}
+
+.inspectorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 1050px) {
+  .hero,
+  .workspace,
+  .visualGrid,
+  .inspectorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .conditionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .topbar,
+  .sectionHeading,
+  .stageHeader,
+  .actionBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topbar {
+    position: static;
+  }
+
+  .modeSwitch,
+  .modeSwitch button {
+    width: 100%;
+  }
+
+  .proofStrip,
+  .markerPanel,
+  .conditionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 2.35rem;
+  }
+}
