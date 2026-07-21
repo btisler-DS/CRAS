@@ -97,31 +97,13 @@ const CONDITION_SHORT_LABELS: Record<RequiredConditionId, string> = {
 };
 
 const PRESENTATION_TIMING = {
-  standard: {
-    mission: 520,
-    model: 520,
-    condition: 230,
-    evidenceLead: 180,
-    evidenceMinimum: 320,
-    evidenceResult: 220,
-    verdict: 900,
-    endpoint: 1450,
-  },
-  reduced: {
-    mission: 450,
-    model: 450,
-    condition: 180,
-    evidenceLead: 150,
-    evidenceMinimum: 250,
-    evidenceResult: 180,
-    verdict: 700,
-    endpoint: 900,
-  },
+  mission: 700,
+  recommendation: 700,
+  condition: 240,
+  evidenceLead: 160,
+  evidenceMinimum: 320,
+  authorization: 950,
 } as const;
-
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
-}
 
 function getJudgeReason(runtimeView: RuntimeView): string {
   const headlineReason =
@@ -167,16 +149,21 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     useState(0);
   const [presentationEvidencePending, setPresentationEvidencePending] =
     useState(false);
-  const [presentationComplete, setPresentationComplete] = useState(false);
+  const [presentationAuthorizationResolved, setPresentationAuthorizationResolved] =
+    useState(false);
   const presetMenuRef = useRef<HTMLDetailsElement>(null);
   const inspectionRef = useRef<HTMLElement>(null);
+  const interactionRef = useRef<HTMLElement>(null);
   const firstGlanceRef = useRef<HTMLElement>(null);
   const presentationFocusRef = useRef<HTMLDivElement>(null);
   const presentationRunRef = useRef(0);
+  const presentationWaitRef = useRef<(() => void) | null>(null);
+  const skipAnimationRef = useRef(false);
 
   useEffect(
     () => () => {
       presentationRunRef.current += 1;
+      presentationWaitRef.current?.();
     },
     [],
   );
@@ -203,7 +190,9 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       : view.runtimeStatus;
   const judgeReason = getJudgeReason(view);
   const presentationReason = getJudgeReason(presentationView ?? view);
-  const presentationActive = presentationStage !== "idle";
+  const presentationVisible = presentationStage !== "idle";
+  const presentationRunning =
+    presentationVisible && presentationStage !== "consequence";
   const endpointConsequence =
     view.robot.movementState === "ARRIVED"
       ? "Arrived"
@@ -229,7 +218,6 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
         : "failed";
 
   async function run(command: object): Promise<RuntimeView | null> {
-    setPresentationComplete(false);
     setPending(true);
     setError(null);
     try {
@@ -268,10 +256,13 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
 
   async function resetRuntime(): Promise<void> {
     presentationRunRef.current += 1;
+    presentationWaitRef.current?.();
+    skipAnimationRef.current = false;
     setPresentationStage("idle");
     setPresentationView(null);
     setVisiblePresentationConditions(0);
     setPresentationEvidencePending(false);
+    setPresentationAuthorizationResolved(false);
     presetMenuRef.current?.removeAttribute("open");
     const nextView = await run({ command: "reset" });
     if (nextView) {
@@ -280,12 +271,10 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       setMode("canned");
       setModelRecommendation("Proceed");
       setInspectionOpen(false);
-      setPresentationComplete(false);
     }
   }
 
   async function loadScenario(scenario: ScenarioCard): Promise<void> {
-    setPresentationComplete(false);
     setPending(true);
     setError(null);
     try {
@@ -314,7 +303,6 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     conditionId: RequiredConditionId,
     satisfied: boolean,
   ): Promise<void> {
-    setPresentationComplete(false);
     const nextView = await run({ command: "set-condition", conditionId, satisfied });
     if (nextView) {
       setSelectedScenario("modified");
@@ -326,21 +314,32 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     const runId = presentationRunRef.current + 1;
     presentationRunRef.current = runId;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timing = reducedMotion
-      ? PRESENTATION_TIMING.reduced
-      : PRESENTATION_TIMING.standard;
-    const pause = async (milliseconds: number): Promise<boolean> => {
-      await delay(milliseconds);
-      return presentationRunRef.current === runId;
+    skipAnimationRef.current = reducedMotion;
+    const pause = (milliseconds: number): Promise<boolean> => {
+      if (skipAnimationRef.current) {
+        return Promise.resolve(presentationRunRef.current === runId);
+      }
+
+      return new Promise((resolve) => {
+        const timer = window.setTimeout(() => {
+          presentationWaitRef.current = null;
+          resolve(presentationRunRef.current === runId);
+        }, milliseconds);
+        presentationWaitRef.current = () => {
+          window.clearTimeout(timer);
+          presentationWaitRef.current = null;
+          resolve(presentationRunRef.current === runId);
+        };
+      });
     };
 
     setPending(true);
     setError(null);
     setInspectionOpen(false);
-    setPresentationComplete(false);
     setPresentationView(view);
     setVisiblePresentationConditions(0);
     setPresentationEvidencePending(false);
+    setPresentationAuthorizationResolved(false);
     setPresentationStage("mission");
     requestAnimationFrame(() => {
       firstGlanceRef.current?.scrollIntoView({
@@ -368,53 +367,51 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
         }
       }
 
-      if (!(await pause(timing.mission))) return;
-      setPresentationStage("model");
+      if (!(await pause(PRESENTATION_TIMING.mission))) return;
+      setPresentationStage("recommendation");
 
-      if (!(await pause(timing.model))) return;
+      if (!(await pause(PRESENTATION_TIMING.recommendation))) return;
       setPresentationView(preparedView);
-      setPresentationStage("conditions");
+      setPresentationStage("authorization");
 
       for (let conditionCount = 1; conditionCount <= 4; conditionCount += 1) {
-        if (!(await pause(timing.condition))) return;
+        if (!(await pause(PRESENTATION_TIMING.condition))) return;
         setVisiblePresentationConditions(conditionCount);
       }
 
-      if (!(await pause(timing.condition))) return;
+      if (!(await pause(PRESENTATION_TIMING.condition))) return;
       setPresentationEvidencePending(preparedView.canCommit);
       setVisiblePresentationConditions(5);
 
-      if (!(await pause(timing.evidenceLead))) return;
+      if (!(await pause(PRESENTATION_TIMING.evidenceLead))) return;
       let finalView = preparedView;
       if (preparedView.canCommit) {
-        const [committedView] = await Promise.all([
-          sendCommand({ command: "commit-and-dispatch" }),
-          delay(timing.evidenceMinimum),
-        ]);
-        finalView = committedView;
-      } else if (!(await pause(timing.evidenceMinimum))) {
-        return;
+        finalView = await sendCommand({ command: "commit-and-dispatch" });
       }
+
+      if (!(await pause(PRESENTATION_TIMING.evidenceMinimum))) return;
 
       if (presentationRunRef.current !== runId) return;
       setPresentationEvidencePending(false);
       setPresentationView(finalView);
+      setPresentationAuthorizationResolved(true);
 
-      if (!(await pause(timing.evidenceResult))) return;
-      setPresentationStage("verdict");
-
-      if (!(await pause(timing.verdict))) return;
-      setPresentationStage("endpoint");
+      if (!(await pause(PRESENTATION_TIMING.authorization))) return;
+      setPresentationStage("consequence");
       setView(finalView);
-
-      if (!(await pause(timing.endpoint))) return;
-      setPresentationStage("idle");
-      setPresentationComplete(true);
+      requestAnimationFrame(() => {
+        firstGlanceRef.current?.scrollIntoView({
+          behavior: reducedMotion ? "auto" : "smooth",
+          block: "start",
+        });
+        presentationFocusRef.current?.focus({ preventScroll: true });
+      });
     } catch (commandError) {
       if (presentationRunRef.current !== runId) return;
       setPresentationStage("idle");
       setPresentationView(null);
       setPresentationEvidencePending(false);
+      setPresentationAuthorizationResolved(false);
       setError(
         commandError instanceof Error ? commandError.message : "Runtime command failed.",
       );
@@ -423,10 +420,35 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     }
   }
 
+  function skipPresentation(): void {
+    skipAnimationRef.current = true;
+    presentationWaitRef.current?.();
+  }
+
+  function closePresentation(): void {
+    presentationRunRef.current += 1;
+    presentationWaitRef.current?.();
+    skipAnimationRef.current = false;
+    setPresentationStage("idle");
+    setPresentationView(null);
+    setVisiblePresentationConditions(0);
+    setPresentationEvidencePending(false);
+    setPresentationAuthorizationResolved(false);
+  }
+
   function revealInspection(): void {
+    closePresentation();
     setInspectionOpen(true);
     requestAnimationFrame(() => {
       inspectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function runAnotherScenario(): void {
+    closePresentation();
+    requestAnimationFrame(() => {
+      interactionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      interactionRef.current?.focus({ preventScroll: true });
     });
   }
 
@@ -443,9 +465,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
 
   return (
     <main
-      className={`${styles.app} ${presentationActive ? styles.appPresenting : ""} ${
-        presentationComplete ? styles.appPresented : ""
-      }`}
+      className={`${styles.app} ${presentationRunning ? styles.appPresenting : ""}`}
     >
       <header className={styles.topbar}>
         <div className={styles.brand}>
@@ -464,11 +484,11 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       <div className={styles.shell}>
         <section
           className={`${styles.firstGlance} ${
-            presentationActive ? styles.firstGlancePresenting : ""
+            presentationVisible ? styles.firstGlancePresenting : ""
           }`}
           ref={firstGlanceRef}
-          aria-labelledby={presentationActive ? undefined : "mission-heading"}
-          aria-label={presentationActive ? "Guided protocol presentation" : undefined}
+          aria-labelledby={presentationVisible ? undefined : "mission-heading"}
+          aria-label={presentationVisible ? "Guided protocol presentation" : undefined}
           data-testid="first-glance"
         >
           {presentationStage !== "idle" ? (
@@ -476,6 +496,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
               className={styles.presentationFocus}
               ref={presentationFocusRef}
               tabIndex={-1}
+              data-testid="presentation-focus"
             >
               <GuidedProtocolPresentation
                 stage={presentationStage}
@@ -483,7 +504,11 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                 modelRecommendation={modelRecommendation}
                 visibleConditionCount={visiblePresentationConditions}
                 evidencePending={presentationEvidencePending}
+                authorizationResolved={presentationAuthorizationResolved}
                 verdictReason={presentationReason}
+                onSkip={skipPresentation}
+                onInspectDecision={revealInspection}
+                onRunAnotherScenario={runAnotherScenario}
               />
             </div>
           ) : (
@@ -567,20 +592,6 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                 </span>
               </div>
 
-              {presentationComplete ? (
-                <div
-                  className={styles.presentationComplete}
-                  role="status"
-                  data-testid="presentation-complete"
-                >
-                  <span aria-hidden="true">↓</span>
-                  <p>
-                    <strong>Presentation complete.</strong> Inspect why, or explore the
-                    experiments below.
-                  </p>
-                </div>
-              ) : null}
-
               {error ? (
                 <p className={styles.error} role="alert">
                   {error}
@@ -592,13 +603,13 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
 
         <section
           className={`${styles.inspectionLayer} ${
-            presentationActive ? styles.presentationBackground : ""
-          } ${presentationComplete ? styles.presentationBackgroundRevealed : ""}`}
+            presentationRunning ? styles.presentationBackground : ""
+          }`}
           id="protocol-explanation"
           ref={inspectionRef}
           hidden={!inspectionOpen}
-          inert={presentationActive}
-          aria-hidden={presentationActive || undefined}
+          inert={presentationRunning}
+          aria-hidden={presentationRunning || undefined}
           data-testid="protocol-explanation"
           aria-labelledby="inspection-heading"
         >
@@ -812,12 +823,14 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
 
         <section
           className={`${styles.interactionLayer} ${
-            presentationActive ? styles.presentationBackground : ""
-          } ${presentationComplete ? styles.presentationBackgroundRevealed : ""}`}
+            presentationRunning ? styles.presentationBackground : ""
+          }`}
           aria-labelledby="interaction-layer-heading"
-          inert={presentationActive}
-          aria-hidden={presentationActive || undefined}
+          inert={presentationRunning}
+          aria-hidden={presentationRunning || undefined}
           data-testid="interaction-layer"
+          ref={interactionRef}
+          tabIndex={-1}
         >
           <div className={styles.layerHeader}>
             <span className={styles.eyebrow}>Explore the proof</span>

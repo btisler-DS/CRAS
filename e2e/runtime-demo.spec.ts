@@ -16,7 +16,15 @@ async function selectPreset(
 async function openExplanation(
   page: import("@playwright/test").Page,
 ): Promise<void> {
-  await page.getByRole("button", { name: "See why", exact: true }).click();
+  const completedRunAction = page.getByRole("button", {
+    name: "Inspect the decision",
+    exact: true,
+  });
+  if (await completedRunAction.isVisible()) {
+    await completedRunAction.click();
+  } else {
+    await page.getByRole("button", { name: "See why", exact: true }).click();
+  }
   await expect(page.getByTestId("protocol-explanation")).toBeVisible();
 }
 
@@ -33,34 +41,69 @@ async function runGuidedScenario(
   await expect(page.getByTestId("guided-mission")).toContainText(
     "Deliver insulin to Room 312",
   );
+  await expect(
+    page.getByRole("button", { name: "Skip animation", exact: true }),
+  ).toBeVisible();
   await expect(page.getByTestId("interaction-layer")).toHaveAttribute("inert", "");
 
-  await expect(presentation).toHaveAttribute("data-stage", "model");
-  await expect(page.getByTestId("guided-model")).toContainText("Proceed");
-  await expect(page.getByTestId("guided-model")).toContainText(
-    "Recommendation only · no authority",
+  await expect(presentation).toHaveAttribute("data-stage", "recommendation");
+  await expect(page.getByTestId("guided-mission")).toContainText(
+    "Deliver insulin to Room 312",
+  );
+  await expect(page.getByTestId("guided-recommendation")).toContainText("Proceed");
+  await expect(page.getByTestId("guided-recommendation")).toContainText(
+    "Recommendation only. No authority.",
   );
 
-  await expect(presentation).toHaveAttribute("data-stage", "conditions");
+  await expect(presentation).toHaveAttribute("data-stage", "authorization");
+  await expect(page.getByTestId("guided-mission")).toBeVisible();
+  await expect(page.getByTestId("guided-recommendation")).toBeVisible();
   await expect(
     page.getByTestId("guided-condition-PATIENT_IDENTITY_VERIFIED"),
   ).toHaveAttribute("data-revealed", "true");
+  await expect(
+    page.getByTestId("guided-condition-PATIENT_IDENTITY_VERIFIED"),
+  ).toBeVisible();
   await expect(page.getByTestId("guided-condition-evidence")).toHaveAttribute(
     "data-revealed",
     "true",
   );
+  await expect(page.getByTestId("guided-condition-evidence")).toBeVisible();
 
-  await expect(presentation).toHaveAttribute("data-stage", "verdict");
-  await expect(page.getByTestId("guided-verdict")).toContainText(expectedVerdict);
+  await expect(page.getByTestId("guided-authorization")).toContainText(
+    expectedVerdict,
+  );
+  await expect(page.getByTestId("causal-statement")).toContainText(
+    expectedVerdict === "AUTHORIZED"
+      ? "The model recommendation did not authorize execution. CRAS authorized only after every required condition was satisfied and the evidence transaction committed."
+      : "The model recommended proceeding, but CRAS blocked execution because patient identity was unresolved.",
+  );
 
-  await expect(presentation).toHaveAttribute("data-stage", "endpoint");
-  await expect(page.getByTestId("guided-endpoint")).toContainText(expectedEndpoint);
+  await expect(presentation).toHaveAttribute("data-stage", "consequence");
+  await expect(page.getByTestId("guided-mission")).toBeVisible();
+  await expect(page.getByTestId("guided-recommendation")).toBeVisible();
+  await expect(page.getByTestId("guided-authorization")).toContainText(
+    expectedVerdict,
+  );
+  await expect(page.getByTestId("guided-consequence")).toContainText(
+    expectedEndpoint,
+  );
+  await expect(page.getByTestId("guided-adapter-result")).toHaveText(
+    expectedVerdict === "AUTHORIZED"
+      ? "1 adapter call after authorization"
+      : "Zero adapter calls",
+  );
   await expect(page.getByTestId("guided-floorplan")).toBeVisible();
 
-  await expect(page.getByTestId("presentation-complete")).toBeVisible({
-    timeout: 7_000,
-  });
-  await expect(presentation).toHaveCount(0);
+  await expect(page.getByTestId("presentation-complete")).toBeVisible();
+  await expect(page.getByTestId("presentation-focus")).toBeFocused();
+  await expect(
+    page.getByRole("button", { name: "Inspect the decision", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Run another scenario", exact: true }),
+  ).toBeVisible();
+  await expect(presentation).toBeVisible();
   await expect(page.getByTestId("interaction-layer")).not.toHaveAttribute("inert", "");
 }
 
@@ -100,7 +143,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("protocol-explanation")).toBeHidden();
 
     await runGuidedScenario(page, "BLOCKED", "Stationary");
-    await expect(page.getByTestId("protocol-verdict")).toHaveText("BLOCKED");
+    await expect(page.getByTestId("guided-authorization")).toContainText("BLOCKED");
     await expect(page.getByTestId("blocking-reasons")).toContainText(
       "Patient identity is unresolved",
     );
@@ -110,6 +153,11 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.locator(".technical-disclosure")).not.toHaveAttribute("open");
     await expect(page.getByTestId("no-evidence")).toBeAttached();
     await expect(page.getByTestId("no-grant")).toBeAttached();
+    await page
+      .getByRole("button", { name: "Run another scenario", exact: true })
+      .click();
+    await expect(page.getByTestId("guided-presentation")).toHaveCount(0);
+    await expect(page.getByTestId("interaction-layer")).toBeVisible();
   });
 
   test("live mission logs attention and instruction acknowledgments without authority", async ({
@@ -237,6 +285,23 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("adapter-calls")).toHaveText("0");
     await expect(page.getByTestId("robot-position")).toHaveText("pharmacy");
     await expect(page.getByLabel("Patient identity verified")).not.toBeChecked();
+
+    await page.getByRole("button", { name: "Run scenario", exact: true }).click();
+    await expect(page.getByTestId("guided-presentation")).toHaveAttribute(
+      "data-stage",
+      "mission",
+    );
+    await page
+      .getByRole("button", { name: "Skip animation", exact: true })
+      .click();
+    await expect(page.getByTestId("guided-presentation")).toHaveAttribute(
+      "data-stage",
+      "consequence",
+      { timeout: 2_000 },
+    );
+    await expect(page.getByTestId("guided-adapter-result")).toHaveText(
+      "Zero adapter calls",
+    );
   });
 
   test("unsupported UI/API commands cannot bypass protected dispatch", async ({
@@ -254,5 +319,17 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("runtime-status")).toHaveText("UNAUTHORIZED");
     await expect(page.getByTestId("adapter-calls")).toHaveText("0");
     await expect(page.getByTestId("robot-position")).toHaveText("pharmacy");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.getByRole("button", { name: "Run scenario", exact: true }).click();
+    await expect(page.getByTestId("guided-presentation")).toHaveAttribute(
+      "data-stage",
+      "consequence",
+      { timeout: 2_000 },
+    );
+    await expect(page.getByTestId("guided-mission")).toBeVisible();
+    await expect(page.getByTestId("guided-recommendation")).toBeVisible();
+    await expect(page.getByTestId("guided-authorization")).toContainText("BLOCKED");
+    await expect(page.getByTestId("guided-consequence")).toContainText("Stationary");
   });
 });
