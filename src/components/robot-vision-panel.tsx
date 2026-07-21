@@ -131,19 +131,21 @@ export function RobotVisionPanel() {
   return (
     <section className="vision-panel" aria-labelledby="vision-heading">
       <div className="vision-copy">
-        <span className="eyebrow">Robot view · observation only</span>
-        <h2 id="vision-heading">See what the robot sees</h2>
+        <span className="eyebrow">Optional camera · observation only</span>
+        <h2 id="vision-heading">Vehicle camera</h2>
         <p>
-          Video provides context. It cannot authorize or execute an action.
+          Video can provide context, but it never approves or releases a delivery.
         </p>
         <div className="vision-actions">
           <button
+            type="button"
             onClick={() => void changeStream("start")}
             disabled={pending || active}
           >
             Start video
           </button>
           <button
+            type="button"
             onClick={() => void changeStream("stop")}
             disabled={pending || !active}
           >
@@ -160,7 +162,7 @@ export function RobotVisionPanel() {
         {markerError ? <p className="vision-error" role="status">{markerError}</p> : null}
         <div className="marker-observations" data-testid="marker-observations">
           <div className="marker-observations__heading">
-            <strong>What the robot recognized</strong>
+            <strong>Observed QR markers</strong>
             <span>{markers.length > 0 ? `${markers.length} recent` : "None yet"}</span>
           </div>
           {markers.length > 0 ? (
@@ -176,7 +178,7 @@ export function RobotVisionPanel() {
               ))}
             </ol>
           ) : (
-            <p>Place a CRAS QR marker in the camera view.</p>
+            <p>No marker has been observed.</p>
           )}
         </div>
       </div>

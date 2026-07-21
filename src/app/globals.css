@@ -364,6 +364,11 @@ blockquote {
   margin-bottom: 0;
 }
 
+.floor-panel h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
 .condition-count,
 .pill {
   border: 1px solid var(--line);
@@ -602,14 +607,34 @@ blockquote {
 
 .route-status {
   position: absolute;
-  top: calc(50% + 0.8rem);
+  top: calc(50% + 0.65rem);
   left: 50%;
-  color: var(--muted);
-  font: 700 0.58rem var(--mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  display: grid;
+  min-width: 7.5rem;
+  gap: 0.12rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid rgba(170, 214, 195, 0.16);
+  border-radius: 0.48rem;
+  background: rgba(4, 13, 10, 0.9);
+  text-align: center;
   transform: translateX(-50%);
   white-space: nowrap;
+}
+
+.route-status small {
+  color: var(--muted);
+  font: 650 0.48rem var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.route-status strong {
+  color: #e5f2ed;
+  font: 750 0.56rem var(--mono);
+}
+
+.floor-map--idle .route-status strong {
+  color: #ffaaa6;
 }
 
 .robot {
@@ -671,7 +696,7 @@ blockquote {
 
 .metric-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.65rem;
   margin-top: 0.8rem;
 }

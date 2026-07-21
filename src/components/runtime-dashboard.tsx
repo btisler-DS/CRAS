@@ -28,12 +28,30 @@ interface ScenarioCard {
   readonly expected: "AUTHORIZED" | "BLOCKED";
 }
 
+interface CaseChange {
+  readonly label: string;
+  readonly before: string;
+  readonly after: string;
+}
+
+interface CaseFact {
+  readonly text: string;
+  readonly tone: "attention" | "verified" | "neutral";
+}
+
+interface ClinicalConditionCopy {
+  readonly label: string;
+  readonly passed: string;
+  readonly missing: string;
+  readonly nextStep: string;
+}
+
 const SCENARIOS: readonly ScenarioCard[] = [
   {
     id: "success",
     glyph: "→",
     title: "Successful delivery",
-    subtitle: "Every required fact can be committed",
+    subtitle: "Every safety check is complete",
     preset: "successful",
     expected: "AUTHORIZED",
   },
@@ -41,7 +59,7 @@ const SCENARIOS: readonly ScenarioCard[] = [
     id: "wrong-patient",
     glyph: "ID",
     title: "Wrong patient",
-    subtitle: "Patient identity does not match",
+    subtitle: "Patient identity is not verified",
     preset: "successful",
     condition: "PATIENT_IDENTITY_VERIFIED",
     expected: "BLOCKED",
@@ -68,7 +86,7 @@ const SCENARIOS: readonly ScenarioCard[] = [
     id: "outside-window",
     glyph: "12",
     title: "Outside administration window",
-    subtitle: "Timing condition is unresolved",
+    subtitle: "Administration time is outside the verified window",
     preset: "successful",
     condition: "ADMINISTRATION_WINDOW_VALID",
     expected: "BLOCKED",
@@ -76,8 +94,8 @@ const SCENARIOS: readonly ScenarioCard[] = [
   {
     id: "evidence-failure",
     glyph: "DB",
-    title: "Evidence store unavailable",
-    subtitle: "Facts pass, persistence fails",
+    title: "Verification record unavailable",
+    subtitle: "All checks pass, but the record cannot be saved",
     preset: "evidence-failure",
     expected: "BLOCKED",
   },
@@ -89,11 +107,35 @@ const PRESET_SCENARIO: Record<DemoPreset, string> = {
   "evidence-failure": "evidence-failure",
 };
 
-const CONDITION_SHORT_LABELS: Record<RequiredConditionId, string> = {
-  PATIENT_IDENTITY_VERIFIED: "Identity",
-  MEDICATION_MATCHED: "Medication",
-  PHYSICIAN_ORDER_ACTIVE: "Order",
-  ADMINISTRATION_WINDOW_VALID: "Window",
+const CLINICAL_CONDITIONS: Record<RequiredConditionId, ClinicalConditionCopy> = {
+  PATIENT_IDENTITY_VERIFIED: {
+    label: "Patient",
+    passed: "Patient identity verified",
+    missing: "Patient verification required",
+    nextStep:
+      "Verify the patient's identity before CRAS can release the delivery.",
+  },
+  MEDICATION_MATCHED: {
+    label: "Medication",
+    passed: "Medication matches the order",
+    missing: "Medication does not match the order",
+    nextStep:
+      "Verify that the medication matches the active order before CRAS can release the delivery.",
+  },
+  PHYSICIAN_ORDER_ACTIVE: {
+    label: "Active order",
+    passed: "Medication order is active",
+    missing: "Medication order is not active",
+    nextStep:
+      "Confirm that the physician order is active before CRAS can release the delivery.",
+  },
+  ADMINISTRATION_WINDOW_VALID: {
+    label: "Administration time",
+    passed: "Administration time verified",
+    missing: "Administration time requires verification",
+    nextStep:
+      "Verify that the administration time is within the approved window before CRAS can release the delivery.",
+  },
 };
 
 const PRESENTATION_TIMING = {
@@ -105,17 +147,120 @@ const PRESENTATION_TIMING = {
   authorization: 950,
 } as const;
 
-function getJudgeReason(runtimeView: RuntimeView): string {
-  const headlineReason =
-    runtimeView.blockingReasons[0] ??
-    (runtimeView.runtimeStatus === "AUTHORIZED"
-      ? "Durable evidence committed and grant consumed."
-      : runtimeView.authorizationDetail);
-  return runtimeView.blockingReasons.some((reason) =>
-    reason.startsWith("Patient identity"),
-  )
-    ? "Patient identity unresolved"
-    : headlineReason;
+function getClinicalDecision(runtimeView: RuntimeView): string {
+  switch (runtimeView.runtimeStatus) {
+    case "AUTHORIZED":
+      return "Delivery approved";
+    case "READY FOR EVIDENCE":
+      return "Ready to record verification";
+    case "EVIDENCE COMMIT FAILED":
+    case "UNAUTHORIZED":
+      return "Delivery blocked";
+  }
+}
+
+function getClinicalReason(runtimeView: RuntimeView): string {
+  if (runtimeView.runtimeStatus === "AUTHORIZED") {
+    return "Every required check passed and the verification record was saved.";
+  }
+  if (runtimeView.runtimeStatus === "EVIDENCE COMMIT FAILED") {
+    return "All safety checks passed, but the verification record could not be saved.";
+  }
+  if (runtimeView.runtimeStatus === "READY FOR EVIDENCE") {
+    return "All safety checks are complete. Record the verification before release.";
+  }
+
+  const missingCondition = runtimeView.conditions.find(
+    (condition) => !condition.satisfied,
+  );
+  return missingCondition
+    ? `${CLINICAL_CONDITIONS[missingCondition.id].missing}.`
+    : "A required safety check is still incomplete.";
+}
+
+function getClinicalNextStep(runtimeView: RuntimeView): string {
+  if (runtimeView.runtimeStatus === "AUTHORIZED") {
+    return "No further action is required for this delivery.";
+  }
+  if (runtimeView.runtimeStatus === "EVIDENCE COMMIT FAILED") {
+    return "Retry when the verification record is available. CRAS cannot release the delivery until it is saved.";
+  }
+  if (runtimeView.runtimeStatus === "READY FOR EVIDENCE") {
+    return "Save the verification record before CRAS can release the delivery.";
+  }
+
+  const missingCondition = runtimeView.conditions.find(
+    (condition) => !condition.satisfied,
+  );
+  return missingCondition
+    ? CLINICAL_CONDITIONS[missingCondition.id].nextStep
+    : "Complete every required safety check before CRAS can release the delivery.";
+}
+
+function getVehicleStatement(runtimeView: RuntimeView): string {
+  if (runtimeView.robot.position === "Room 312") {
+    return "Vehicle arrived at Room 312.";
+  }
+  if (runtimeView.robot.movementState === "FAILED") {
+    return "Vehicle stopped before completing the delivery.";
+  }
+  return "Vehicle remained at Pharmacy.";
+}
+
+function getCommandStatement(runtimeView: RuntimeView): string {
+  return runtimeView.robot.dispatchCount === 0
+    ? "No delivery command was issued."
+    : `${runtimeView.robot.dispatchCount} delivery command sent after approval.`;
+}
+
+function getVehicleOutcomeExplanation(runtimeView: RuntimeView): string {
+  if (runtimeView.robot.target === "physical") {
+    return runtimeView.robot.dispatchCount === 0
+      ? "CRAS issued no protected command, so the physical vehicle received no movement instruction."
+      : "CRAS released the commissioned physical behavior after authorization. This display does not claim ground navigation."
+  }
+  if (runtimeView.robot.position === "Room 312") {
+    return "CRAS approved the delivery, and the simulated vehicle traveled from Pharmacy to Room 312."
+  }
+  if (runtimeView.runtimeStatus === "EVIDENCE COMMIT FAILED") {
+    return "Although every safety check passed, the verification record could not be saved, so CRAS never released the vehicle."
+  }
+  if (runtimeView.robot.movementState === "FAILED") {
+    return "CRAS released the delivery, but the vehicle stopped before reaching Room 312."
+  }
+  if (runtimeView.runtimeStatus === "READY FOR EVIDENCE") {
+    return "Every safety check passed, but CRAS has not released the vehicle because the verification record has not been saved."
+  }
+  return "CRAS issued no delivery command, so the vehicle remained at the Pharmacy."
+}
+
+function scrollToAndFocus(target: HTMLElement | null): void {
+  if (!target) return;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  target.scrollIntoView({
+    behavior: reducedMotion ? "auto" : "smooth",
+    block: "start",
+  });
+  target.focus({ preventScroll: true });
+}
+
+function getBaselineDecision(scenario: ScenarioCard): string {
+  return scenario.condition ? "Delivery blocked" : "Ready to record verification";
+}
+
+function isBaselineConditionSatisfied(
+  scenario: ScenarioCard,
+  conditionId: RequiredConditionId,
+): boolean {
+  return scenario.condition !== conditionId;
+}
+
+function formatList(items: readonly string[]): string {
+  if (items.length < 2) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
 }
 
 async function sendCommand(command: object): Promise<RuntimeView> {
@@ -142,6 +287,8 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
   const [mode, setMode] = useState<"canned" | "modified">("canned");
   const [modelRecommendation, setModelRecommendation] = useState("Proceed");
   const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [caseEditing, setCaseEditing] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [presentationStage, setPresentationStage] =
     useState<GuidedPresentationStage>("idle");
   const [presentationView, setPresentationView] = useState<RuntimeView | null>(null);
@@ -151,9 +298,9 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     useState(false);
   const [presentationAuthorizationResolved, setPresentationAuthorizationResolved] =
     useState(false);
-  const presetMenuRef = useRef<HTMLDetailsElement>(null);
   const inspectionRef = useRef<HTMLElement>(null);
-  const interactionRef = useRef<HTMLElement>(null);
+  const scenarioLibraryRef = useRef<HTMLElement>(null);
+  const technicalAuditRef = useRef<HTMLDetailsElement>(null);
   const firstGlanceRef = useRef<HTMLElement>(null);
   const presentationFocusRef = useRef<HTMLDivElement>(null);
   const presentationRunRef = useRef(0);
@@ -173,23 +320,21 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     [view.conditions],
   );
   const originalScenario =
-    SCENARIOS.find((scenario) => scenario.id === comparisonScenario) ?? SCENARIOS[0];
+    SCENARIOS.find((scenario) => scenario.id === comparisonScenario) ?? SCENARIOS[0]!;
   const currentScenario = SCENARIOS.find(
     (scenario) => scenario.id === selectedScenario,
   );
-  const currentRunTitle =
-    selectedScenario === "modified"
-      ? "Modified run"
-      : selectedScenario === "live-mission"
-        ? "Live mission"
-        : (currentScenario?.title ?? "Current run");
   const displayVerdict =
     view.runtimeStatus === "UNAUTHORIZED" ||
     view.runtimeStatus === "EVIDENCE COMMIT FAILED"
       ? "BLOCKED"
-      : view.runtimeStatus;
-  const judgeReason = getJudgeReason(view);
-  const presentationReason = getJudgeReason(presentationView ?? view);
+      : view.runtimeStatus === "READY FOR EVIDENCE"
+        ? "READY TO RECORD"
+        : "APPROVED";
+  const clinicalDecision = getClinicalDecision(view);
+  const clinicalReason = getClinicalReason(view);
+  const clinicalNextStep = getClinicalNextStep(view);
+  const presentationReason = getClinicalReason(presentationView ?? view);
   const presentationVisible = presentationStage !== "idle";
   const presentationRunning =
     presentationVisible && presentationStage !== "consequence";
@@ -216,6 +361,107 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       : view.runtimeStatus === "READY FOR EVIDENCE"
         ? "waiting"
         : "failed";
+  const caseChanges = useMemo(() => {
+    const changes: CaseChange[] = [];
+
+    for (const condition of view.conditions) {
+      const baselineSatisfied = isBaselineConditionSatisfied(
+        originalScenario,
+        condition.id,
+      );
+      if (condition.satisfied !== baselineSatisfied) {
+        changes.push({
+          label: `${CLINICAL_CONDITIONS[condition.id].label} verification`,
+          before: baselineSatisfied ? "Verified" : "Verification required",
+          after: condition.satisfied ? "Verified" : "Verification required",
+        });
+      }
+    }
+
+    if (modelRecommendation !== "Proceed") {
+      changes.push({
+        label: "AI suggestion",
+        before: "Proceed",
+        after: modelRecommendation,
+      });
+    }
+
+    const baselineDecision = getBaselineDecision(originalScenario);
+    if (
+      changes.some((change) => change.label !== "AI suggestion") &&
+      baselineDecision !== clinicalDecision
+    ) {
+      changes.push({
+        label: "Delivery result",
+        before: baselineDecision,
+        after: clinicalDecision,
+      });
+    }
+
+    return changes;
+  }, [clinicalDecision, modelRecommendation, originalScenario, view.conditions]);
+  const caseModified = caseChanges.length > 0;
+  const verificationLabel =
+    view.evidenceState === "COMMITTED"
+      ? "Verification record saved"
+      : view.evidenceState === "FAILED"
+        ? "Verification record unavailable"
+        : satisfiedCount === view.conditions.length
+          ? "Ready to save verification"
+          : "Verification still required";
+  const caseSummaryFacts = useMemo(() => {
+    const missing = view.conditions.filter((condition) => !condition.satisfied);
+    const verified = view.conditions.filter((condition) => condition.satisfied);
+    const facts: CaseFact[] = [];
+
+    if (missing.length > 0) {
+      facts.push(
+        ...missing.map((condition) => ({
+          text: `${CLINICAL_CONDITIONS[condition.id].missing}.`,
+          tone: "attention" as const,
+        })),
+      );
+      if (verified.length > 0) {
+        const verifiedList = formatList(
+          verified.map((condition) =>
+            CLINICAL_CONDITIONS[condition.id].label.toLocaleLowerCase(),
+          ),
+        );
+        facts.push(
+          {
+            text: `${verifiedList.charAt(0).toLocaleUpperCase()}${verifiedList.slice(1)} verified.`,
+            tone: "verified",
+          },
+        );
+      }
+    } else {
+      facts.push({
+        text: "Patient, medication, active order, and administration time verified.",
+        tone: "verified",
+      });
+    }
+
+    if (view.evidenceState === "FAILED") {
+      facts.push({
+        text: "The verification record could not be saved.",
+        tone: "attention",
+      });
+    }
+    facts.push(
+      {
+        text: `${clinicalDecision}.`,
+        tone:
+          view.runtimeStatus === "AUTHORIZED"
+            ? "verified"
+            : view.runtimeStatus === "READY FOR EVIDENCE"
+              ? "neutral"
+              : "attention",
+      },
+      { text: getVehicleStatement(view), tone: "neutral" },
+      { text: getCommandStatement(view), tone: "neutral" },
+    );
+    return facts;
+  }, [clinicalDecision, view]);
 
   async function run(command: object): Promise<RuntimeView | null> {
     setPending(true);
@@ -235,22 +481,23 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
   }
 
   async function selectPreset(preset: DemoPreset): Promise<void> {
-    presetMenuRef.current?.removeAttribute("open");
     const nextView = await run({ command: "preset", preset });
     if (nextView) {
       const scenarioId = PRESET_SCENARIO[preset];
       setSelectedScenario(scenarioId);
       setComparisonScenario(scenarioId);
       setMode("canned");
+      setModelRecommendation("Proceed");
+      setCaseEditing(false);
     }
   }
 
   async function beginMission(): Promise<void> {
-    presetMenuRef.current?.removeAttribute("open");
     const nextView = await run({ command: "begin-mission" });
     if (nextView) {
       setSelectedScenario("live-mission");
       setMode("modified");
+      setCaseEditing(false);
     }
   }
 
@@ -263,7 +510,6 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     setVisiblePresentationConditions(0);
     setPresentationEvidencePending(false);
     setPresentationAuthorizationResolved(false);
-    presetMenuRef.current?.removeAttribute("open");
     const nextView = await run({ command: "reset" });
     if (nextView) {
       setSelectedScenario("wrong-patient");
@@ -271,6 +517,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       setMode("canned");
       setModelRecommendation("Proceed");
       setInspectionOpen(false);
+      setCaseEditing(false);
     }
   }
 
@@ -290,6 +537,10 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       setSelectedScenario(scenario.id);
       setComparisonScenario(scenario.id);
       setMode("canned");
+      setModelRecommendation("Proceed");
+      closePresentation();
+      setInspectionOpen(false);
+      setCaseEditing(false);
     } catch (commandError) {
       setError(
         commandError instanceof Error ? commandError.message : "Runtime command failed.",
@@ -308,6 +559,25 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
       setSelectedScenario("modified");
       setMode("modified");
     }
+  }
+
+  function changeModelRecommendation(recommendation: string): void {
+    setModelRecommendation(recommendation);
+    setMode(recommendation === "Proceed" && !caseModified ? "canned" : "modified");
+  }
+
+  async function restoreOriginalCase(): Promise<void> {
+    await loadScenario(originalScenario);
+    setInspectionOpen(true);
+    setCaseEditing(false);
+    requestAnimationFrame(() => {
+      inspectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  async function releaseDelivery(): Promise<void> {
+    const nextView = await run({ command: "commit-and-dispatch" });
+    if (nextView) showDecisionSummary(nextView);
   }
 
   async function runSelectedScenario(): Promise<void> {
@@ -436,19 +706,65 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
     setPresentationAuthorizationResolved(false);
   }
 
-  function revealInspection(): void {
-    closePresentation();
+  function showDecisionSummary(nextView: RuntimeView): void {
+    setInspectionOpen(false);
+    setCaseEditing(false);
+    setPresentationView(nextView);
+    setVisiblePresentationConditions(5);
+    setPresentationEvidencePending(false);
+    setPresentationAuthorizationResolved(true);
+    setPresentationStage("consequence");
+    requestAnimationFrame(() => scrollToAndFocus(presentationFocusRef.current));
+  }
+
+  function returnToDecisionSummary(): void {
+    setInspectionOpen(false);
+    setCaseEditing(false);
+    if (technicalAuditRef.current) technicalAuditRef.current.open = false;
+    requestAnimationFrame(() =>
+      scrollToAndFocus(
+        presentationStage === "consequence"
+          ? presentationFocusRef.current
+          : firstGlanceRef.current,
+      ),
+    );
+  }
+
+  function revealInspection(editCase = false): void {
+    if (technicalAuditRef.current) technicalAuditRef.current.open = false;
     setInspectionOpen(true);
+    setCaseEditing(editCase);
+    requestAnimationFrame(() => scrollToAndFocus(inspectionRef.current));
+  }
+
+  function reviewPresentationVerification(): void {
+    revealInspection(false);
+  }
+
+  function beginCaseModification(): void {
+    setCaseEditing(true);
     requestAnimationFrame(() => {
-      inspectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const missingCondition = inspectionRef.current?.querySelector<HTMLInputElement>(
+        "input[type='checkbox']:not(:checked)",
+      );
+      missingCondition?.focus();
     });
   }
 
-  function runAnotherScenario(): void {
-    closePresentation();
+  function tryAnotherSafetyCase(): void {
+    setInspectionOpen(false);
+    setCaseEditing(false);
+    if (technicalAuditRef.current) technicalAuditRef.current.open = false;
+    requestAnimationFrame(() => scrollToAndFocus(scenarioLibraryRef.current));
+  }
+
+  function viewTechnicalAudit(): void {
+    setInspectionOpen(false);
+    setCaseEditing(false);
+    if (technicalAuditRef.current) technicalAuditRef.current.open = true;
     requestAnimationFrame(() => {
-      interactionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      interactionRef.current?.focus({ preventScroll: true });
+      const summary = technicalAuditRef.current?.querySelector<HTMLElement>("summary");
+      scrollToAndFocus(summary ?? null);
     });
   }
 
@@ -459,9 +775,19 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
         ? styles.verdictREADY
         : "";
   const conditionsLocked =
+    !caseEditing ||
     pending ||
     view.runtimeStatus === "AUTHORIZED" ||
     view.interaction.state !== "INSTRUCTION_ACKNOWLEDGED";
+  const canModifyCase =
+    view.runtimeStatus === "UNAUTHORIZED" ||
+    view.runtimeStatus === "READY FOR EVIDENCE";
+  const releaseGuidance =
+    view.runtimeStatus === "AUTHORIZED"
+      ? "This delivery is complete. No further clinical action is required."
+      : view.canCommit
+        ? "Save the verification record before CRAS can release the delivery."
+        : clinicalNextStep;
 
   return (
     <main
@@ -472,7 +798,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           <span className={styles.brandMark}>CR</span>
           <div>
             <strong>Constitutional Runtime</strong>
-            <span>Protocol governs execution</span>
+            <span>Safety checks govern delivery</span>
           </div>
         </div>
         <div className={styles.environmentStatus}>
@@ -490,6 +816,7 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           aria-labelledby={presentationVisible ? undefined : "mission-heading"}
           aria-label={presentationVisible ? "Guided protocol presentation" : undefined}
           data-testid="first-glance"
+          tabIndex={-1}
         >
           {presentationStage !== "idle" ? (
             <div
@@ -507,45 +834,50 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                 authorizationResolved={presentationAuthorizationResolved}
                 verdictReason={presentationReason}
                 onSkip={skipPresentation}
-                onInspectDecision={revealInspection}
-                onRunAnotherScenario={runAnotherScenario}
+                onReviewVerification={reviewPresentationVerification}
+                onTryAnotherCase={tryAnotherSafetyCase}
+                onViewTechnicalAudit={viewTechnicalAudit}
               />
             </div>
           ) : (
             <>
               <div className={styles.missionBlock}>
-                <span className={styles.eyebrow}>Medication delivery</span>
-                <span className={styles.missionLabel}>Mission</span>
+                <span className={styles.eyebrow}>Medication delivery review</span>
+                <span className={styles.missionLabel}>Delivery task</span>
                 <h1 id="mission-heading">Deliver insulin to Room 312</h1>
                 <p className={styles.thesis}>
-                  <strong>CRAS authorizes actions using deterministic protocols.</strong>{" "}
-                  AI may recommend an action, but cannot authorize one.
+                  <strong>CRAS applies the same safety checks to every delivery.</strong>{" "}
+                  AI can suggest what to do, but only CRAS can approve release.
                 </p>
                 <p className={styles.visuallyHidden} data-testid="instruction">
                   {view.instruction ? `“${view.instruction}”` : "Awaiting instruction…"}
                 </p>
               </div>
 
-              <div className={styles.decisionGrid} aria-label="Mission decision path">
+              <div className={styles.decisionGrid} aria-label="Medication delivery decision">
                 <article className={`${styles.decisionCard} ${styles.modelCard}`}>
-                  <span>Model recommendation</span>
+                  <span>AI suggestion</span>
                   <strong data-testid="model-recommendation-display">
                     {modelRecommendation}
                   </strong>
-                  <small>Proposal only</small>
+                  <small>Advisory only · cannot approve delivery</small>
                 </article>
 
                 <article
                   className={`${styles.verdict} ${verdictToneClass}`}
                   aria-live="polite"
                 >
-                  <span>CRAS decision</span>
+                  <span>CRAS delivery decision</span>
                   <strong key={displayVerdict} data-testid="protocol-verdict">
                     {displayVerdict}
                   </strong>
                   <p className={styles.verdictReason} data-testid="headline-reason">
                     <span>Reason</span>
-                    {judgeReason}
+                    {clinicalReason}
+                  </p>
+                  <p className={styles.verdictNextStep}>
+                    <span>Next</span>
+                    {clinicalNextStep}
                   </p>
                 </article>
 
@@ -555,13 +887,11 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                   }`}
                   aria-live="polite"
                 >
-                  <span>Endpoint</span>
+                  <span>Delivery vehicle</span>
                   <strong key={endpointConsequence} data-testid="endpoint-consequence">
-                    {endpointConsequence}
+                    {view.robot.position === "Room 312" ? "Room 312" : "At Pharmacy"}
                   </strong>
-                  <small>
-                    {endpointActive ? "Protected action completed" : "No movement"}
-                  </small>
+                  <small>{getVehicleStatement(view)}</small>
                   <span className={styles.visuallyHidden} data-testid="execution-state">
                     {view.executionState}
                   </span>
@@ -581,14 +911,14 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                 <button
                   className={styles.secondaryButton}
                   type="button"
-                  onClick={revealInspection}
+                  onClick={() => revealInspection()}
                   aria-controls="protocol-explanation"
                   aria-expanded={inspectionOpen}
                 >
-                  See why
+                  Review verification
                 </button>
                 <span className={styles.visuallyHidden} id="run-scenario-note">
-                  Model proposes. CRAS decides. The endpoint obeys.
+                  The AI suggests. CRAS decides. The delivery vehicle obeys.
                 </span>
               </div>
 
@@ -612,42 +942,80 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
           aria-hidden={presentationRunning || undefined}
           data-testid="protocol-explanation"
           aria-labelledby="inspection-heading"
+          tabIndex={-1}
         >
           <div className={styles.inspectionHeader}>
             <div>
-              <span className={styles.eyebrow}>Inspect the decision</span>
-              <h2 id="inspection-heading">CRAS requires evidence, not confidence.</h2>
-              <p>Resolve every condition, commit the record, then consume one grant.</p>
+              <span className={styles.eyebrow}>Verification review</span>
+              <h2 id="inspection-heading">
+                {view.runtimeStatus === "AUTHORIZED"
+                  ? "Why was this delivery approved?"
+                  : view.runtimeStatus === "READY FOR EVIDENCE"
+                    ? "What is needed before release?"
+                    : "Why was this delivery blocked?"}
+              </h2>
+              <p>{clinicalNextStep}</p>
             </div>
-            <button
-              className={styles.secondaryButton}
-              type="button"
-              onClick={() => setInspectionOpen(false)}
-            >
-              Close explanation
-            </button>
+            <div className={styles.inspectionHeaderActions}>
+              {!caseEditing && canModifyCase ? (
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={beginCaseModification}
+                >
+                  Modify this case
+                </button>
+              ) : null}
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={returnToDecisionSummary}
+              >
+                Back to decision summary
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.clinicalDecisionBanner} data-testid="blocking-reasons">
+            <div>
+              <span>Current decision</span>
+              <strong>{clinicalDecision}</strong>
+            </div>
+            <p>{clinicalReason}</p>
           </div>
 
           <div className={styles.inspectionSummary}>
             <div className={styles.modelControl}>
-              <label htmlFor="model-recommendation">Model recommendation</label>
-              <select
-                id="model-recommendation"
-                aria-label="Model"
-                value={modelRecommendation}
-                aria-describedby="model-boundary-note"
-                onChange={(event) => setModelRecommendation(event.currentTarget.value)}
-              >
-                <option>Proceed</option>
-                <option>Do not proceed</option>
-                <option>Patient is probably correct. Proceed</option>
-              </select>
+              {caseEditing ? (
+                <>
+                  <label htmlFor="model-recommendation">AI suggestion</label>
+                  <select
+                    id="model-recommendation"
+                    aria-label="Model"
+                    value={modelRecommendation}
+                    aria-describedby="model-boundary-note"
+                    disabled={view.runtimeStatus === "AUTHORIZED"}
+                    onChange={(event) =>
+                      changeModelRecommendation(event.currentTarget.value)
+                    }
+                  >
+                    <option>Proceed</option>
+                    <option>Do not proceed</option>
+                    <option>Patient is probably correct. Proceed</option>
+                  </select>
+                </>
+              ) : (
+                <div className={styles.modelReadout} data-testid="review-model-suggestion">
+                  <span>AI suggestion</span>
+                  <strong>{modelRecommendation}</strong>
+                </div>
+              )}
               <small id="model-boundary-note">
-                Untrusted proposal · never submitted as authority
+                Advisory only. Changing this suggestion never changes the safety checks.
               </small>
             </div>
 
-            <ul className={styles.protocolMap} aria-label="Protocol state">
+            <ul className={styles.protocolMap} aria-label="Medication safety checks">
               {view.conditions.map((condition) => (
                 <li
                   key={condition.id}
@@ -655,21 +1023,33 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                     condition.satisfied ? styles.protocolPassed : styles.protocolFailed
                   }
                 >
-                  <label>
-                    <input
-                      className={styles.conditionInput}
-                      type="checkbox"
-                      aria-label={condition.label}
-                      checked={condition.satisfied}
-                      disabled={conditionsLocked}
-                      onChange={(event) =>
-                        void setCondition(condition.id, event.currentTarget.checked)
-                      }
-                    />
-                    <span>{CONDITION_SHORT_LABELS[condition.id]}</span>
-                    <small>{condition.satisfied ? "Resolved" : "Unresolved"}</small>
-                    <strong aria-hidden="true">{condition.satisfied ? "✓" : "×"}</strong>
-                  </label>
+                  {caseEditing ? (
+                    <label>
+                      <input
+                        className={styles.conditionInput}
+                        type="checkbox"
+                        aria-label={condition.label}
+                        checked={condition.satisfied}
+                        disabled={conditionsLocked}
+                        onChange={(event) =>
+                          void setCondition(condition.id, event.currentTarget.checked)
+                        }
+                      />
+                      <span>{CLINICAL_CONDITIONS[condition.id].label}</span>
+                      <small>
+                        {condition.satisfied ? "Verified" : "Verification required"}
+                      </small>
+                      <strong aria-hidden="true">{condition.satisfied ? "✓" : "×"}</strong>
+                    </label>
+                  ) : (
+                    <div className={styles.protocolConditionReadout}>
+                      <span>{CLINICAL_CONDITIONS[condition.id].label}</span>
+                      <small>
+                        {condition.satisfied ? "Verified" : "Verification required"}
+                      </small>
+                      <strong aria-hidden="true">{condition.satisfied ? "✓" : "×"}</strong>
+                    </div>
+                  )}
                 </li>
               ))}
               <li
@@ -681,8 +1061,8 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                       : styles.protocolWaiting
                 }
               >
-                <span>Evidence</span>
-                <small>{view.evidenceState}</small>
+                <span>Verification record</span>
+                <small>{verificationLabel}</small>
                 <strong aria-hidden="true">
                   {evidenceProtocolState === "passed"
                     ? "✓"
@@ -700,8 +1080,11 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                       : styles.protocolWaiting
                 }
               >
-                <span>Authorization</span>
-                <small data-testid="runtime-status">{view.runtimeStatus}</small>
+                <span>Delivery decision</span>
+                <small>{clinicalDecision}</small>
+                <span className={styles.visuallyHidden} data-testid="runtime-status">
+                  {view.runtimeStatus}
+                </span>
                 <strong aria-hidden="true">
                   {authorizationProtocolState === "passed"
                     ? "✓"
@@ -715,67 +1098,425 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                   endpointActive ? styles.protocolPassed : styles.protocolWaiting
                 }
               >
-                <span>Endpoint</span>
-                <small>{endpointConsequence}</small>
+                <span>Delivery vehicle</span>
+                <small>{view.robot.position === "Room 312" ? "Arrived" : "At Pharmacy"}</small>
                 <strong aria-hidden="true">{endpointActive ? "→" : "Ⅱ"}</strong>
               </li>
             </ul>
           </div>
 
-          {view.blockingReasons.length > 0 ? (
-            <div className={styles.blockingBox} data-testid="blocking-reasons">
-              <strong>Why execution is blocked</strong>
-              {view.blockingReasons.map((reason) => (
-                <p key={reason}>{reason}</p>
-              ))}
-            </div>
-          ) : null}
-
-          <div className={styles.actionFlow} id="protected-action-flow">
-            <span>1 · Commit evidence</span>
-            <span>2 · Create authorization grant</span>
-            <span>3 · Consume grant and dispatch endpoint</span>
-          </div>
-
           <div className={styles.actionBar}>
             <div className={styles.evidenceStatus}>
-              <span>{satisfiedCount}/4 conditions satisfied</span>
-              <strong data-testid="evidence-state">{view.evidenceState}</strong>
-            </div>
-            <label className={styles.failureToggle}>
-              <input
-                type="checkbox"
-                role="switch"
-                checked={view.failureInjected}
-                disabled={pending}
-                onChange={(event) =>
-                  void selectPreset(
-                    event.currentTarget.checked ? "evidence-failure" : "successful",
-                  )
-                }
-              />
-              <span>
-                <strong>Inject evidence-store failure</strong>
-                <small>Repository boundary</small>
+              <span>{satisfiedCount} of 4 safety checks verified</span>
+              <strong>{verificationLabel}</strong>
+              <span className={styles.visuallyHidden} data-testid="evidence-state">
+                {view.evidenceState}
               </span>
-            </label>
-            <button
-              type="button"
-              className={styles.primaryButton}
-              aria-describedby="protected-action-flow"
-              disabled={!view.canCommit || pending}
-              onClick={() => void run({ command: "commit-and-dispatch" })}
-            >
-              {pending ? "Working…" : "Commit evidence & execute"}
-            </button>
-          </div>
-
-          <details className={`technical-disclosure ${styles.technicalDisclosure}`}>
-            <summary>Technical audit record</summary>
-            <p className={styles.inspectorIntro}>
-              Evidence, the single-use grant, the execution receipt, and the server-owned
-              event timeline remain separate records.
+            </div>
+            <p className={styles.releaseGuidance} data-testid="release-guidance">
+              {releaseGuidance}
             </p>
+            {caseEditing ? (
+              <>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => void restoreOriginalCase()}
+                  disabled={pending}
+                >
+                  Restore original case
+                </button>
+                {caseModified && !view.canCommit ? (
+                  <button
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={() => void runSelectedScenario()}
+                    disabled={pending}
+                  >
+                    Run modified case
+                  </button>
+                ) : null}
+              </>
+            ) : null}
+            {caseEditing && view.canCommit ? (
+              <button
+                type="button"
+                className={styles.primaryButton}
+                disabled={pending}
+                onClick={() => void releaseDelivery()}
+              >
+                {pending ? "Recording…" : "Record verification and release delivery"}
+              </button>
+            ) : null}
+          </div>
+        </section>
+
+        <section
+          className={`${styles.interactionLayer} ${
+            presentationRunning ? styles.presentationBackground : ""
+          }`}
+          aria-labelledby="interaction-layer-heading"
+          inert={presentationRunning}
+          aria-hidden={presentationRunning || undefined}
+          data-testid="interaction-layer"
+          tabIndex={-1}
+        >
+          <section className={`${styles.stage} ${styles.caseOutcome}`} aria-busy={pending}>
+            <div className={styles.stageHeader}>
+              <div>
+                <span className={styles.eyebrow}>After the decision</span>
+                <h2 id="interaction-layer-heading">Vehicle outcome</h2>
+                <p
+                  className={styles.vehicleOutcomeExplanation}
+                  data-testid="vehicle-outcome-explanation"
+                >
+                  {getVehicleOutcomeExplanation(view)}
+                </p>
+              </div>
+              <span className={styles.runBadge}>
+                {caseModified
+                  ? `${originalScenario.title} · modified`
+                  : (currentScenario?.title ?? originalScenario.title)}
+              </span>
+            </div>
+
+            <div className={styles.outcomeLayout}>
+              <div className={styles.outcomeNarrative}>
+                {caseModified ? (
+                  <div
+                    className={styles.changeList}
+                    aria-label="Changed case fields"
+                    data-testid="case-comparison"
+                  >
+                    {caseChanges.map((change) => (
+                      <article key={change.label}>
+                        <strong>{change.label}</strong>
+                        <div>
+                          <span>{change.before}</span>
+                          <span aria-hidden="true">→</span>
+                          <span>{change.after}</span>
+                        </div>
+                      </article>
+                    ))}
+                    <div className={styles.outcomeWhy}>
+                      <span>Why it matters</span>
+                      <p>{clinicalReason}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <ul className={styles.caseFacts} data-testid="case-summary">
+                    {caseSummaryFacts.map((fact) => (
+                      <li
+                        key={fact.text}
+                        className={
+                          fact.tone === "verified"
+                            ? styles.caseFactVerified
+                            : fact.tone === "attention"
+                              ? styles.caseFactAttention
+                              : styles.caseFactNeutral
+                        }
+                      >
+                        <span aria-hidden="true">
+                          {fact.tone === "verified"
+                            ? "✓"
+                            : fact.tone === "attention"
+                              ? "!"
+                              : "·"}
+                        </span>
+                        <p>{fact.text}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className={styles.caseActions}>
+                  {canModifyCase ? (
+                    <button
+                      className={styles.primaryButton}
+                      type="button"
+                      onClick={() => revealInspection(true)}
+                    >
+                      Modify this case
+                    </button>
+                  ) : null}
+                  {caseModified ? (
+                    <button
+                      className={styles.secondaryButton}
+                      type="button"
+                      onClick={() => void restoreOriginalCase()}
+                      disabled={pending}
+                    >
+                      Restore original case
+                    </button>
+                  ) : null}
+                  <button
+                    className={`${styles.secondaryButton} ${styles.explorationButton}`}
+                    type="button"
+                    onClick={tryAnotherSafetyCase}
+                  >
+                    Choose another case
+                  </button>
+                  {presentationStage === "consequence" ? (
+                    <button
+                      className={styles.secondaryButton}
+                      type="button"
+                      onClick={returnToDecisionSummary}
+                    >
+                      Back to decision summary
+                    </button>
+                  ) : null}
+                  <button
+                    className={
+                      presentationStage === "consequence" && !caseModified
+                        ? styles.replayButton
+                        : styles.primaryButton
+                    }
+                    type="button"
+                    onClick={() => void runSelectedScenario()}
+                    disabled={pending}
+                  >
+                    {caseModified
+                      ? "Run modified case"
+                      : presentationStage === "consequence"
+                        ? "Replay demonstration"
+                        : "Run selected case"}
+                  </button>
+                </div>
+
+                <details className={styles.deliveryDetails}>
+                  <summary>Delivery details</summary>
+                  <div className={styles.markerPanel} aria-label="Medication delivery details">
+                    <div className={styles.markerCard}>
+                      <span>Patient</span>
+                      <strong>PAT-1001</strong>
+                      <small>Sarah Johnson</small>
+                    </div>
+                    <div className={styles.markerCard}>
+                      <span>Medication</span>
+                      <strong>MED-2001</strong>
+                      <small>Insulin lispro</small>
+                    </div>
+                    <div className={styles.markerCard}>
+                      <span>Destination</span>
+                      <strong>LOC-ROOM-312</strong>
+                      <small>Room 312</small>
+                    </div>
+                    <div className={styles.markerCard}>
+                      <span>Order</span>
+                      <strong>ORDER-8001</strong>
+                      <small>Active physician order</small>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <RobotFloorMap robot={view.robot} />
+            </div>
+          </section>
+
+          <section
+            className={styles.scenarioRail}
+            aria-labelledby="scenario-library-heading"
+            data-testid="scenario-library"
+            ref={scenarioLibraryRef}
+            tabIndex={-1}
+          >
+            <div className={styles.layerHeader}>
+              <span className={styles.eyebrow}>Safety case library</span>
+              <h2 id="scenario-library-heading">Choose another case</h2>
+              <p>
+                Select a case, then run it to see how the same safety checks control the
+                delivery vehicle.
+              </p>
+            </div>
+            <div className={styles.sectionHeading}>
+              <span>Choose a case</span>
+              <strong>{SCENARIOS.length} cases</strong>
+            </div>
+            <div className={styles.scenarioList}>
+              {SCENARIOS.map((scenario) => (
+                <button
+                  key={scenario.id}
+                  className={`${styles.scenarioCard} ${
+                    selectedScenario === scenario.id && !caseModified
+                      ? styles.selectedScenario
+                      : ""
+                  }`}
+                  aria-pressed={selectedScenario === scenario.id && !caseModified}
+                  onClick={() => void loadScenario(scenario)}
+                  disabled={pending}
+                  type="button"
+                >
+                  <span
+                    className={`${styles.scenarioIcon} ${
+                      scenario.expected === "AUTHORIZED"
+                        ? styles.scenarioIconAuthorized
+                        : ""
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {scenario.glyph}
+                  </span>
+                  <span className={styles.scenarioCardCopy}>
+                    <strong>{scenario.title}</strong>
+                    <small>{scenario.subtitle}</small>
+                  </span>
+                  <span
+                    className={`${styles.outcomeBadge} ${
+                      scenario.expected === "AUTHORIZED"
+                        ? styles.outcomeAuthorized
+                        : styles.outcomeBlocked
+                    }`}
+                  >
+                    Expected · Delivery {scenario.expected === "AUTHORIZED" ? "approved" : "blocked"}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className={styles.scenarioSelectionActions}>
+              <p>
+                Selected: <strong>{currentScenario?.title ?? originalScenario.title}</strong>
+              </p>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={returnToDecisionSummary}
+              >
+                Back to decision summary
+              </button>
+              <button
+                className={styles.primaryButton}
+                type="button"
+                onClick={() => void runSelectedScenario()}
+                disabled={pending}
+              >
+                Run selected case
+              </button>
+            </div>
+          </section>
+
+          <details
+            className={styles.optionalPanel}
+            onToggle={(event) => setCameraOpen(event.currentTarget.open)}
+          >
+            <summary>
+              <span>Optional vehicle camera</span>
+              <small>Observation only · not required for the safety decision</small>
+            </summary>
+            {cameraOpen ? (
+              <div className={styles.visionBoundary} aria-label="Vehicle camera observation">
+                <RobotVisionPanel />
+              </div>
+            ) : null}
+          </details>
+
+          <details
+            className={`technical-disclosure ${styles.technicalDisclosure} ${styles.auditDisclosure}`}
+            data-testid="technical-audit"
+            ref={technicalAuditRef}
+          >
+            <summary data-testid="technical-audit-summary">
+              Technical audit record
+            </summary>
+            <p className={styles.inspectorIntro}>
+              For technical reviewers: inspect the deterministic runtime state, durable
+              evidence, single-use grant, execution receipt, and server-owned timeline.
+            </p>
+
+            <div className={styles.technicalStateGrid} aria-label="Raw runtime state">
+              <div>
+                <span>Runtime status</span>
+                <strong>{view.runtimeStatus}</strong>
+              </div>
+              <div>
+                <span>Evidence state</span>
+                <strong>{view.evidenceState}</strong>
+              </div>
+              <div>
+                <span>Execution state</span>
+                <strong data-testid="technical-execution-state">
+                  {view.executionState}
+                </strong>
+              </div>
+              <div>
+                <span>Adapter calls</span>
+                <strong>{view.robot.dispatchCount}</strong>
+              </div>
+            </div>
+
+            <div className={styles.actionFlow} id="protected-action-flow">
+              <span>1 · Commit evidence</span>
+              <span>2 · Create authorization grant</span>
+              <span>3 · Consume grant and dispatch endpoint</span>
+            </div>
+
+            <div className={styles.technicalControls}>
+              <label className={styles.failureToggle}>
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={view.failureInjected}
+                  disabled={pending}
+                  onChange={(event) =>
+                    void selectPreset(
+                      event.currentTarget.checked ? "evidence-failure" : "successful",
+                    )
+                  }
+                />
+                <span>
+                  <strong>Inject evidence-store failure</strong>
+                  <small>Repository boundary</small>
+                </span>
+              </label>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={() => void resetRuntime()}
+                disabled={pending}
+              >
+                Reset demonstration
+              </button>
+            </div>
+
+            <section
+              className={styles.interactionPanel}
+              aria-labelledby="interaction-heading"
+            >
+              <div className={styles.interactionCopy}>
+                <span className={styles.eyebrow}>Request intake demonstration</span>
+                <h3 id="interaction-heading">Acknowledge a request without approving it</h3>
+                <p data-testid="interaction-acknowledgment">
+                  {view.interaction.acknowledgment}
+                </p>
+              </div>
+              <div className={styles.interactionActions}>
+                <span className={styles.interactionState} data-testid="interaction-state">
+                  {view.interaction.state.replaceAll("_", " ")}
+                </span>
+                <button
+                  onClick={() => void beginMission()}
+                  disabled={pending}
+                  type="button"
+                >
+                  Start new request
+                </button>
+                <button
+                  onClick={() => void run({ command: "alert-robot" })}
+                  disabled={!view.interaction.canAlert || pending}
+                  type="button"
+                >
+                  Notify vehicle
+                </button>
+                <button
+                  onClick={() => void run({ command: "issue-instruction" })}
+                  disabled={!view.interaction.canInstruct || pending}
+                  type="button"
+                >
+                  Send delivery request
+                </button>
+              </div>
+            </section>
+
             <div className={styles.inspectorGrid}>
               <div className={styles.auditRecords}>
                 <RuntimeRecords view={view} />
@@ -818,257 +1559,17 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
               </div>
               <EventTimeline events={view.events} />
             </div>
-          </details>
-        </section>
-
-        <section
-          className={`${styles.interactionLayer} ${
-            presentationRunning ? styles.presentationBackground : ""
-          }`}
-          aria-labelledby="interaction-layer-heading"
-          inert={presentationRunning}
-          aria-hidden={presentationRunning || undefined}
-          data-testid="interaction-layer"
-          ref={interactionRef}
-          tabIndex={-1}
-        >
-          <div className={styles.layerHeader}>
-            <span className={styles.eyebrow}>Explore the proof</span>
-            <h2 id="interaction-layer-heading">Change the run. The rules stay fixed.</h2>
-            <p>Choose a scenario, modify its inputs, and watch the same endpoint obey CRAS.</p>
-          </div>
-
-          <div className={styles.demoToolbar} aria-label="Demonstration controls">
-            <div className={styles.toolbarActions}>
-              <button
-                className={styles.missionButton}
-                onClick={() => void beginMission()}
-                disabled={pending}
-                type="button"
-              >
-                Live mission
-              </button>
-              <details className={styles.presetMenu} ref={presetMenuRef}>
-                <summary>Demo presets</summary>
-                <div>
-                  <button
-                    onClick={() => void selectPreset("blocked")}
-                    disabled={pending}
-                    type="button"
-                  >
-                    Blocked
-                  </button>
-                  <button
-                    onClick={() => void selectPreset("successful")}
-                    disabled={pending}
-                    type="button"
-                  >
-                    Successful
-                  </button>
-                  <button
-                    onClick={() => void selectPreset("evidence-failure")}
-                    disabled={pending}
-                    type="button"
-                  >
-                    Evidence failure
-                  </button>
-                </div>
-              </details>
+            <div className={styles.auditReturn}>
+              <p>Finished reviewing the formal proof?</p>
               <button
                 className={styles.secondaryButton}
                 type="button"
-                onClick={() => void resetRuntime()}
-                disabled={pending}
+                onClick={returnToDecisionSummary}
               >
-                Reset
+                Back to decision summary
               </button>
             </div>
-            <div className={styles.modeSwitch} aria-label="Demo mode">
-              <button
-                className={mode === "canned" ? styles.activeMode : ""}
-                aria-pressed={mode === "canned"}
-                onClick={() => setMode("canned")}
-                type="button"
-              >
-                Canned runs
-              </button>
-              <button
-                className={mode === "modified" ? styles.activeMode : ""}
-                aria-pressed={mode === "modified"}
-                onClick={() => setMode("modified")}
-                type="button"
-              >
-                Modify run
-              </button>
-            </div>
-          </div>
-
-          <section className={styles.interactionPanel} aria-labelledby="interaction-heading">
-            <div className={styles.interactionCopy}>
-              <span className={styles.eyebrow}>Untrusted request ingress</span>
-              <h3 id="interaction-heading">Alert, instruct, then evaluate</h3>
-              <p data-testid="interaction-acknowledgment">
-                {view.interaction.acknowledgment}
-              </p>
-            </div>
-            <div className={styles.interactionActions}>
-              <span className={styles.interactionState} data-testid="interaction-state">
-                {view.interaction.state.replaceAll("_", " ")}
-              </span>
-              <button
-                onClick={() => void run({ command: "alert-robot" })}
-                disabled={!view.interaction.canAlert || pending}
-                type="button"
-              >
-                Alert robot
-              </button>
-              <button
-                onClick={() => void run({ command: "issue-instruction" })}
-                disabled={!view.interaction.canInstruct || pending}
-                type="button"
-              >
-                Give instruction
-              </button>
-            </div>
-          </section>
-
-          <div className={styles.workspace}>
-            <aside className={styles.scenarioRail}>
-              <div className={styles.sectionHeading}>
-                <span>{mode === "canned" ? "Scenario library" : "Protocol controls"}</span>
-                <strong>{mode === "canned" ? `${SCENARIOS.length} runs` : "Local demo"}</strong>
-              </div>
-
-              {mode === "canned" ? (
-                <div className={styles.scenarioList}>
-                  {SCENARIOS.map((scenario) => (
-                    <button
-                      key={scenario.id}
-                      className={`${styles.scenarioCard} ${
-                        selectedScenario === scenario.id ? styles.selectedScenario : ""
-                      }`}
-                      aria-pressed={selectedScenario === scenario.id}
-                      onClick={() => void loadScenario(scenario)}
-                      disabled={pending}
-                      type="button"
-                    >
-                      <span
-                        className={`${styles.scenarioIcon} ${
-                          scenario.expected === "AUTHORIZED"
-                            ? styles.scenarioIconAuthorized
-                            : ""
-                        }`}
-                        aria-hidden="true"
-                      >
-                        {scenario.glyph}
-                      </span>
-                      <span className={styles.scenarioCardCopy}>
-                        <strong>{scenario.title}</strong>
-                        <small>{scenario.subtitle}</small>
-                      </span>
-                      <span
-                        className={`${styles.outcomeBadge} ${
-                          scenario.expected === "AUTHORIZED"
-                            ? styles.outcomeAuthorized
-                            : styles.outcomeBlocked
-                        }`}
-                      >
-                        Expected · {scenario.expected}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.modifierPanel}>
-                  <p>
-                    Use See why to change the model recommendation and edit the four
-                    protocol conditions. The recommendation is never submitted to CRAS.
-                  </p>
-                  <button
-                    className={styles.secondaryButton}
-                    type="button"
-                    onClick={revealInspection}
-                  >
-                    Edit protocol conditions
-                  </button>
-                  <div className={styles.boundaryNote}>
-                    <span>Authority boundary</span>
-                    <strong>The protocol—not the recommendation—sets the verdict.</strong>
-                    <small>
-                      Condition edits use only the existing closed set-condition command.
-                    </small>
-                  </div>
-                  <ol className={styles.protocolSteps}>
-                    <li>Resolve required conditions</li>
-                    <li>Commit durable evidence and grant</li>
-                    <li>Consume the grant before endpoint dispatch</li>
-                  </ol>
-                </div>
-              )}
-            </aside>
-
-            <section className={styles.stage} aria-busy={pending}>
-              <div className={styles.stageHeader}>
-                <div>
-                  <span className={styles.eyebrow}>Original versus current</span>
-                  <h3>Compare the run</h3>
-                </div>
-                <span className={styles.runBadge}>Run · {selectedScenario}</span>
-              </div>
-
-              <div className={styles.visualGrid}>
-                <RobotFloorMap robot={view.robot} />
-                <div className={styles.markerPanel} aria-label="Prepared mission identifiers">
-                  <div className={styles.markerCard}>
-                    <span>Patient</span>
-                    <strong>PAT-1001</strong>
-                    <small>Sarah Johnson</small>
-                  </div>
-                  <div className={styles.markerCard}>
-                    <span>Medication</span>
-                    <strong>MED-2001</strong>
-                    <small>Insulin lispro</small>
-                  </div>
-                  <div className={styles.markerCard}>
-                    <span>Destination</span>
-                    <strong>LOC-ROOM-312</strong>
-                    <small>Room 312</small>
-                  </div>
-                  <div className={styles.markerCard}>
-                    <span>Order</span>
-                    <strong>ORDER-8001</strong>
-                    <small>Active physician order</small>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.comparisonGrid} aria-label="Run comparison">
-                <article>
-                  <span>Original scenario</span>
-                  <strong>{originalScenario?.title}</strong>
-                  <small>Expected · {originalScenario?.expected}</small>
-                </article>
-                <span className={styles.comparisonArrow} aria-hidden="true">
-                  →
-                </span>
-                <article>
-                  <span>{selectedScenario === "modified" ? "Modified run" : "Current run"}</span>
-                  <strong>{currentRunTitle}</strong>
-                  <small>
-                    {satisfiedCount}/4 conditions · {view.runtimeStatus}
-                  </small>
-                </article>
-              </div>
-            </section>
-          </div>
-
-          <section className={styles.visionBoundary} aria-label="Endpoint observation boundary">
-            <div className={styles.visionBoundaryHeading}>
-              <span>Endpoint vehicle</span>
-              <strong>Observation only · no authorization authority</strong>
-            </div>
-            <RobotVisionPanel />
-          </section>
+          </details>
         </section>
       </div>
     </main>

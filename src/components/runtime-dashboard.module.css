@@ -281,6 +281,17 @@
   animation: guidedPulse 700ms ease-in-out infinite alternate;
 }
 
+.guidedConditionWaiting {
+  border-color: rgba(170, 214, 195, 0.16);
+  background: rgba(170, 214, 195, 0.025);
+}
+
+.guidedConditionWaiting > strong {
+  border: 1px solid rgba(170, 214, 195, 0.24);
+  color: #9fb7ae;
+  background: rgba(170, 214, 195, 0.05);
+}
+
 .guidedFloorplan {
   --guided-robot-end: calc(100% - 9.95rem);
   --guided-robot-start: 7.15rem;
@@ -722,32 +733,82 @@
 }
 
 .guidedCompletion {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.55fr) minmax(0, 1.45fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.95rem;
   color: #a9c0b7;
+  background: rgba(7, 16, 14, 0.7);
   animation: fadeUp 440ms both cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.guidedCompletion p {
-  max-width: 38rem;
+.guidedCompletionHeading {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.guidedCompletionHeading > span {
+  color: #72f2b1;
+  font: 750 0.58rem ui-monospace, monospace;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.guidedCompletionHeading h2 {
   margin: 0;
+  color: #edf8f3;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.guidedCompletionHeading p {
+  margin: 0;
+  color: #8fa79e;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.guidedNextActions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.guidedNextAction {
+  display: grid;
+  min-width: 0;
+  min-height: 4.2rem;
+  align-content: center;
+  gap: 0.25rem;
+  padding: 0.65rem 0.7rem;
+  text-align: left;
+  white-space: normal;
+}
+
+.guidedNextAction strong,
+.guidedNextAction small {
+  display: block;
+}
+
+.guidedNextAction strong {
   font-size: 0.72rem;
-  line-height: 1.45;
+  line-height: 1.25;
 }
 
-.guidedCompletion p strong {
-  color: #eaf6f1;
+.guidedNextAction small {
+  color: #8fa79e;
+  font-size: 0.58rem;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
-.guidedCompletion > div {
-  display: flex;
-  gap: 0.55rem;
-}
-
-.guidedCompletion button {
-  white-space: nowrap;
+.guidedNextAction.primaryButton small {
+  color: rgba(7, 16, 14, 0.72);
 }
 
 @keyframes guidedAmbient {
@@ -1091,6 +1152,28 @@
   background: rgba(255, 255, 255, 0.035);
 }
 
+.explorationButton {
+  border-color: rgba(114, 242, 177, 0.38);
+  color: #cffff0;
+  background: rgba(114, 242, 177, 0.055);
+}
+
+.replayButton {
+  padding: 0.68rem 0.78rem;
+  border: 1px solid transparent;
+  border-radius: 0.72rem;
+  color: #829a91;
+  background: transparent;
+  font-size: 0.74rem;
+  font-weight: 680;
+}
+
+.replayButton:hover:not(:disabled) {
+  border-color: rgba(170, 214, 195, 0.16);
+  color: #b7cac2;
+  background: rgba(255, 255, 255, 0.025);
+}
+
 .heroActions .primaryButton,
 .heroActions .secondaryButton {
   min-width: 9.5rem;
@@ -1165,6 +1248,12 @@
   gap: 1rem;
 }
 
+.inspectionHeaderActions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.55rem;
+}
+
 .inspectionHeader h2,
 .layerHeader h2 {
   margin: 0.35rem 0 0.35rem;
@@ -1205,6 +1294,24 @@
   font-size: 0.68rem;
   letter-spacing: 0.11em;
   text-transform: uppercase;
+}
+
+.modelReadout {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.modelReadout span {
+  color: #9fb7ae;
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.modelReadout strong {
+  color: #edf8f3;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  letter-spacing: -0.035em;
 }
 
 .modelControl select {
@@ -1252,7 +1359,8 @@
   background: rgba(7, 16, 14, 0.88);
 }
 
-.protocolMap label {
+.protocolMap label,
+.protocolConditionReadout {
   position: relative;
   display: grid;
   grid-column: 1 / -1;
@@ -1261,6 +1369,9 @@
   align-items: center;
   margin: -0.62rem -0.75rem;
   padding: 0.62rem 0.75rem;
+}
+
+.protocolMap label {
   cursor: pointer;
   transition: background 160ms ease;
 }
@@ -1391,6 +1502,15 @@
 
 .evidenceStatus strong {
   font: 750 0.82rem ui-monospace, monospace;
+}
+
+.releaseGuidance {
+  flex: 1 1 20rem;
+  max-width: 33rem;
+  margin: 0;
+  color: #b7cac2;
+  font-size: 0.74rem;
+  line-height: 1.45;
 }
 
 .failureToggle {
@@ -1914,10 +2034,406 @@
   font: 700 0.68rem ui-monospace, monospace;
 }
 
+/* Clinician-facing information architecture */
+.clinicalDecisionBanner {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding: 1rem;
+  border: 1px solid rgba(170, 214, 195, 0.16);
+  border-radius: 0.9rem;
+  background: rgba(7, 16, 14, 0.62);
+}
+
+.verdictNextStep {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+  color: #d9e5e0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.verdictNextStep span {
+  color: #ffc0bd;
+  font: 700 0.58rem ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.verdictREADY .verdictNextStep span {
+  color: #ffce73;
+}
+
+.verdictAUTHORIZED .verdictNextStep span {
+  color: #72f2b1;
+}
+
+.clinicalDecisionBanner > div {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.clinicalDecisionBanner span,
+.outcomeWhy span {
+  color: #9fb7ae;
+  font: 700 0.64rem ui-monospace, monospace;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.clinicalDecisionBanner strong {
+  font-size: clamp(1.15rem, 2vw, 1.65rem);
+  letter-spacing: -0.035em;
+}
+
+.clinicalDecisionBanner p {
+  margin: 0;
+  color: #cfddd7;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.caseOutcome {
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.caseOutcome .stageHeader {
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid rgba(170, 214, 195, 0.13);
+}
+
+.caseOutcome .stageHeader h2 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  letter-spacing: -0.045em;
+}
+
+.vehicleOutcomeExplanation {
+  max-width: 54rem;
+  margin: 0.65rem 0 0;
+  color: #c9d9d3;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.outcomeLayout {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.82fr) minmax(28rem, 1.18fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.outcomeNarrative {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.caseFacts {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.caseFacts li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 3.15rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(170, 214, 195, 0.13);
+  border-radius: 0.72rem;
+  background: rgba(7, 16, 14, 0.58);
+}
+
+.caseFacts li > span {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 1px solid rgba(114, 242, 177, 0.28);
+  border-radius: 50%;
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.06);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.caseFacts .caseFactAttention > span {
+  border-color: rgba(255, 124, 119, 0.38);
+  color: #fff;
+  background: #ff7c77;
+}
+
+.caseFacts .caseFactNeutral > span {
+  border-color: rgba(170, 214, 195, 0.2);
+  color: #9fb7ae;
+  background: rgba(170, 214, 195, 0.045);
+}
+
+.caseFacts .caseFactVerified > span {
+  border-color: rgba(114, 242, 177, 0.4);
+  color: #07100e;
+  background: #72f2b1;
+}
+
+.caseFacts p {
+  margin: 0;
+  color: #dceae4;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.changeList {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.changeList article {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.78rem;
+  background: rgba(7, 16, 14, 0.6);
+}
+
+.changeList article > strong {
+  font-size: 0.78rem;
+}
+
+.changeList article > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.changeList article span {
+  color: #a9c0b7;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.changeList article span:nth-child(2) {
+  color: #72f2b1;
+  font-size: 1rem;
+}
+
+.changeList article span:last-child {
+  color: #f4fbf8;
+  font-weight: 700;
+}
+
+.outcomeWhy {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border-left: 3px solid #72f2b1;
+  border-radius: 0.15rem 0.7rem 0.7rem 0.15rem;
+  background: rgba(114, 242, 177, 0.045);
+}
+
+.outcomeWhy p {
+  margin: 0;
+  color: #dceae4;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.caseActions,
+.scenarioSelectionActions,
+.technicalControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.caseActions {
+  padding-top: 0.15rem;
+}
+
+.deliveryDetails,
+.optionalPanel {
+  overflow: hidden;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.8rem;
+  background: rgba(7, 16, 14, 0.52);
+}
+
+.deliveryDetails summary,
+.optionalPanel > summary {
+  padding: 0.8rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 740;
+}
+
+.deliveryDetails .markerPanel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 0.8rem 0.8rem;
+}
+
+.deliveryDetails .markerCard {
+  min-height: 4.8rem;
+  padding: 0.7rem;
+}
+
+.caseOutcome :global(.floor-panel) {
+  min-width: 0;
+  padding: 1rem;
+}
+
+.caseOutcome :global(.floor-panel .panel-heading) {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(170, 214, 195, 0.12);
+}
+
+.caseOutcome :global(.floor-map) {
+  min-height: clamp(17rem, 26vw, 21rem);
+}
+
+.caseOutcome :global(.metric-row) {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(170, 214, 195, 0.12);
+}
+
+.scenarioRail {
+  margin-top: 0.5rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.scenarioRail .layerHeader {
+  margin-bottom: 1.2rem;
+}
+
+.scenarioSelectionActions {
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(170, 214, 195, 0.13);
+}
+
+.scenarioSelectionActions p {
+  margin: 0 auto 0 0;
+  color: #9fb7ae;
+  font-size: 0.78rem;
+}
+
+.scenarioSelectionActions p strong {
+  color: #edf8f3;
+}
+
+.optionalPanel {
+  margin-top: 0.5rem;
+}
+
+.optionalPanel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4.25rem;
+  padding: 1rem 1.15rem;
+  list-style-position: inside;
+}
+
+.optionalPanel > summary small {
+  color: #78938a;
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.optionalPanel .visionBoundary {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid rgba(170, 214, 195, 0.12);
+  border-radius: 0;
+}
+
+.auditDisclosure {
+  margin-top: 0.5rem;
+  padding: 1rem 1.15rem;
+  background: rgba(7, 16, 14, 0.56);
+}
+
+.technicalStateGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin: 1rem 0;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.72rem;
+  background: rgba(170, 214, 195, 0.12);
+}
+
+.technicalStateGrid > div {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem;
+  background: #091612;
+}
+
+.technicalStateGrid span {
+  color: #78938a;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.technicalStateGrid strong {
+  overflow: hidden;
+  font: 700 0.7rem ui-monospace, monospace;
+  text-overflow: ellipsis;
+}
+
+.technicalControls {
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.auditReturn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(170, 214, 195, 0.14);
+}
+
+.auditReturn p {
+  margin: 0 auto 0 0;
+  color: #9fb7ae;
+  font-size: 0.76rem;
+}
+
+.technicalControls .failureToggle {
+  margin-right: auto;
+}
+
+.auditDisclosure .interactionPanel {
+  margin: 1rem 0;
+}
+
 @media (max-width: 1050px) {
   .workspace,
   .visualGrid,
-  .inspectorGrid {
+  .inspectorGrid,
+  .outcomeLayout {
     grid-template-columns: 1fr;
   }
 
@@ -2111,6 +2627,21 @@
     flex-direction: column;
   }
 
+  .inspectionHeaderActions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .inspectionHeaderActions button {
+    width: 100%;
+  }
+
+  .clinicalDecisionBanner,
+  .technicalStateGrid {
+    grid-template-columns: 1fr;
+  }
+
   .toolbarActions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2142,6 +2673,41 @@
   .actionFlow,
   .comparisonGrid {
     grid-template-columns: 1fr;
+  }
+
+  .caseActions,
+  .scenarioSelectionActions,
+  .technicalControls,
+  .auditReturn {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .scenarioSelectionActions p,
+  .technicalControls .failureToggle {
+    width: 100%;
+    margin: 0;
+  }
+
+  .caseActions button,
+  .scenarioSelectionActions button,
+  .technicalControls button,
+  .auditReturn button {
+    width: 100%;
+  }
+
+  .auditReturn p {
+    margin: 0;
+  }
+
+  .optionalPanel > summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .caseOutcome :global(.floor-map) {
+    min-height: 15rem;
   }
 
   .scenarioCard {
@@ -2268,18 +2834,37 @@
 
   .guidedCompletion {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding: 0.65rem;
   }
 
-  .guidedCompletion > div {
+  .guidedNextActions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
   }
 
-  .guidedCompletion button {
+  .guidedNextAction {
     min-width: 0;
-    padding: 0.68rem 0.6rem;
+    min-height: 4.35rem;
+    padding: 0.55rem 0.35rem;
+    text-align: center;
     white-space: normal;
+  }
+
+  .guidedNextAction strong {
+    font-size: 0.65rem;
+    line-height: 1.25;
+  }
+
+  .guidedNextAction small,
+  .guidedCompletionHeading p {
+    display: none;
+  }
+
+  .guidedCompletionHeading h2 {
+    font-size: 0.92rem;
   }
 }
 
@@ -2359,8 +2944,12 @@
     font-size: 0.43rem;
   }
 
-  .guidedCompletion p {
-    font-size: 0.67rem;
+  .guidedCompletionHeading h2 {
+    font-size: 0.86rem;
+  }
+
+  .guidedNextAction strong {
+    font-size: 0.6rem;
   }
 
   .guidedKicker {
@@ -2376,6 +2965,10 @@
   }
 
   .markerPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .deliveryDetails .markerPanel {
     grid-template-columns: 1fr;
   }
 

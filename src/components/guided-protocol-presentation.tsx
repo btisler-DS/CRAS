@@ -18,15 +18,16 @@ interface GuidedProtocolPresentationProps {
   readonly authorizationResolved: boolean;
   readonly verdictReason: string;
   readonly onSkip: () => void;
-  readonly onInspectDecision: () => void;
-  readonly onRunAnotherScenario: () => void;
+  readonly onReviewVerification: () => void;
+  readonly onTryAnotherCase: () => void;
+  readonly onViewTechnicalAudit: () => void;
 }
 
 const PRESENTATION_STEPS = [
-  { id: "mission", label: "Mission" },
-  { id: "recommendation", label: "Recommendation" },
-  { id: "authorization", label: "Authorization" },
-  { id: "consequence", label: "Consequence" },
+  { id: "mission", label: "Task" },
+  { id: "recommendation", label: "AI suggestion" },
+  { id: "authorization", label: "Safety decision" },
+  { id: "consequence", label: "Vehicle response" },
 ] as const;
 
 const CONDITION_ORDER: readonly RequiredConditionId[] = [
@@ -37,10 +38,10 @@ const CONDITION_ORDER: readonly RequiredConditionId[] = [
 ];
 
 const CONDITION_LABELS: Record<RequiredConditionId, string> = {
-  PATIENT_IDENTITY_VERIFIED: "Identity",
+  PATIENT_IDENTITY_VERIFIED: "Patient",
   MEDICATION_MATCHED: "Medication",
   PHYSICIAN_ORDER_ACTIVE: "Order",
-  ADMINISTRATION_WINDOW_VALID: "Window",
+  ADMINISTRATION_WINDOW_VALID: "Timing",
 };
 
 function sentenceCaseReason(reason: string): string {
@@ -57,8 +58,9 @@ export function GuidedProtocolPresentation({
   authorizationResolved,
   verdictReason,
   onSkip,
-  onInspectDecision,
-  onRunAnotherScenario,
+  onReviewVerification,
+  onTryAnotherCase,
+  onViewTechnicalAudit,
 }: GuidedProtocolPresentationProps) {
   const activeStep = PRESENTATION_STEPS.findIndex((step) => step.id === stage);
   const recommendationVisible = activeStep >= 1;
@@ -67,9 +69,9 @@ export function GuidedProtocolPresentation({
   const authorized = authorizationResolved && view.runtimeStatus === "AUTHORIZED";
   const displayVerdict = authorizationResolved
     ? authorized
-      ? "AUTHORIZED"
+      ? "APPROVED"
       : "BLOCKED"
-    : "EVALUATING";
+    : "CHECKING";
   const endpointMoving = authorized && view.executionState === "EXECUTED";
   const endpointState = endpointMoving
     ? "Moving"
@@ -86,35 +88,36 @@ export function GuidedProtocolPresentation({
   });
   const evidencePassed = view.evidenceState === "COMMITTED";
   const evidenceLabel = evidencePending
-    ? "Committing"
+    ? "Saving"
     : evidencePassed
-      ? "Committed"
+      ? "Saved"
       : view.evidenceState === "FAILED"
-        ? "Commit failed"
-        : "Not eligible";
+        ? "Save failed"
+        : "Not started";
   const recommendationProceeding = modelRecommendation === "Proceed";
   const causalReason =
-    verdictReason === "Patient identity unresolved"
-      ? "patient identity was unresolved"
+    verdictReason === "Patient verification required."
+      ? "patient identity was not verified"
       : sentenceCaseReason(verdictReason);
   const causalStatement = authorized
-    ? "The model recommendation did not authorize execution. CRAS authorized only after every required condition was satisfied and the evidence transaction committed."
+    ? "The AI suggestion did not approve the delivery. CRAS approved it only after every required check passed and the verification record was saved."
     : recommendationProceeding
-      ? `The model recommended proceeding, but CRAS blocked execution because ${causalReason}.`
-      : `The model recommendation did not authorize execution. CRAS blocked execution because ${causalReason}.`;
+      ? `The AI suggested proceeding, but CRAS blocked the delivery because ${causalReason}.`
+      : `The AI suggestion did not approve the delivery. CRAS blocked it because ${causalReason}.`;
 
   return (
     <section
       className={styles.guidedPresentation}
-      aria-label="Guided authorization story"
+      aria-label="Guided medication safety review"
       data-stage={stage}
       data-testid="guided-presentation"
     >
       <div className={styles.guidedNavigation}>
         <ol className={styles.guidedProgress} aria-label="Presentation progress">
           {PRESENTATION_STEPS.map((step, index) => {
-            const complete = index < activeStep;
-            const active = index === activeStep;
+            const complete =
+              index < activeStep || (consequenceVisible && index === activeStep);
+            const active = index === activeStep && !consequenceVisible;
             return (
               <li
                 key={step.id}
@@ -140,7 +143,7 @@ export function GuidedProtocolPresentation({
         <header className={styles.guidedMissionAnchor} data-testid="guided-mission">
           <div>
             <span className={styles.guidedKicker}>
-              {stage === "mission" ? "Mission received" : "Mission"}
+              {stage === "mission" ? "Delivery task received" : "Delivery task"}
             </span>
             <strong>Deliver insulin to Room 312</strong>
           </div>
@@ -155,9 +158,9 @@ export function GuidedProtocolPresentation({
             >
               <span className={styles.guidedFactIndex}>01</span>
               <div>
-                <p>Model recommendation</p>
+                <p>AI suggestion</p>
                 <h2>{modelRecommendation}</h2>
-                <small>Recommendation only. No authority.</small>
+                <small>Advisory only. It cannot approve delivery.</small>
               </div>
             </article>
           ) : null}
@@ -177,12 +180,12 @@ export function GuidedProtocolPresentation({
               <div className={styles.guidedAuthorizationBody}>
                 <div className={styles.guidedAuthorizationHeading}>
                   <div>
-                    <p>CRAS authorization</p>
+                    <p>CRAS safety decision</p>
                     <h2 key={displayVerdict}>{displayVerdict}</h2>
                     <small>
                       {authorizationResolved
                         ? verdictReason
-                        : "Checking required conditions and durable evidence"}
+                        : "Checking patient, medication, order, timing, and record"}
                     </small>
                   </div>
                   <ul className={styles.guidedConditionStrip} aria-label="Protocol checks">
@@ -217,15 +220,23 @@ export function GuidedProtocolPresentation({
                           ? styles.guidedConditionPending
                           : evidencePassed
                             ? styles.guidedConditionPassed
-                            : styles.guidedConditionFailed
+                            : view.evidenceState === "FAILED"
+                              ? styles.guidedConditionFailed
+                              : styles.guidedConditionWaiting
                       }`}
                       aria-hidden={visibleConditionCount <= conditions.length}
                       data-revealed={visibleConditionCount > conditions.length}
                       data-testid="guided-condition-evidence"
                     >
-                      <span>Evidence</span>
+                      <span>Record</span>
                       <strong aria-hidden="true">
-                        {evidencePending ? "···" : evidencePassed ? "✓" : "×"}
+                        {evidencePending
+                          ? "···"
+                          : evidencePassed
+                            ? "✓"
+                            : view.evidenceState === "FAILED"
+                              ? "×"
+                              : "·"}
                       </strong>
                       <small>{evidenceLabel}</small>
                     </li>
@@ -251,19 +262,19 @@ export function GuidedProtocolPresentation({
             >
               <span className={styles.guidedFactIndex}>03</span>
               <div>
-                <p>Endpoint consequence</p>
+                <p>Vehicle response</p>
                 <h2>{endpointState}</h2>
                 <small data-testid="guided-adapter-result">
                   {endpointMoving
-                    ? `${view.robot.dispatchCount} adapter call after authorization`
-                    : "Zero adapter calls"}
+                    ? `${view.robot.dispatchCount} delivery command sent after approval`
+                    : "No delivery command was issued"}
                 </small>
                 <div
                   className={styles.guidedFloorplan}
                   aria-label={
                     endpointMoving
-                      ? "Authorized endpoint moving from Pharmacy to Room 312"
-                      : "Blocked endpoint stationary at Pharmacy"
+                      ? "Approved delivery vehicle moving from Pharmacy to Room 312"
+                      : "Blocked delivery vehicle stationary at Pharmacy"
                   }
                   data-testid="guided-floorplan"
                 >
@@ -293,24 +304,40 @@ export function GuidedProtocolPresentation({
           className={styles.guidedCompletion}
           data-testid="presentation-complete"
         >
-          <p role="status">
-            <strong>Decision complete.</strong> The full case remains above so you can
-            inspect it without reconstructing the sequence.
-          </p>
-          <div>
+          <div className={styles.guidedCompletionHeading}>
+            <span role="status">Safety review complete</span>
+            <h2>What would you like to do next?</h2>
+            <p>The completed decision remains above while you choose what to inspect.</p>
+          </div>
+          <div
+            className={styles.guidedNextActions}
+            aria-label="Choose what to explore next"
+          >
             <button
-              className={styles.primaryButton}
+              className={`${styles.primaryButton} ${styles.guidedNextAction}`}
               type="button"
-              onClick={onInspectDecision}
+              onClick={onReviewVerification}
             >
-              Inspect the decision
+              <strong>
+                Review why delivery was {authorized ? "approved" : "blocked"}
+              </strong>
+              <small>See the verification and next required action.</small>
             </button>
             <button
-              className={styles.secondaryButton}
+              className={`${styles.secondaryButton} ${styles.explorationButton} ${styles.guidedNextAction}`}
               type="button"
-              onClick={onRunAnotherScenario}
+              onClick={onTryAnotherCase}
             >
-              Run another scenario
+              <strong>Choose another case</strong>
+              <small>Select a different clinical situation.</small>
+            </button>
+            <button
+              className={`${styles.secondaryButton} ${styles.guidedNextAction}`}
+              type="button"
+              onClick={onViewTechnicalAudit}
+            >
+              <strong>View technical audit</strong>
+              <small>Inspect the formal evidence and execution trail.</small>
             </button>
           </div>
         </div>
@@ -318,16 +345,16 @@ export function GuidedProtocolPresentation({
 
       <span className={styles.visuallyHidden} role="status" aria-live="polite">
         {stage === "mission"
-          ? "Mission received: Deliver insulin to Room 312."
+          ? "Delivery task received: Deliver insulin to Room 312."
           : stage === "recommendation"
-            ? `Model recommendation: ${modelRecommendation}. Recommendation only; no authority.`
+            ? `AI suggestion: ${modelRecommendation}. Advisory only; it cannot approve delivery.`
             : stage === "authorization"
               ? authorizationResolved
-                ? `CRAS authorization: ${displayVerdict}. ${verdictReason}.`
-                : "CRAS is evaluating required conditions and evidence."
-              : `Endpoint consequence: ${endpointState}. ${
+                ? `CRAS safety decision: ${displayVerdict}. ${verdictReason}.`
+                : "CRAS is checking required safety conditions and the verification record."
+              : `Vehicle response: ${endpointState}. ${
                   endpointMoving ? view.robot.dispatchCount : "Zero"
-                } adapter calls.`}
+                } delivery commands.`}
       </span>
     </section>
   );
