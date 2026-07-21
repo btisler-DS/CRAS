@@ -13,6 +13,13 @@ async function selectPreset(
   await page.getByRole("button", { name, exact: true }).click();
 }
 
+async function openExplanation(
+  page: import("@playwright/test").Page,
+): Promise<void> {
+  await page.getByRole("button", { name: "See why", exact: true }).click();
+  await expect(page.getByTestId("protocol-explanation")).toBeVisible();
+}
+
 test.describe("Constitutional Runtime browser demonstration", () => {
   test.beforeEach(async ({ page }) => {
     await reset(page);
@@ -21,10 +28,27 @@ test.describe("Constitutional Runtime browser demonstration", () => {
   test("Scene 1: blocked state is visible and robot remains stationary", async ({
     page,
   }) => {
+    await expect(page.getByTestId("first-glance")).toBeVisible();
     await expect(page.getByTestId("instruction")).toContainText(
       "Deliver medication to Room 312.",
     );
+    await expect(page.getByLabel("Model", { exact: true })).toHaveValue("Proceed");
+    await expect(page.getByTestId("protocol-verdict")).toHaveText("BLOCKED");
     await expect(page.getByTestId("runtime-status")).toHaveText("UNAUTHORIZED");
+    await expect(page.getByTestId("execution-state")).toHaveText("STATIONARY");
+    await expect(page.getByTestId("headline-reason")).toContainText(
+      "Patient identity is unresolved",
+    );
+    await expect(
+      page.getByRole("button", { name: "Run scenario", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "See why", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId("protocol-explanation")).toBeHidden();
+
+    await page.getByRole("button", { name: "Run scenario", exact: true }).click();
+    await expect(page.getByTestId("protocol-verdict")).toHaveText("BLOCKED");
     await expect(page.getByTestId("blocking-reasons")).toContainText(
       "Patient identity is unresolved",
     );
@@ -79,6 +103,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
   test("Scene 2: satisfying conditions reaches ready, never early authorization", async ({
     page,
   }) => {
+    await openExplanation(page);
     await page.getByLabel("Patient identity verified").click();
 
     await expect(page.getByTestId("runtime-status")).toHaveText(
@@ -99,6 +124,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
       "READY FOR EVIDENCE",
     );
 
+    await openExplanation(page);
     await page
       .getByRole("button", { name: "Commit evidence & execute" })
       .click();
@@ -128,6 +154,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
     await expect(page.getByTestId("runtime-status")).toHaveText(
       "READY FOR EVIDENCE",
     );
+    await openExplanation(page);
     await expect(page.getByRole("switch")).toBeChecked();
 
     await page
@@ -147,6 +174,7 @@ test.describe("Constitutional Runtime browser demonstration", () => {
 
   test("reset restores the deterministic blocked scene", async ({ page }) => {
     await selectPreset(page, "Successful");
+    await openExplanation(page);
     await page
       .getByRole("button", { name: "Commit evidence & execute" })
       .click();
