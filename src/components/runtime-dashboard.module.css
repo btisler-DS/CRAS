@@ -52,6 +52,59 @@
   font: 800 0.74rem ui-monospace, monospace;
 }
 
+.topbarControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.missionButton {
+  padding: 0.65rem 0.85rem;
+  border-color: rgba(114, 242, 177, 0.4);
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.06);
+  font-size: 0.78rem;
+}
+
+.presetMenu {
+  position: relative;
+  margin-top: 0;
+}
+
+.presetMenu summary {
+  padding: 0.62rem 0.8rem;
+  border: 1px solid rgba(170, 214, 195, 0.18);
+  border-radius: 0.65rem;
+  color: #f7fbf9;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.78rem;
+  list-style-position: inside;
+  white-space: nowrap;
+}
+
+.presetMenu > div {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  width: 12rem;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(170, 214, 195, 0.2);
+  border-radius: 0.75rem;
+  background: #0c1d18;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+.presetMenu button {
+  width: 100%;
+  padding: 0.58rem 0.65rem;
+  text-align: left;
+  font-size: 0.76rem;
+}
+
 .modeSwitch {
   display: flex;
   padding: 0.25rem;
@@ -82,10 +135,14 @@
 
 .hero {
   display: grid;
-  grid-template-columns: 1fr minmax(17rem, 0.42fr);
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.42fr);
   gap: 1.25rem;
   align-items: stretch;
   margin-bottom: 1rem;
+}
+
+.hero > div {
+  min-width: 0;
 }
 
 .hero > div:first-child {
@@ -119,6 +176,15 @@
   color: #b7cac3;
 }
 
+.claim {
+  display: block;
+  max-width: 50rem;
+  margin-top: 0.8rem;
+  color: #d7e4df;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 .verdict {
   display: grid;
   align-content: center;
@@ -133,6 +199,7 @@
 .verdict span,
 .verdict small,
 .proofStrip span,
+.proofStrip label,
 .sectionHeading span,
 .markerCard span,
 .actionBar span {
@@ -144,8 +211,10 @@
 
 .verdict strong {
   color: #ff7c77;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: clamp(1.65rem, 2.75vw, 2.55rem);
+  letter-spacing: -0.04em;
   line-height: 1;
+  overflow-wrap: anywhere;
 }
 
 .verdictREADY {
@@ -186,6 +255,80 @@
 
 .proofStrip strong {
   font-size: 0.92rem;
+}
+
+.proofStrip small {
+  color: #78938a;
+  font-size: 0.68rem;
+}
+
+.modelProof select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.42rem 2rem 0.42rem 0;
+  overflow: hidden;
+  border: 0;
+  border-bottom: 1px solid rgba(114, 242, 177, 0.22);
+  border-radius: 0;
+  color: #f7fbf9;
+  background: #091411;
+  font: 750 0.9rem ui-sans-serif, system-ui, sans-serif;
+  text-overflow: ellipsis;
+}
+
+.modelProof select:focus-visible {
+  outline: 3px solid rgba(114, 242, 177, 0.7);
+  outline-offset: 3px;
+}
+
+.interactionPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(170, 214, 195, 0.14);
+  border-radius: 0.9rem;
+  background: rgba(9, 20, 17, 0.84);
+}
+
+.interactionCopy {
+  min-width: 0;
+}
+
+.interactionCopy h2 {
+  margin: 0.28rem 0;
+  font-size: 1rem;
+}
+
+.interactionCopy p {
+  margin: 0;
+  color: #9fb7ae;
+  font-size: 0.8rem;
+}
+
+.interactionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.interactionActions button {
+  padding: 0.58rem 0.75rem;
+  white-space: nowrap;
+}
+
+.interactionState {
+  padding: 0.48rem 0.65rem;
+  border: 1px solid rgba(114, 242, 177, 0.28);
+  border-radius: 999px;
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.05);
+  font: 700 0.66rem ui-monospace, monospace;
+  white-space: nowrap;
 }
 
 .workspace {
@@ -270,63 +413,68 @@
   font-weight: 850;
 }
 
+.scenarioIconAuthorized {
+  border-color: rgba(114, 242, 177, 0.42);
+  color: #72f2b1;
+  background: rgba(114, 242, 177, 0.1);
+}
+
 .selectedScenario {
   border-color: rgba(114, 242, 177, 0.52);
   background: rgba(114, 242, 177, 0.07);
 }
 
 .selectedScenario .scenarioIcon {
-  border-color: rgba(114, 242, 177, 0.42);
-  color: #72f2b1;
-  background: rgba(114, 242, 177, 0.1);
+  box-shadow: 0 0 0 1px currentColor;
 }
 
 .modifierPanel p {
   margin: 0 0 0.25rem;
   color: #b7cac3;
   font-size: 0.86rem;
+  line-height: 1.55;
 }
 
-.conditionToggle {
+.modifierPanel code {
+  color: #72f2b1;
+  font: 0.78rem ui-monospace, monospace;
+}
+
+.boundaryNote {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.7rem;
-  align-items: center;
-  padding: 0.75rem;
-  border: 1px solid rgba(170, 214, 195, 0.14);
+  gap: 0.38rem;
+  margin-top: 0.65rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(114, 242, 177, 0.2);
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(114, 242, 177, 0.045);
 }
 
-.conditionToggle strong,
-.conditionToggle small {
-  display: block;
-}
-
-.conditionToggle small {
-  margin-top: 0.18rem;
-  color: #9fb7ae;
-}
-
-.modelField {
-  display: grid;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
-}
-
-.modelField span {
-  color: #9fb7ae;
-  font-size: 0.72rem;
+.boundaryNote span {
+  color: #72f2b1;
+  font: 700 0.65rem ui-monospace, monospace;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.modelField select {
-  width: 100%;
-  padding: 0.7rem;
-  border: 1px solid rgba(170, 214, 195, 0.18);
-  border-radius: 0.7rem;
-  color: #f7fbf9;
-  background: #10231e;
+.boundaryNote strong {
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.boundaryNote small {
+  color: #9fb7ae;
+  line-height: 1.45;
+}
+
+.protocolSteps {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.3rem;
+  color: #b7cac3;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .stageHeader {
@@ -382,6 +530,7 @@
 }
 
 .conditionNode {
+  position: relative;
   display: grid;
   grid-template-columns: 2rem 1fr;
   gap: 0.65rem;
@@ -391,15 +540,40 @@
   border: 1px solid rgba(170, 214, 195, 0.14);
   border-radius: 0.8rem;
   background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
 }
 
-.conditionNode > span {
+.conditionNode:hover {
+  border-color: rgba(114, 242, 177, 0.34);
+  background: rgba(114, 242, 177, 0.045);
+}
+
+.conditionNode:has(.conditionInput:disabled) {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.conditionInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.conditionIndicator {
   display: grid;
   width: 1.8rem;
   height: 1.8rem;
   place-items: center;
   border-radius: 50%;
   font-weight: 850;
+}
+
+.conditionInput:focus-visible + .conditionIndicator {
+  outline: 3px solid rgba(114, 242, 177, 0.72);
+  outline-offset: 3px;
 }
 
 .conditionNode strong,
@@ -412,27 +586,103 @@
   color: #9fb7ae;
 }
 
-.conditionPass > span {
+.conditionPass .conditionIndicator {
   color: #07100e;
   background: #72f2b1;
 }
 
-.conditionFail > span {
+.conditionFail .conditionIndicator {
   color: #fff;
   background: #ff7c77;
 }
 
+.blockingBox {
+  margin-bottom: 0.8rem;
+  padding: 0.78rem;
+  border: 1px solid rgba(255, 124, 119, 0.28);
+  border-radius: 0.75rem;
+  color: #ffd1cf;
+  background: rgba(255, 124, 119, 0.06);
+}
+
+.blockingBox strong {
+  font-size: 0.78rem;
+}
+
+.blockingBox p {
+  margin: 0.28rem 0 0;
+  font-size: 0.76rem;
+}
+
+.actionFlow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin-bottom: 0.55rem;
+  border: 1px solid rgba(170, 214, 195, 0.12);
+  border-radius: 0.65rem;
+  background: rgba(170, 214, 195, 0.12);
+}
+
+.actionFlow span {
+  padding: 0.55rem 0.65rem;
+  color: #9fb7ae;
+  background: rgba(7, 16, 14, 0.76);
+  font: 650 0.64rem ui-monospace, monospace;
+  text-transform: uppercase;
+}
+
 .actionBar {
+  flex-wrap: wrap;
   padding: 0.8rem;
   border: 1px solid rgba(170, 214, 195, 0.14);
   border-radius: 0.85rem;
   background: rgba(7, 16, 14, 0.58);
 }
 
-.actionBar > div {
+.evidenceStatus {
   display: grid;
   gap: 0.25rem;
   margin-right: auto;
+}
+
+.evidenceStatus strong {
+  font: 750 0.82rem ui-monospace, monospace;
+}
+
+.failureToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.48rem 0.62rem;
+  border: 1px dashed rgba(255, 124, 119, 0.28);
+  border-radius: 0.65rem;
+  background: rgba(255, 124, 119, 0.035);
+  cursor: pointer;
+}
+
+.failureToggle input {
+  width: 2.25rem;
+  height: 1.15rem;
+  accent-color: #ff7c77;
+}
+
+.failureToggle span,
+.failureToggle strong,
+.failureToggle small {
+  display: block;
+}
+
+.failureToggle strong {
+  color: #ffd1cf;
+  font-size: 0.72rem;
+}
+
+.failureToggle small {
+  margin-top: 0.12rem;
+  color: #9fb7ae;
+  font-size: 0.64rem;
 }
 
 .primaryButton,
@@ -459,6 +709,34 @@
   color: #ff9f9a;
 }
 
+.visionBoundary {
+  margin-top: 1rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(170, 214, 195, 0.12);
+  border-radius: 1.1rem;
+  background: rgba(7, 16, 14, 0.42);
+}
+
+.visionBoundaryHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.45rem 0.8rem;
+}
+
+.visionBoundaryHeading span {
+  color: #9fb7ae;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.visionBoundaryHeading strong {
+  color: #72f2b1;
+  font: 700 0.68rem ui-monospace, monospace;
+}
+
 .inspector {
   margin-top: 1rem;
   padding: 1rem;
@@ -470,11 +748,38 @@
   font-weight: 750;
 }
 
+.inspectorIntro {
+  max-width: 62rem;
+  margin: 0.65rem 0 0;
+  color: #9fb7ae;
+  font-size: 0.78rem;
+}
+
 .inspectorGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.45fr);
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.auditRecords {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.auditRecords :global(.records-grid) {
+  margin-bottom: 0;
+}
+
+.executionRecord {
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.executionRecord h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
 }
 
 @media (max-width: 1050px) {
@@ -488,13 +793,23 @@
   .conditionGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .topbarControls {
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 680px) {
   .topbar,
   .sectionHeading,
   .stageHeader,
-  .actionBar {
+  .actionBar,
+  .interactionPanel,
+  .visionBoundaryHeading {
     align-items: stretch;
     flex-direction: column;
   }
@@ -504,13 +819,32 @@
   }
 
   .modeSwitch,
-  .modeSwitch button {
+  .modeSwitch button,
+  .topbarControls,
+  .missionButton,
+  .presetMenu,
+  .presetMenu summary {
     width: 100%;
+  }
+
+  .topbarControls {
+    display: grid;
+  }
+
+  .presetMenu > div {
+    position: static;
+    width: 100%;
+    margin-top: 0.35rem;
+  }
+
+  .interactionActions {
+    justify-content: flex-start;
   }
 
   .proofStrip,
   .markerPanel,
-  .conditionGrid {
+  .conditionGrid,
+  .actionFlow {
     grid-template-columns: 1fr;
   }
 
