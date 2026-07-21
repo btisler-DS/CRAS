@@ -11,6 +11,10 @@
 > testbed, safety protocol, and recommended completion order. Track final gates in
 > [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md).
 
+> **Current implementation report:** [BUILD_WEEK_REPORT.md](BUILD_WEEK_REPORT.md)
+> records what was built, what was physically verified, what failed, and which claims
+> remain unproven as of July 21.
+
 ## Gated Robot HAT tone verification
 
 Phase 5D-3B includes a concrete local controller for the verified SunFounder PyAudio
@@ -151,12 +155,14 @@ completed. Callers cannot select frequency, duration, device, file, or command.
 Attention and instruction receipt are currently connected to the live mission flow;
 the latter two remain reserved until that flow owns physical execution state.
 
-The single active protected hardware behavior is
-`MEDICATION_DELIVERY_ROUND_TRIP_V1`. It is a fixed minimum-speed
-outbound/stop/return/stop stand maneuver and accepts no caller-selected motion
-parameters. It is verified by deterministic tests and one separately authorized
-wheel-off-ground physical dispatch. This stand maneuver does not yet constitute
-autonomous navigation to a physical Room 312.
+The previously commissioned protected hardware behavior was
+`MEDICATION_DELIVERY_ROUND_TRIP_V1`, a fixed minimum-speed
+outbound/stop/return/stop stand maneuver. It remains the physically verified dispatch
+checkpoint in project history. The current code admits only its versioned successor,
+`MEDICATION_DELIVERY_MISSION_V1`: a bounded Pharmacy → Room 312 → Home mission using
+robot-local observation under the same protected grant boundary. The successor is
+hardware-free tested but has not completed the physical ground route and must not be
+described as verified navigation.
 
 ### Optional local speech recognition artifact
 

@@ -22,6 +22,7 @@ import {
   resolveMedicationObservations,
   ROOM_312_MISSION_REGISTRY,
 } from "../mission/medication-observation-resolver.js";
+import { resolvePreparedMedicationRecord } from "../mission/prepared-medication-record.js";
 import type {
   DemoPreset,
   InteractionState,
@@ -299,6 +300,24 @@ export class RuntimeSession {
     return this.view();
   }
 
+  loadPreparedHospitalRecord(): RuntimeView {
+    if (this.#interactionState !== "INSTRUCTION_ACKNOWLEDGED") return this.view();
+    if (this.#authorization || this.#executionRecord) return this.view();
+    const resolved = resolvePreparedMedicationRecord();
+    this.#facts = { ...resolved.facts };
+    this.#conditionEvidenceReferences = resolved.evidenceReferences;
+    this.#evidenceState = "NOT STARTED";
+    this.#authorizationEventId = null;
+    this.#authorizationAcknowledged = false;
+    this.#addEvent(
+      "HOSPITAL_RECORD_RESOLVED",
+      `${resolved.record.recordId} supplied patient, order, medication, and administration-window evidence`,
+      "CRAS",
+    );
+    this.#evaluate();
+    return this.view();
+  }
+
   commitAndDispatch(): RuntimeView {
     if (this.#decision.state !== "READY_FOR_EVIDENCE") {
       this.#addEvent("BLOCKED", "Evidence commit refused while conditions are unresolved");
@@ -499,6 +518,10 @@ export class RuntimeSession {
         this.#evidenceState !== "FAILED" &&
         this.#executionRecord === null &&
         (!this.#authorization || !this.#authorizationAcknowledged),
+      canLoadHospitalRecord:
+        this.#interactionState === "INSTRUCTION_ACKNOWLEDGED" &&
+        this.#authorization === null &&
+        this.#executionRecord === null,
       canExport: evidenceRecord !== null,
     };
   }

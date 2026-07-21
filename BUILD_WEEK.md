@@ -426,6 +426,27 @@ Verified on July 18, 2026:
 
 Phase 1 tests verify deterministic evaluation and the boundary at `READY_FOR_EVIDENCE`. Phase 2 tests verify local SQLite evidence-backed authorization. Phase 3 tests verify protected dispatch and simulation. Phase 4 browser tests verify the complete local demonstration. External integrations remain future work.
 
+## July 21 physical mission checkpoint
+
+- Preserved `MEDICATION_DELIVERY_ROUND_TRIP_V1` as the last physically verified
+  wheel-off-ground dispatch checkpoint and versioned the current admitted behavior as
+  `MEDICATION_DELIVERY_MISSION_V1`.
+- Added a server-owned prepared hospital record for the patient, order, medication,
+  and administration-window facts. Browser input cannot alter the fixture values.
+- Added a fixed Pharmacy → Room 312 → Home mission candidate with current-frame route
+  observation, typed location observations, bounded steering, fixed loopback vision,
+  robot-local durable mission events, timeout, and stop/center cleanup.
+- Added full-page large navigation markers for Pharmacy, Room 312, and Home.
+- Hardware-free verification passes, but the complete ground mission did not execute.
+  Small markers were not reliably decoded at route distance, the multi-card capture
+  workflow lacked per-card cues and confirmation, and line/mapping approaches failed
+  to produce reliable general navigation.
+- Recent attempts therefore remained unauthorized and produced no evidence record,
+  grant, adapter call, or movement. This is correct fail-closed behavior but not a
+  successful mission demonstration.
+- The complete implementation and experiment record, including successful and failed
+  work, is [BUILD_WEEK_REPORT.md](BUILD_WEEK_REPORT.md).
+
 ## Future provenance rule
 
 Any imported code, copied configuration, external asset, or integration derived from a pre-existing system must be recorded here with its source, license or permission basis, date introduced, and the exact role it plays in Constitutional Runtime.

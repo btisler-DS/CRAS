@@ -18,6 +18,10 @@ Open `print-markers.html` in a browser and print at actual size. Do not crop the
 quiet zone, laminate with glossy film, recolor, stretch, or place tape over the QR area.
 The human-readable text is part of the demonstration but is not the scanned payload.
 
+`print-navigation-markers.html` contains three full-page, high-visibility location
+markers for the physical route. They remain mounted in the environment; the operator
+does not present them to the camera. Print at 100% scale without fit-to-page reduction.
+
 `print-patient-faces.html` contains eight deliberately simple fictional portrait
 drawings. Place the appropriate QR patient marker beside, not over, the face. A face is
 demonstration context only and must never satisfy patient identity by itself.

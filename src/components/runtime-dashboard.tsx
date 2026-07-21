@@ -172,6 +172,15 @@ export function RuntimeDashboard({ initialView }: RuntimeDashboardProps) {
                 </label>
               ))}
             </div>
+            {view.robot.target === "physical" ? (
+              <button
+                className="button"
+                disabled={!view.canLoadHospitalRecord || pending}
+                onClick={() => void run({ command: "load-hospital-record" })}
+              >
+                Load prepared hospital record
+              </button>
+            ) : null}
             {view.blockingReasons.length > 0 ? (
               <div className="blocking-box" data-testid="blocking-reasons">
                 <strong>Why execution is blocked</strong>

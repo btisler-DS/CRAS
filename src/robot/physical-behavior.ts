@@ -1,16 +1,12 @@
 import type { NormalizedAction } from "../dispatch/types.js";
 
 export const PHYSICAL_BEHAVIOR = Object.freeze({
-  id: "MEDICATION_DELIVERY_ROUND_TRIP_V1",
+  id: "MEDICATION_DELIVERY_MISSION_V1",
   actionKind: "MEDICATION_DELIVERY",
   destination: "Room 312",
-  leftMotor: 1,
-  rightMotor: 2,
-  speed: 1,
-  outboundDurationMs: 1_000,
-  stoppedPauseMs: 500,
-  returnSpeed: -1,
-  returnDurationMs: 1_000,
+  startLocation: "LOC-PHARMACY",
+  deliveryLocation: "LOC-ROOM-312",
+  homeLocation: "LOC-HOME",
   finalPosition: "home-base",
 } as const);
 

@@ -1,5 +1,9 @@
 # CRAS competition handoff
 
+> **Status note (July 21):** This handoff preserves the July 20 checkpoint. For the
+> current implementation, experiment outcomes, and verified claims boundary, read
+> [BUILD_WEEK_REPORT.md](BUILD_WEEK_REPORT.md) first.
+
 **Prepared:** July 20, 2026 (UTC)
 
 **Repository:** <https://github.com/btisler-DS/CRAS>

@@ -49,8 +49,8 @@ export class PhysicalRobotAdapter implements RobotAdapter {
     this.#signingKey = options.signingKey.slice();
     this.#now = options.now ?? Date.now;
     this.#nonce = options.nonce ?? randomUUID;
-    this.#timeoutMs = options.timeoutMs ?? 10_000;
-    if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 1_000 || this.#timeoutMs > 15_000) {
+    this.#timeoutMs = options.timeoutMs ?? 210_000;
+    if (!Number.isInteger(this.#timeoutMs) || this.#timeoutMs < 1_000 || this.#timeoutMs > 240_000) {
       throw new TypeError("Physical adapter timeout is outside its allowed bounds.");
     }
   }

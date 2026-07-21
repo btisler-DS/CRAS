@@ -51,10 +51,10 @@ Verified July 20, 2026 with the robot secured on its stand:
 All four fixed patterns are physically verified: attention (one short), instruction
 received (two short), authorized (one long), and mission completed (three short).
 
-## Active round-trip contract — physically verified
+## Former round-trip contract — physically verified checkpoint
 
-`MEDICATION_DELIVERY_ROUND_TRIP_V1` supersedes the forward-only behavior as the one
-active physical contract. It commands minimum-speed forward for 1,000 ms, stops,
+`MEDICATION_DELIVERY_ROUND_TRIP_V1` superseded the forward-only behavior as the one
+active physical contract at this checkpoint. It commands minimum-speed forward for 1,000 ms, stops,
 holds neutral for 500 ms, commands minimum-speed reverse for 1,000 ms, and stops in
 `finally`. A successful receipt reports `home-base`.
 
@@ -72,6 +72,12 @@ Verified July 20, 2026 on the wheel-off-ground stand:
 - Operator observation: both wheels ran forward and backward with the intended stop;
   final stop succeeded and no other issue or unintended actuator movement occurred.
 - Post-action state: worker active and healthy; no motion child remained.
+
+The current code admits the versioned successor `MEDICATION_DELIVERY_MISSION_V1`, a
+bounded Pharmacy → Room 312 → Home behavior. Its hardware-free tests pass, but it has
+not completed the physical ground route. Do not use this earlier round-trip checkpoint
+as evidence that the successor navigated the course. See
+[`BUILD_WEEK_REPORT.md`](../BUILD_WEEK_REPORT.md).
 
 Constitutional Runtime exposes exactly one physical behavior for the competition demonstration.
 

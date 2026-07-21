@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CRAS navigation markers</title>
+  <style>
+    @page { size: letter portrait; margin: 0.35in; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; color: #111827; }
+    .page { min-height: 10.3in; display: grid; place-items: center; text-align: center; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    img { width: 6.5in; height: 6.5in; image-rendering: pixelated; }
+    h1 { margin: 0.15in 0 0; font-size: 34pt; }
+    p { margin: 0.08in 0; font-size: 16pt; }
+    code { font-size: 14pt; }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div><img src="svg/LOC-PHARMACY.svg" alt="Pharmacy QR" /><h1>PHARMACY</h1><p>Start location</p><code>LOC-PHARMACY</code></div>
+  </section>
+  <section class="page">
+    <div><img src="svg/LOC-ROOM-312.svg" alt="Room 312 QR" /><h1>ROOM 312</h1><p>Medication destination</p><code>LOC-ROOM-312</code></div>
+  </section>
+  <section class="page">
+    <div><img src="svg/LOC-HOME.svg" alt="Home QR" /><h1>HOME BASE</h1><p>Mission completion</p><code>LOC-HOME</code></div>
+  </section>
+</body>
+</html>

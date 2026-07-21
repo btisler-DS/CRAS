@@ -19,7 +19,7 @@ HOST = "127.0.0.1"
 PORT = 9300
 MAX_BODY = 16 * 1024
 MAX_CLOCK_SKEW_MS = 30_000
-BEHAVIOR_ID = "MEDICATION_DELIVERY_ROUND_TRIP_V1"
+BEHAVIOR_ID = "MEDICATION_DELIVERY_MISSION_V1"
 ACKNOWLEDGMENT_TYPES = frozenset(("ATTENTION", "INSTRUCTION_RECEIVED", "AUTHORIZED", "MISSION_COMPLETED"))
 DB_PATH = os.environ.get("CRAS_ROBOT_REPLAY_DB", "/var/lib/cras-robot/replay.sqlite3")
 KEY_PATH = os.environ.get("CRAS_ROBOT_SIGNING_KEY_FILE", "/etc/cras-robot/dispatch.key")
@@ -77,16 +77,31 @@ def execute_fixed_demo_action():
     try:
         cleanup_stale_gpio_fifo()
         process = subprocess.Popen(
-            ["/usr/bin/script", "-qec", "/usr/bin/python3 /opt/cras-robot/worker/motion_once.py", "/dev/null"],
+            ["/usr/bin/script", "-qec", "/usr/bin/python3 /opt/cras-robot/worker/mission_once.py", "/dev/null"],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
             start_new_session=True,
         )
         with ACTIVE_LOCK:
             ACTIVE_PROCESS = process
-        output, _ = process.communicate(timeout=8)
-        if process.returncode != 0 or "CRAS_MOTION_COMPLETED" not in output:
+        output, _ = process.communicate(timeout=190)
+        result = None
+        for line in output.replace("\r", "\n").splitlines():
+            try:
+                candidate = json.loads(line.strip())
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if isinstance(candidate, dict) and candidate.get("behavior_id") == BEHAVIOR_ID:
+                result = candidate
+        if (
+            process.returncode != 0
+            or result is None
+            or result.get("status") != "executed"
+            or result.get("final_position") != "home-base"
+            or result.get("cleanup_completed") is not True
+        ):
             diagnostic = output.replace("\x00", "")[-1200:]
             raise RuntimeError(f"fixed motion child failed ({process.returncode}): {diagnostic}")
+        return result
     except subprocess.TimeoutExpired:
         if process is not None:
             os.killpg(process.pid, signal.SIGTERM)
@@ -94,7 +109,7 @@ def execute_fixed_demo_action():
                 process.wait(timeout=1)
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGKILL)
-        raise RuntimeError("fixed motion child timed out")
+        raise RuntimeError("fixed mission child timed out")
     finally:
         with ACTIVE_LOCK:
             ACTIVE_PROCESS = None
@@ -208,13 +223,16 @@ class Handler(BaseHTTPRequestHandler):
             if not OPERATION_LOCK.acquire(blocking=False):
                 return self.reply(409, {"error": "robot_busy"})
             try:
-                execute_fixed_demo_action()
+                mission_result = execute_fixed_demo_action()
             finally:
                 OPERATION_LOCK.release()
             self.reply(200, {
                 "status": "executed",
                 "final_position": "home-base",
                 "behavior_id": BEHAVIOR_ID,
+                "mission_run_id": mission_result.get("mission_run_id"),
+                "delivery_location": mission_result.get("delivery_location"),
+                "cleanup_completed": mission_result.get("cleanup_completed"),
             })
         except Exception as error:
             print(json.dumps({

@@ -65,5 +65,6 @@ export interface RuntimeView {
   readonly events: readonly RuntimeEvent[];
   readonly failureInjected: boolean;
   readonly canCommit: boolean;
+  readonly canLoadHospitalRecord: boolean;
   readonly canExport: boolean;
 }

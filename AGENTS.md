@@ -9,11 +9,13 @@ state, testbed, deadline, remaining risks, and recommended completion order.
 
 ## Current state
 
-The competition build has a canonical simulator, one protected round-trip physical
-behavior, a private fixed-pattern acknowledgment boundary, a bounded local speech
-pipeline, and an observation-only camera worker and browser proxy. Simulator and
-physical targets use one shared authorization/evidence/Dispatcher composition and
-differ only at the final injected adapter. Do not create a target-specific bypass.
+The competition build has a canonical simulator, one physically verified historical
+round-trip stand behavior, one current but ground-unverified protected mission behavior,
+a private fixed-pattern acknowledgment boundary, a bounded local speech pipeline, and
+an observation-only camera worker and browser proxy. Simulator and physical targets use
+one shared authorization/evidence/Dispatcher composition and differ only at the final
+injected adapter. Do not create a target-specific bypass. Read
+`BUILD_WEEK_REPORT.md` for the exact verified/unverified boundary.
 
 The robot has not navigated the taped physical hospital layout. Do not imply that
 stand commissioning or simulator animation proves ground navigation.

@@ -4,9 +4,7 @@
 import importlib.util
 import os
 import sqlite3
-import sys
 import tempfile
-import types
 import unittest
 from contextlib import closing
 from pathlib import Path
@@ -28,6 +26,21 @@ class CompletedProcess:
         return (
             '{"status":"completed","acknowledgment":"ATTENTION",'
             '"cleanup_completed":true}\n',
+            None,
+        )
+
+
+class MissionProcess:
+    returncode = 0
+    pid = 1001
+
+    def communicate(self, timeout):
+        self.timeout = timeout
+        return (
+            '{"status":"executed","final_position":"home-base",'
+            '"behavior_id":"MEDICATION_DELIVERY_MISSION_V1",'
+            '"mission_run_id":"physical-mission-1",'
+            '"cleanup_completed":true}\r\n',
             None,
         )
 
@@ -72,42 +85,24 @@ class RobotWorkerTests(unittest.TestCase):
         )
         self.assertNotIn("robot_hat", globals())
 
-    def test_motion_child_has_one_fixed_outbound_stop_return_sequence(self):
-        motion_path = WORKER_PATH.with_name("motion_once.py")
-        spec = importlib.util.spec_from_file_location("motion_once", motion_path)
-        motion = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(motion)
-        calls = []
-
-        class FakePicarx:
-            def set_motor_speed(self, motor, speed):
-                calls.append(("motor", motor, speed))
-
-            def stop(self):
-                calls.append(("stop",))
-
-        fake_module = types.SimpleNamespace(Picarx=FakePicarx)
+    def test_dispatch_child_is_the_one_fixed_mission_and_returns_its_receipt(self):
+        process = MissionProcess()
         with (
-            patch.dict(sys.modules, {"picarx": fake_module}),
-            patch.object(motion.os, "getlogin", return_value="edos"),
-            patch.object(motion.time, "sleep", side_effect=lambda value: calls.append(("sleep", value))),
+            patch.object(worker, "cleanup_stale_gpio_fifo"),
+            patch.object(worker.subprocess, "Popen", return_value=process) as popen,
         ):
-            motion.main()
+            result = worker.execute_fixed_demo_action()
 
         self.assertEqual(
-            calls,
+            popen.call_args.args[0],
             [
-                ("motor", 1, 1),
-                ("motor", 2, 1),
-                ("sleep", 1.0),
-                ("stop",),
-                ("sleep", 0.5),
-                ("motor", 1, -1),
-                ("motor", 2, -1),
-                ("sleep", 1.0),
-                ("stop",),
+                "/usr/bin/script", "-qec",
+                "/usr/bin/python3 /opt/cras-robot/worker/mission_once.py",
+                "/dev/null",
             ],
         )
+        self.assertEqual(process.timeout, 190)
+        self.assertEqual(result["mission_run_id"], "physical-mission-1")
 
 
 if __name__ == "__main__":

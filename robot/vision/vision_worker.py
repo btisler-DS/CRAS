@@ -464,6 +464,20 @@ class Handler(BaseHTTPRequestHandler):
                 "observations": SCANNER.list_observations(after),
                 "error": status["error"],
             })
+        if parsed_url.path == "/frame.jpg":
+            active, _, _, _ = OWNER.status()
+            if not active:
+                return self.reply(409, {"error": {"code": "STREAM_INACTIVE", "message": "Camera stream is stopped.", "retryable": True}})
+            frame, _ = OWNER.wait_frame(-1, timeout=2)
+            if frame is None:
+                return self.reply(503, {"error": {"code": "FRAME_UNAVAILABLE", "message": "No camera frame is available.", "retryable": True}})
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(frame)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(frame)
+            return
         if parsed_url.path == "/stream.mjpg":
             active, _, _, _ = OWNER.status()
             if not active:
